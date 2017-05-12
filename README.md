@@ -2,6 +2,8 @@
 
 Two way GraphQL to Sequelize bridge, extending out graphql-sequelize with dynamically exposing relationships and functions
 
+[![Build Status](https://travis-ci.org/VostroNet/seeql.svg?branch=master)](https://travis-ci.org/VostroNet/seeql)
+
 ## Features 
 
 - Dynamic mapping of sequelize models and relationships to graphql for query and mutation
