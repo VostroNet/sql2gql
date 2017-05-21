@@ -243,7 +243,7 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
         }),
       },
     };
-    const {mutations} = ((models[modelName].schema.expose || {}).classMethods || {});
+    const {mutations} = ((models[modelName].$gqlsql.expose || {}).classMethods || {});
     if (mutations) {
       Object.keys(mutations).forEach((methodName) => {
         const {type, args, roles = []} = mutations[methodName];
@@ -277,7 +277,7 @@ function createQueryFunctions(models, keys, typeCollection, userProfile) {
   let queryCollection = {};
   keys.forEach((modelName) => {
     let {fields} = typeCollection[modelName]._typeConfig; //eslint-disable-line
-    const {query} = ((models[modelName].schema.expose || {}).classMethods || {});
+    const {query} = ((models[modelName].$gqlsql.expose || {}).classMethods || {});
     let queryFields = {};
     if (query) {
       Object.keys(query).forEach((methodName) => {
@@ -290,6 +290,7 @@ function createQueryFunctions(models, keys, typeCollection, userProfile) {
             return models[modelName][methodName].apply(models[modelName], [args, req]);
           },
         };
+        console.log("test", queryFields[methodName]);
       });
       queryCollection[modelName] = {
         type: new GraphQLObjectType({
@@ -307,7 +308,7 @@ function createQueryFunctions(models, keys, typeCollection, userProfile) {
 
 export default function createSchema(instance, fields = {}, mutations = {}, options = {}, userProfile) {
   let validKeys = Object.keys(instance.models).reduce((o, key) => {
-    if (instance.models[key].schema) {
+    if (instance.models[key].$gqlsql) {
       // o[key] = instance.models[key];
       o.push(key);
     }
@@ -317,18 +318,24 @@ export default function createSchema(instance, fields = {}, mutations = {}, opti
   let mutationCollection = createMutationFunctions(instance.models, validKeys, typeCollection, mutations, userProfile);
   let queryCollection = createQueryFunctions(instance.models, validKeys, typeCollection, userProfile);
   fields = createQueryLists(instance.models, validKeys, typeCollection, fields, options);
-  const rootFields = Object.assign({
+  const queryRootFields = {
     models: {
       type: new GraphQLObjectType({name: "Models", fields: fields}),
       resolve() {
         return {};
       },
     },
-  }, queryCollection);
+    classMethods: {
+      type: new GraphQLObjectType({name: "ClassMethods", fields: queryCollection}),
+      resolve() {
+        return {};
+      },
+    },
+  };
   return new GraphQLSchema({
     query: new GraphQLObjectType({
       name: "RootQuery",
-      fields: rootFields,
+      fields: queryRootFields,
     }),
     mutation: new GraphQLObjectType({
       name: "Mutation",

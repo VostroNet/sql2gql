@@ -12,7 +12,7 @@ function loadSchemas(schemas, instance, options = {}) {
   const {defaultAttr, defaultModel} = options;
   schemas.forEach((schema) => {
     instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
-    instance.models[schema.name].schema = schema;
+    instance.models[schema.name].$gqlsql = schema;
   });
   schemas.forEach((schema) => {
     (schema.relationships || []).forEach((relationship) => {
