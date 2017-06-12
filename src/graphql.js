@@ -208,8 +208,8 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
         type: typeCollection[modelName],
         args: Object.assign(defaultArgs(models[modelName]), {input: {type: optionalInput}}),
         resolve: resolver(models[modelName], {
-          after: (item, {input}, req, gql) => {
-            return item.save(input, {user: req.user});
+          after: (item, args, req, gql) => {
+            return item.update(args.input, {user: req.user});
           },
         }),
       },
@@ -217,8 +217,8 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
         type: GraphQLBoolean,
         args: defaultArgs(models[modelName]),
         resolve: resolver(models[modelName], {
-          after: function(items, args, req, gql) {
-            return Promise.all(items.map((item) => item.destroy({user: req.user})))
+          after: function(item, args, req, gql) {
+            return item.destroy({user: req.user})
               .then(() => true);
           },
         }),
@@ -228,17 +228,16 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
         args: Object.assign(defaultListArgs(models[modelName]), {input: {type: optionalInput}}),
         resolve: resolver(models[modelName], {
           after: (items, args, req, gql) => {
-            return Promise.all(items.map((item) => item.save({}, {user: req.user})));
+            return Promise.all(items.map((item) => item.update(args.input, {user: req.user})));
           },
         }),
       },
       deleteAll: {
-        type: GraphQLBoolean,
+        type: new GraphQLList(GraphQLBoolean),
         args: defaultListArgs(models[modelName]),
         resolve: resolver(models[modelName], {
           after: function(items, args, req, gql) {
-            return Promise.all(items.map((item) => item.destroy({user: req.user})))
-              .then(() => true);
+            return Promise.all(items.map((item) => item.destroy({user: req.user}).then(() => true))); //TODO: needs to return id with boolean value
           },
         }),
       },
@@ -290,7 +289,7 @@ function createQueryFunctions(models, keys, typeCollection, userProfile) {
             return models[modelName][methodName].apply(models[modelName], [args, req]);
           },
         };
-        console.log("test", queryFields[methodName]);
+        // console.log("test", queryFields[methodName]);
       });
       queryCollection[modelName] = {
         type: new GraphQLObjectType({

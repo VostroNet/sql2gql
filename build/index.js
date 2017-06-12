@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.createSchema = exports.connect = undefined;
 
+require("babel-polyfill");
+
 var _database = require("./database");
 
 var _database2 = _interopRequireDefault(_database);

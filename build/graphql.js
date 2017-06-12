@@ -215,10 +215,8 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
         type: typeCollection[modelName],
         args: Object.assign((0, _graphqlSequelize.defaultArgs)(models[modelName]), { input: { type: optionalInput } }),
         resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-          after: function after(item, _ref2, req, gql) {
-            var input = _ref2.input;
-
-            return item.save(input, { user: req.user });
+          after: function after(item, args, req, gql) {
+            return item.update(args.input, { user: req.user });
           }
         })
       },
@@ -226,10 +224,8 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
         type: _graphql.GraphQLBoolean,
         args: (0, _graphqlSequelize.defaultArgs)(models[modelName]),
         resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-          after: function after(items, args, req, gql) {
-            return Promise.all(items.map(function (item) {
-              return item.destroy({ user: req.user });
-            })).then(function () {
+          after: function after(item, args, req, gql) {
+            return item.destroy({ user: req.user }).then(function () {
               return true;
             });
           }
@@ -241,28 +237,28 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
         resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
           after: function after(items, args, req, gql) {
             return Promise.all(items.map(function (item) {
-              return item.save({}, { user: req.user });
+              return item.update(args.input, { user: req.user });
             }));
           }
         })
       },
       deleteAll: {
-        type: _graphql.GraphQLBoolean,
+        type: new _graphql.GraphQLList(_graphql.GraphQLBoolean),
         args: (0, _graphqlSequelize.defaultListArgs)(models[modelName]),
         resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
           after: function after(items, args, req, gql) {
             return Promise.all(items.map(function (item) {
-              return item.destroy({ user: req.user });
-            })).then(function () {
-              return true;
-            });
+              return item.destroy({ user: req.user }).then(function () {
+                return true;
+              });
+            })); //TODO: needs to return id with boolean value
           }
         })
       }
     };
 
-    var _ref3 = (models[modelName].$gqlsql.expose || {}).classMethods || {},
-        mutations = _ref3.mutations;
+    var _ref2 = (models[modelName].$gqlsql.expose || {}).classMethods || {},
+        mutations = _ref2.mutations;
 
     if (mutations) {
       Object.keys(mutations).forEach(function (methodName) {
@@ -303,8 +299,8 @@ function createQueryFunctions(models, keys, typeCollection, userProfile) {
   keys.forEach(function (modelName) {
     var fields = typeCollection[modelName]._typeConfig.fields; //eslint-disable-line
 
-    var _ref4 = (models[modelName].$gqlsql.expose || {}).classMethods || {},
-        query = _ref4.query;
+    var _ref3 = (models[modelName].$gqlsql.expose || {}).classMethods || {},
+        query = _ref3.query;
 
     var queryFields = {};
     if (query) {
@@ -321,7 +317,7 @@ function createQueryFunctions(models, keys, typeCollection, userProfile) {
             return models[modelName][methodName].apply(models[modelName], [args, req]);
           }
         };
-        console.log("test", queryFields[methodName]);
+        // console.log("test", queryFields[methodName]);
       });
       queryCollection[modelName] = {
         type: new _graphql.GraphQLObjectType({

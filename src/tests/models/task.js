@@ -100,7 +100,7 @@ export default {
       },
     },
     indexes: [
-      {unique: true, fields: ["name"]},
+      // {unique: true, fields: ["name"]},
     ],
     instanceMethods: {}, //TODO: figure out a way to expose this on graphql
   },

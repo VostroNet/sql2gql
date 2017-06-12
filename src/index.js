@@ -1,3 +1,5 @@
+import "babel-polyfill";
+
 import database from "./database";
 import graphql from "./graphql";
 export const connect = database;

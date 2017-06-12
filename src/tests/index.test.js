@@ -25,27 +25,141 @@ function createSqlInstance() {
 
 
 describe("index test", () => {
-  it("basic query test", () => {
-    return createSqlInstance().then((instance) => {
-      const {Task} = instance.models;
-      return Promise.all([
-        Task.create({
-          name: "item1",
-        }),
-        Task.create({
-          name: "item2",
-        }),
-        Task.create({
-          name: "item3",
-        }),
-      ]).then(() => {
-        const schema = createSchema(instance);
-        return graphql(schema, "query { models { Task { id, name } } }").then((result) => {
-          return expect(result.data.models.Task.length).toEqual(3);
-        });
-      });
-    });
+  it("basic query test", async () => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const items = await Promise.all([
+      Task.create({
+        name: "item1",
+      }),
+      Task.create({
+        name: "item2",
+      }),
+      Task.create({
+        name: "item3",
+      }),
+    ]);
+    const schema = createSchema(instance);
+    const result = await graphql(schema, "query { models { Task { id, name } } }");
+    return expect(result.data.models.Task.length).toEqual(3);
   });
+  it("basic update test", async () => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const item = await Task.create({
+      name: "item2",
+    });
+    const schema = createSchema(instance);
+
+    const mutation = `mutation {
+      Task {
+        update(id: ${item.id}, input: {name: "UPDATED"}) {
+          id, 
+          name
+        }
+      }
+    }`
+    const result = await graphql(schema, mutation);
+    return expect(result.data.Task.update.name).toEqual("UPDATED");
+  });
+  it("basic delete test", async () => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const item = await Task.create({
+      name: "item2",
+    });
+    const schema = createSchema(instance);
+
+    const mutation = `mutation {
+      Task {
+        delete(id: ${item.id})
+      }
+    }`
+    const result = await graphql(schema, mutation);
+    expect(result.data.Task.delete).toEqual(true);
+    // console.log("delete result", result);
+    const query = `query { models { Task(where: {id: ${item.id}}) { id, name } } }`;
+    const queryResult = await graphql(schema, query);
+    // console.log("query result", queryResult);
+    return expect(queryResult.data.models.Task.length).toEqual(0);
+  });
+  it("basic update all test", async () => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const items = await Promise.all([
+      Task.create({
+        name: "item1",
+      }),
+      Task.create({
+        name: "item2",
+      }),
+      Task.create({
+        name: "item3",
+      }),
+    ])
+    const schema = createSchema(instance);
+    const mutation = `mutation {
+      Task {
+        updateAll(where: {name: {in: ["item2", "item3"]}}, input: {name: "UPDATED"}) {
+          id, 
+          name
+        }
+      }
+    }`
+    const result = await graphql(schema, mutation);
+    const item2Result = await graphql(schema, `query { models { Task(where: {id: ${items[1].id}}) { id, name } } }`);
+    const item3Result = await graphql(schema, `query { models { Task(where: {id: ${items[2].id}}) { id, name } } }`);
+    expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
+    expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
+  });
+  it("basic delete all test", async () => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const items = await Promise.all([
+      Task.create({
+        name: "item1",
+      }),
+      Task.create({
+        name: "item2",
+      }),
+      Task.create({
+        name: "item3",
+      }),
+    ])
+    const schema = createSchema(instance);
+    const mutation = `mutation {
+      Task {
+        deleteAll(where: {name: {in: ["item2", "item3"]}})
+      }
+    }`
+    const result = await graphql(schema, mutation);
+    // console.log("result", result.data);
+    expect(result.data.Task.deleteAll.length).toEqual(2);
+    const queryResults = await graphql(schema, "query { models { Task { id, name } } }");
+    // console.log("queryResults", queryResults.data.models.Task);
+    expect(queryResults.data.models.Task.length).toEqual(1);
+  });
+  // it("basic delete test", async () => {
+  //   const instance = await createSqlInstance();
+  //   const {Task} = instance.models;
+  //   const item = await Task.create({
+  //     name: "item2",
+  //   });
+  //   const schema = createSchema(instance);
+
+  //   const mutation = `mutation {
+  //     Task {
+  //       delete(id: ${item.id})
+  //     }
+  //   }`
+  //   const result = await graphql(schema, mutation);
+  //   expect(result.data.Task.delete).toEqual(true);
+  //   // console.log("delete result", result);
+  //   const query = `query { models { Task(where: {id: ${item.id}}) { id, name } } }`;
+  //   const queryResult = await graphql(schema, query);
+  //   // console.log("query result", queryResult);
+  //   return expect(queryResult.data.models.Task.length).toEqual(0);
+  // });
 });
 
 

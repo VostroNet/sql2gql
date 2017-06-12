@@ -101,7 +101,9 @@ exports.default = {
         return cb(undefined, instance, options);
       }
     },
-    indexes: [{ unique: true, fields: ["name"] }],
+    indexes: [
+      // {unique: true, fields: ["name"]},
+    ],
     instanceMethods: {} }
 };
 // import {getDatabase} from "server/database";
