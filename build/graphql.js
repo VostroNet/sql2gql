@@ -267,17 +267,17 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
             args = _mutations$methodName.args,
             _mutations$methodName2 = _mutations$methodName.roles,
             roles = _mutations$methodName2 === undefined ? [] : _mutations$methodName2;
+        // if (roles.indexOf(userProfile) > -1) {
 
-        if (roles.indexOf(userProfile) > -1) {
-          var outputType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
-          mutationFields[methodName] = {
-            type: outputType,
-            args: args,
-            resolve: function resolve(item, args, req, gql) {
-              return models[modelName][methodName].apply(models[modelName], [args, req]);
-            }
-          };
-        }
+        var outputType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
+        mutationFields[methodName] = {
+          type: outputType,
+          args: args,
+          resolve: function resolve(item, args, req, gql) {
+            return models[modelName][methodName].apply(models[modelName], [args, req]);
+          }
+        };
+        // }
       });
     }
 

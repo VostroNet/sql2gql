@@ -5,6 +5,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = connect;
 
+var _sequelize = require("sequelize");
+
+var _sequelize2 = _interopRequireDefault(_sequelize);
+
 var _logger = require("./utils/logger");
 
 var _logger2 = _interopRequireDefault(_logger);
@@ -26,6 +30,22 @@ function loadSchemas(schemas, instance) {
   schemas.forEach(function (schema) {
     instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
     instance.models[schema.name].$gqlsql = schema;
+    if (/^4/.test(_sequelize2.default.version) && schema.options) {
+      var _schema$options = schema.options,
+          classMethods = _schema$options.classMethods,
+          instanceMethods = _schema$options.instanceMethods;
+
+      if (classMethods) {
+        Object.keys(classMethods).forEach(function (classMethod) {
+          instance.models[schema.name][classMethod] = classMethods[classMethod];
+        });
+      }
+      if (instanceMethods) {
+        Object.keys(instanceMethods).forEach(function (instanceMethod) {
+          instance.models[schema.name].prototype[instanceMethod] = instanceMethods[instanceMethod];
+        });
+      }
+    }
   });
   schemas.forEach(function (schema) {
     (schema.relationships || []).forEach(function (relationship) {

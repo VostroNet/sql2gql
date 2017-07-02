@@ -7,16 +7,14 @@ import {
   GraphQLInputObjectType,
   GraphQLNonNull,
   GraphQLBoolean,
-}
-from "graphql";
+} from "graphql";
 import {
   resolver,
   defaultListArgs,
   defaultArgs,
   attributeFields,
   // typeMapper,
-}
-from "graphql-sequelize";
+} from "graphql-sequelize";
 
 function resetInterfaces(impl) {
   delete impl._interfaces; //eslint-disable-line
@@ -246,16 +244,16 @@ function createMutationFunctions(models, keys, typeCollection, mutationCollectio
     if (mutations) {
       Object.keys(mutations).forEach((methodName) => {
         const {type, args, roles = []} = mutations[methodName];
-        if (roles.indexOf(userProfile) > -1) {
-          let outputType = (type instanceof String || typeof type === "string") ? typeCollection[type] : type;
-          mutationFields[methodName] = {
-            type: outputType,
-            args,
-            resolve(item, args, req, gql) {
-              return models[modelName][methodName].apply(models[modelName], [args, req]);
-            },
-          };
-        }
+        // if (roles.indexOf(userProfile) > -1) {
+        let outputType = (type instanceof String || typeof type === "string") ? typeCollection[type] : type;
+        mutationFields[methodName] = {
+          type: outputType,
+          args,
+          resolve(item, args, req, gql) {
+            return models[modelName][methodName].apply(models[modelName], [args, req]);
+          },
+        };
+        // }
       });
     }
 

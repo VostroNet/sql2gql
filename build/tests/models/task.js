@@ -88,17 +88,17 @@ exports.default = {
       }
     },
     hooks: {
-      beforeFind: function beforeFind(options, cb) {
-        return cb(undefined, options);
+      beforeFind: function beforeFind(options) {
+        return undefined;
       },
-      beforeCreate: function beforeCreate(instance, options, cb) {
-        return cb(undefined, instance, options);
+      beforeCreate: function beforeCreate(instance, options) {
+        return undefined;
       },
-      beforeUpdate: function beforeUpdate(instance, options, cb) {
-        return cb(undefined, instance, options);
+      beforeUpdate: function beforeUpdate(instance, options) {
+        return undefined;
       },
-      beforeDestroy: function beforeDestroy(instance, options, cb) {
-        return cb(undefined, instance, options);
+      beforeDestroy: function beforeDestroy(instance, options) {
+        return undefined;
       }
     },
     indexes: [

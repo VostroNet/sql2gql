@@ -26,17 +26,17 @@ export default {
     tableName: "task-items",
     classMethods: {},
     hooks: {
-      beforeFind(options, cb) {
-        return cb(undefined, options);
+      beforeFind(options) {
+        return undefined;
       },
       beforeCreate(instance, options, cb) {
-        return cb(undefined, instance, options);
+        return undefined;
       },
       beforeUpdate(instance, options, cb) {
-        return cb(undefined, instance, options);
+        return undefined;
       },
       beforeDestroy(instance, options, cb) {
-        return cb(undefined, instance, options);
+        return undefined;
       },
     },
     indexes: [

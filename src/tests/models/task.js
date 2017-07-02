@@ -14,8 +14,7 @@ import {
   GraphQLInputObjectType,
   GraphQLObjectType,
   GraphQLInt,
-}
-from "graphql";
+} from "graphql";
 
 
 export default {
@@ -86,17 +85,17 @@ export default {
       },
     },
     hooks: {
-      beforeFind(options, cb) {
-        return cb(undefined, options);
+      beforeFind(options) {
+        return undefined;
       },
-      beforeCreate(instance, options, cb) {
-        return cb(undefined, instance, options);
+      beforeCreate(instance, options) {
+        return undefined;
       },
-      beforeUpdate(instance, options, cb) {
-        return cb(undefined, instance, options);
+      beforeUpdate(instance, options) {
+        return undefined;
       },
-      beforeDestroy(instance, options, cb) {
-        return cb(undefined, instance, options);
+      beforeDestroy(instance, options) {
+        return undefined;
       },
     },
     indexes: [

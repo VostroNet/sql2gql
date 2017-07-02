@@ -25,7 +25,7 @@ function createSqlInstance() {
 
 
 describe("index test", () => {
-  it("basic query test", async () => {
+  it("basic query test", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
     const items = await Promise.all([
@@ -43,7 +43,7 @@ describe("index test", () => {
     const result = await graphql(schema, "query { models { Task { id, name } } }");
     return expect(result.data.models.Task.length).toEqual(3);
   });
-  it("basic update test", async () => {
+  it("basic update test", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
     const item = await Task.create({
@@ -58,11 +58,11 @@ describe("index test", () => {
           name
         }
       }
-    }`
+    }`;
     const result = await graphql(schema, mutation);
     return expect(result.data.Task.update.name).toEqual("UPDATED");
   });
-  it("basic delete test", async () => {
+  it("basic delete test", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
     const item = await Task.create({
@@ -74,7 +74,7 @@ describe("index test", () => {
       Task {
         delete(id: ${item.id})
       }
-    }`
+    }`;
     const result = await graphql(schema, mutation);
     expect(result.data.Task.delete).toEqual(true);
     // console.log("delete result", result);
@@ -83,7 +83,7 @@ describe("index test", () => {
     // console.log("query result", queryResult);
     return expect(queryResult.data.models.Task.length).toEqual(0);
   });
-  it("basic update all test", async () => {
+  it("basic update all test", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
     const items = await Promise.all([
@@ -96,7 +96,7 @@ describe("index test", () => {
       Task.create({
         name: "item3",
       }),
-    ])
+    ]);
     const schema = createSchema(instance);
     const mutation = `mutation {
       Task {
@@ -105,14 +105,14 @@ describe("index test", () => {
           name
         }
       }
-    }`
+    }`;
     const result = await graphql(schema, mutation);
     const item2Result = await graphql(schema, `query { models { Task(where: {id: ${items[1].id}}) { id, name } } }`);
     const item3Result = await graphql(schema, `query { models { Task(where: {id: ${items[2].id}}) { id, name } } }`);
     expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
     expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
   });
-  it("basic delete all test", async () => {
+  it("basic delete all test", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
     const items = await Promise.all([
@@ -125,13 +125,13 @@ describe("index test", () => {
       Task.create({
         name: "item3",
       }),
-    ])
+    ]);
     const schema = createSchema(instance);
     const mutation = `mutation {
       Task {
         deleteAll(where: {name: {in: ["item2", "item3"]}})
       }
-    }`
+    }`;
     const result = await graphql(schema, mutation);
     // console.log("result", result.data);
     expect(result.data.Task.deleteAll.length).toEqual(2);
@@ -139,66 +139,43 @@ describe("index test", () => {
     // console.log("queryResults", queryResults.data.models.Task);
     expect(queryResults.data.models.Task.length).toEqual(1);
   });
-  // it("basic delete test", async () => {
-  //   const instance = await createSqlInstance();
-  //   const {Task} = instance.models;
-  //   const item = await Task.create({
-  //     name: "item2",
-  //   });
-  //   const schema = createSchema(instance);
+  it("basic classMethod test", async() => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const item = await Task.create({
+      name: "item2",
+    });
+    const schema = createSchema(instance);
 
-  //   const mutation = `mutation {
-  //     Task {
-  //       delete(id: ${item.id})
-  //     }
-  //   }`
-  //   const result = await graphql(schema, mutation);
-  //   expect(result.data.Task.delete).toEqual(true);
-  //   // console.log("delete result", result);
-  //   const query = `query { models { Task(where: {id: ${item.id}}) { id, name } } }`;
-  //   const queryResult = await graphql(schema, query);
-  //   // console.log("query result", queryResult);
-  //   return expect(queryResult.data.models.Task.length).toEqual(0);
-  // });
+    const query = `query {
+      classMethods {
+        Task {
+          getHiddenData {
+            hidden
+          }
+        }
+      }
+    }`;
+    const result = await graphql(schema, query);
+    return expect(result.data.classMethods.Task.getHiddenData.hidden).toEqual("Hi");
+  });
+  it("mutation classMethod test", async() => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const item = await Task.create({
+      name: "item2",
+    });
+    const schema = createSchema(instance);
+
+    const mutation = `mutation {
+      Task {
+        reverseName(input: {amount: 2}) {
+          name
+        }
+      }
+    }`;
+    const result = await graphql(schema, mutation);
+    console.log("result", result);
+    return expect(result.data.Task.reverseName.name).toEqual("reverseName2");
+  });
 });
-
-
-
-
-
-// function createInstance() {
-//   const {host, username, password, database, debug, dialect, pool, sync} = config.database;
-//   const db = new Sequelize(database, username, password, {
-//     host: host,
-//     dialect: dialect,
-//     logging: (args) => {
-//       if (debug) {
-//         log.info(args);
-//       }
-//     },
-//     pool: Object.assign({}, pool, {
-//       max: 20,
-//       min: 0,
-//       idle: 10000,
-//     }),
-//     paranoid: true,
-//     timestamps: true,
-//   });
-//   let models = loadSchemas(db);
-//   db.models = models;
-//   return db.sync(sync);
-// }
-
-
-// let instance;
-// export function getDatabase() {
-//   if (instance) {
-//     return Promise.resolve(instance);
-//   }
-//   return createInstance().then((db) => {
-//     instance = db;
-//     return instance;
-//   });
-// }
-
-

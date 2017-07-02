@@ -268,61 +268,77 @@ describe("index test", function () {
       }
     }, _callee5, undefined);
   })));
-  // it("basic delete test", async () => {
-  //   const instance = await createSqlInstance();
-  //   const {Task} = instance.models;
-  //   const item = await Task.create({
-  //     name: "item2",
-  //   });
-  //   const schema = createSchema(instance);
+  it("basic classMethod test", _asyncToGenerator(regeneratorRuntime.mark(function _callee6() {
+    var instance, Task, item, schema, query, result;
+    return regeneratorRuntime.wrap(function _callee6$(_context6) {
+      while (1) {
+        switch (_context6.prev = _context6.next) {
+          case 0:
+            _context6.next = 2;
+            return createSqlInstance();
 
-  //   const mutation = `mutation {
-  //     Task {
-  //       delete(id: ${item.id})
-  //     }
-  //   }`
-  //   const result = await graphql(schema, mutation);
-  //   expect(result.data.Task.delete).toEqual(true);
-  //   // console.log("delete result", result);
-  //   const query = `query { models { Task(where: {id: ${item.id}}) { id, name } } }`;
-  //   const queryResult = await graphql(schema, query);
-  //   // console.log("query result", queryResult);
-  //   return expect(queryResult.data.models.Task.length).toEqual(0);
-  // });
+          case 2:
+            instance = _context6.sent;
+            Task = instance.models.Task;
+            _context6.next = 6;
+            return Task.create({
+              name: "item2"
+            });
+
+          case 6:
+            item = _context6.sent;
+            schema = (0, _index.createSchema)(instance);
+            query = "query {\n      classMethods {\n        Task {\n          getHiddenData {\n            hidden\n          }\n        }\n      }\n    }";
+            _context6.next = 11;
+            return (0, _graphql.graphql)(schema, query);
+
+          case 11:
+            result = _context6.sent;
+            return _context6.abrupt("return", (0, _expect2.default)(result.data.classMethods.Task.getHiddenData.hidden).toEqual("Hi"));
+
+          case 13:
+          case "end":
+            return _context6.stop();
+        }
+      }
+    }, _callee6, undefined);
+  })));
+  it("mutation classMethod test", _asyncToGenerator(regeneratorRuntime.mark(function _callee7() {
+    var instance, Task, item, schema, mutation, result;
+    return regeneratorRuntime.wrap(function _callee7$(_context7) {
+      while (1) {
+        switch (_context7.prev = _context7.next) {
+          case 0:
+            _context7.next = 2;
+            return createSqlInstance();
+
+          case 2:
+            instance = _context7.sent;
+            Task = instance.models.Task;
+            _context7.next = 6;
+            return Task.create({
+              name: "item2"
+            });
+
+          case 6:
+            item = _context7.sent;
+            schema = (0, _index.createSchema)(instance);
+            mutation = "mutation {\n      Task {\n        reverseName(input: {amount: 2}) {\n          name\n        }\n      }\n    }";
+            _context7.next = 11;
+            return (0, _graphql.graphql)(schema, mutation);
+
+          case 11:
+            result = _context7.sent;
+
+            console.log("result", result);
+            return _context7.abrupt("return", (0, _expect2.default)(result.data.Task.reverseName.name).toEqual("reverseName2"));
+
+          case 14:
+          case "end":
+            return _context7.stop();
+        }
+      }
+    }, _callee7, undefined);
+  })));
 });
-
-// function createInstance() {
-//   const {host, username, password, database, debug, dialect, pool, sync} = config.database;
-//   const db = new Sequelize(database, username, password, {
-//     host: host,
-//     dialect: dialect,
-//     logging: (args) => {
-//       if (debug) {
-//         log.info(args);
-//       }
-//     },
-//     pool: Object.assign({}, pool, {
-//       max: 20,
-//       min: 0,
-//       idle: 10000,
-//     }),
-//     paranoid: true,
-//     timestamps: true,
-//   });
-//   let models = loadSchemas(db);
-//   db.models = models;
-//   return db.sync(sync);
-// }
-
-
-// let instance;
-// export function getDatabase() {
-//   if (instance) {
-//     return Promise.resolve(instance);
-//   }
-//   return createInstance().then((db) => {
-//     instance = db;
-//     return instance;
-//   });
-// }
 //# sourceMappingURL=index.test.js.map
