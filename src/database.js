@@ -14,8 +14,16 @@ function loadSchemas(schemas, instance, options = {}) {
   schemas.forEach((schema) => {
     instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
     instance.models[schema.name].$gqlsql = schema;
-    if (/^4/.test(Sequelize.version) && schema.options) {
-      const {classMethods, instanceMethods} = schema.options;
+    if (/^4/.test(Sequelize.version)) {
+      let {classMethods, instanceMethods} = schema;
+      if (schema.options) {
+        if (schema.options.classMethods) {
+          classMethods = schema.options.classMethods;
+        }
+        if (schema.options.instanceMethods) {
+          instanceMethods = schema.options.instanceMethods;
+        }
+      }
       if (classMethods) {
         Object.keys(classMethods).forEach((classMethod) => {
           instance.models[schema.name][classMethod] = classMethods[classMethod];

@@ -36,16 +36,16 @@ exports.default = {
     tableName: "task-items",
     classMethods: {},
     hooks: {
-      beforeFind: function beforeFind(options) {
+      beforeFind(options) {
         return undefined;
       },
-      beforeCreate: function beforeCreate(instance, options, cb) {
+      beforeCreate(instance, options, cb) {
         return undefined;
       },
-      beforeUpdate: function beforeUpdate(instance, options, cb) {
+      beforeUpdate(instance, options, cb) {
         return undefined;
       },
-      beforeDestroy: function beforeDestroy(instance, options, cb) {
+      beforeDestroy(instance, options, cb) {
         return undefined;
       }
     },

@@ -5,7 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.createSchema = exports.connect = undefined;
 
-require("babel-polyfill");
+require("core-js/modules/es7.string.pad-start");
+
+require("core-js/modules/es7.string.pad-end");
 
 var _database = require("./database");
 
@@ -17,6 +19,6 @@ var _graphql2 = _interopRequireDefault(_graphql);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var connect = exports.connect = _database2.default;
-var createSchema = exports.createSchema = _graphql2.default; //TODO: better way to lay this out?
+const connect = exports.connect = _database2.default;
+const createSchema = exports.createSchema = _graphql2.default; //TODO: better way to lay this out?
 //# sourceMappingURL=index.js.map

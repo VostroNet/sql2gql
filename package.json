@@ -1,6 +1,6 @@
 {
   "name": "seeql",
-  "version": "0.9.9",
+  "version": "1.0.0",
   "description": "Two way GraphQL to Sequelize bridge, extending out graphql-sequelize",
   "main": "build/index.js",
   "scripts": {

@@ -1,11 +1,4 @@
 import Sequelize from "sequelize";
-import logger from "utils/logger";
-// import {getDatabase} from "server/database";
-// import Promise from "bluebird";
-// import {InvalidUserNamePasswordError, FormSubmissionError, DatabasePermissionError} from "server/logic/errors";
-
-
-// const log = logger("tests:models:task:");
 
 import {
   GraphQLString,
@@ -66,6 +59,15 @@ export default {
           }),
           args: {},
         },
+        getHiddenData2: {
+          type: new GraphQLObjectType({
+            name: "TaskHiddenData2",
+            fields: () => ({
+              hidden: {type: GraphQLString},
+            }),
+          }),
+          args: {},
+        },
       },
     },
   },
@@ -81,6 +83,11 @@ export default {
       getHiddenData(args, req) {
         return {
           hidden: "Hi",
+        };
+      },
+      getHiddenData2(args, req) {
+        return {
+          hidden: "Hi2",
         };
       },
     },

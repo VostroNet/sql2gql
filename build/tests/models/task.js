@@ -8,10 +8,6 @@ var _sequelize = require("sequelize");
 
 var _sequelize2 = _interopRequireDefault(_sequelize);
 
-var _logger = require("../../utils/logger");
-
-var _logger2 = _interopRequireDefault(_logger);
-
 var _graphql = require("graphql");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -59,11 +55,18 @@ exports.default = {
         getHiddenData: {
           type: new _graphql.GraphQLObjectType({
             name: "TaskHiddenData",
-            fields: function fields() {
-              return {
-                hidden: { type: _graphql.GraphQLString }
-              };
-            }
+            fields: () => ({
+              hidden: { type: _graphql.GraphQLString }
+            })
+          }),
+          args: {}
+        },
+        getHiddenData2: {
+          type: new _graphql.GraphQLObjectType({
+            name: "TaskHiddenData2",
+            fields: () => ({
+              hidden: { type: _graphql.GraphQLString }
+            })
           }),
           args: {}
         }
@@ -73,31 +76,34 @@ exports.default = {
   options: {
     tableName: "tasks",
     classMethods: {
-      reverseName: function reverseName(_ref, req) {
-        var amount = _ref.input.amount;
-
+      reverseName({ input: { amount } }, req) {
         return {
           id: 1,
-          name: "reverseName" + amount
+          name: `reverseName${amount}`
         };
       },
-      getHiddenData: function getHiddenData(args, req) {
+      getHiddenData(args, req) {
         return {
           hidden: "Hi"
+        };
+      },
+      getHiddenData2(args, req) {
+        return {
+          hidden: "Hi2"
         };
       }
     },
     hooks: {
-      beforeFind: function beforeFind(options) {
+      beforeFind(options) {
         return undefined;
       },
-      beforeCreate: function beforeCreate(instance, options) {
+      beforeCreate(instance, options) {
         return undefined;
       },
-      beforeUpdate: function beforeUpdate(instance, options) {
+      beforeUpdate(instance, options) {
         return undefined;
       },
-      beforeDestroy: function beforeDestroy(instance, options) {
+      beforeDestroy(instance, options) {
         return undefined;
       }
     },
@@ -106,10 +112,4 @@ exports.default = {
     ],
     instanceMethods: {} }
 };
-// import {getDatabase} from "server/database";
-// import Promise from "bluebird";
-// import {InvalidUserNamePasswordError, FormSubmissionError, DatabasePermissionError} from "server/logic/errors";
-
-
-// const log = logger("tests:models:task:");
 //# sourceMappingURL=task.js.map
