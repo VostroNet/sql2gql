@@ -19,11 +19,37 @@ gulp.task("lint", ["clean"], () => {
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
 });
-
+gulp.task("compile:publish", ["lint"], () => {
+  return gulp.src(["src/**/*"])
+    .pipe(sourcemaps.init())
+    .pipe(babel({
+      "presets": [
+        "stage-0",
+        ["env", {
+          "targets": {
+            "node": "4",
+          },
+          "useBuiltIns": true,
+        }],
+      ]})
+    )
+    .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
+    .pipe(gulp.dest("build/"));
+});
 gulp.task("compile", ["lint"], () => {
   return gulp.src(["src/**/*"])
     .pipe(sourcemaps.init())
-    .pipe(babel({}))
+    .pipe(babel({
+      "presets": [
+        "stage-0",
+        ["env", {
+          "targets": {
+            "node": process.env.NODE_ENV === JSON.stringify("production") ? "4" : "current",
+          },
+          "useBuiltIns": true,
+        }],
+      ]})
+    )
     .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
     .pipe(gulp.dest("build/"));
 });

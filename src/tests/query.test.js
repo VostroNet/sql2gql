@@ -1,10 +1,6 @@
 import expect from "expect";
 import {createSqlInstance} from "./utils";
 import {graphql} from "graphql";
-
-// import logger from "utils/logger";
-// const log = logger("seeql::tests:query:");
-
 import {createSchema} from "../index";
 
 describe("queries", () => {

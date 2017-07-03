@@ -1,6 +1,6 @@
 import Sequelize from "sequelize";
-import logger from "utils/logger";
-const log = logger("seeql::database:");
+import logger from "./utils/logger";
+const log = logger("sql2gql::database:");
 
 
 export default function connect(schemas, instance, options) {
@@ -12,10 +12,18 @@ export default function connect(schemas, instance, options) {
 function loadSchemas(schemas, instance, options = {}) {
   const {defaultAttr, defaultModel} = options;
   schemas.forEach((schema) => {
+    let {classMethods, instanceMethods} = schema;
+    if (!(/^4/.test(Sequelize.version))) { // v3 compatibilty
+      if (classMethods) {
+        schema.options.classMethods = classMethods;
+      }
+      if (instanceMethods) {
+        schema.options.instanceMethods = instanceMethods;
+      }
+    }
     instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
     instance.models[schema.name].$gqlsql = schema;
-    if (/^4/.test(Sequelize.version)) {
-      let {classMethods, instanceMethods} = schema;
+    if (/^4/.test(Sequelize.version)) {// v4 compatibilty
       if (schema.options) {
         if (schema.options.classMethods) {
           classMethods = schema.options.classMethods;

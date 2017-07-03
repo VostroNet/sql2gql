@@ -1,10 +1,6 @@
 import expect from "expect";
 import {createSqlInstance} from "./utils";
 import {graphql} from "graphql";
-
-// import logger from "utils/logger";
-// const log = logger("seeql::tests:query:");
-
 import {createSchema} from "../index";
 
 
@@ -87,7 +83,7 @@ describe("mutations", () => {
   it("deleteAll", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
-    const items = await Promise.all([
+    await Promise.all([
       Task.create({
         name: "item1",
       }),

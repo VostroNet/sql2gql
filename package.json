@@ -1,17 +1,21 @@
 {
-  "name": "seeql",
+  "name": "sql2gql",
   "version": "1.0.0",
   "description": "Two way GraphQL to Sequelize bridge, extending out graphql-sequelize",
   "main": "build/index.js",
   "scripts": {
-    "test": "node ./node_modules/mocha/bin/_mocha --no-timeouts ./build/tests/**/*.test.js"
+    "test": "node ./node_modules/mocha/bin/_mocha --no-timeouts ./build/tests/**/*.test.js",
+    "prepublish": "gulp compile:publish"
   },
   "author": "Matthew Mckenzie",
   "license": "GPL-3.0",
+  "devEngines": {
+    "node": "4.x || 5.x || 6.x || 7.x",
+    "npm": "2.x || 3.x || 4.x || 5.x"
+  },
   "devDependencies": {
     "babel-core": "^6.25.0",
     "babel-eslint": "^7.2.3",
-    "babel-plugin-module-resolver": "^2.7.1",
     "babel-polyfill": "^6.23.0",
     "babel-preset-env": "^1.5.2",
     "babel-preset-es2015": "^6.24.1",
