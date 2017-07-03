@@ -56,8 +56,8 @@ describe("permissions", () => {
   it("relationship", async() => {
     const schema = await createSchema(instance, {
       permission: {
-        relationship(modelName, relationshipName, targetType) {
-          if (modelName === "Task" && targetType === "TaskItem") {
+        relationship(modelName, relationshipName, targetModelName) {
+          if (modelName === "Task" && targetModelName === "TaskItem") {
             return false;
           }
           return true;

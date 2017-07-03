@@ -44,7 +44,7 @@ gulp.task("compile", ["lint"], () => {
         "stage-0",
         ["env", {
           "targets": {
-            "node": process.env.NODE_ENV === JSON.stringify("production") ? "4" : "current",
+            "node": "current",
           },
           "useBuiltIns": true,
         }],

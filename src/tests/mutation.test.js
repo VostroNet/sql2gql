@@ -5,6 +5,24 @@ import {createSchema} from "../index";
 
 
 describe("mutations", () => {
+  it("create", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "item1"}) {
+            id, 
+            name
+          }
+        }
+      }
+    }`;
+    await graphql(schema, mutation);
+    const query = "query { models { Task { id, name } } }";
+    const queryResult = await graphql(schema, query);
+    return expect(queryResult.data.models.Task.length).toEqual(1);
+  });
   it("update", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
@@ -76,9 +94,9 @@ describe("mutations", () => {
     }`;
     await graphql(schema, mutation);
     const item2Result = await graphql(schema, `query { models { Task(where: {id: ${items[1].id}}) { id, name } } }`);
-    await graphql(schema, `query { models { Task(where: {id: ${items[2].id}}) { id, name } } }`);
+    const item3Result = await graphql(schema, `query { models { Task(where: {id: ${items[2].id}}) { id, name } } }`);
     expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
-    expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
+    expect(item3Result.data.models.Task[0].name).toEqual("UPDATED");
   });
   it("deleteAll", async() => {
     const instance = await createSqlInstance();

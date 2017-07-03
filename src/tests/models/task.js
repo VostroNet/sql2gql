@@ -3,7 +3,7 @@ import Sequelize from "sequelize";
 import {
   GraphQLString,
   GraphQLNonNull,
-  GraphQLBoolean,
+  // GraphQLBoolean,
   GraphQLInputObjectType,
   GraphQLObjectType,
   GraphQLInt,

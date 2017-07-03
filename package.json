@@ -40,6 +40,7 @@
   "peerDependencies": {
     "graphql": "^0.10.3",
     "graphql-sequelize": "^5.3.3",
-    "sequelize": "^4.2.1"
+    "sequelize": "^4.2.1",
+    "graphql-relay": "^0.5.2"
   }
 }

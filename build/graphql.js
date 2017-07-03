@@ -167,8 +167,8 @@ let createMutationFunctions = (() => {
               type: requiredInput
             }
           },
-          resolve(_, { input }, req, info) {
-            return models[modelName].create(input, { user: req.user });
+          resolve(_, args, req, info) {
+            return models[modelName].create(args.input, { rootValue: { req, args } });
           }
         };
         let update = {
@@ -176,7 +176,7 @@ let createMutationFunctions = (() => {
           args: Object.assign((0, _graphqlSequelize.defaultArgs)(models[modelName]), { input: { type: optionalInput } }),
           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
             after: function (item, args, req, gql) {
-              return item.update(args.input, { user: req.user });
+              return item.update(args.input, { rootValue: { req, args } });
             }
           })
         };
@@ -185,7 +185,7 @@ let createMutationFunctions = (() => {
           args: (0, _graphqlSequelize.defaultArgs)(models[modelName]),
           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
             after: function (item, args, req, gql) {
-              return item.destroy({ user: req.user }).then(() => true);
+              return item.destroy({ rootValue: { req, args } }).then(() => true);
             }
           })
         };

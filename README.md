@@ -5,10 +5,10 @@ Opininated Sequelize to GraphQL bridge, extending out graphql-sequelize with dyn
 [![Build Status](https://travis-ci.org/VostroNet/sql2gql.svg?branch=master)](https://travis-ci.org/VostroNet/sql2gql)
 
 ## Requirements
-- NodeJs >= 4
-- (Sequelize)[http://docs.sequelizejs.com/] v3/v4
-- (graphql)[http://graphql.org/learn/]
-- (graphql-sequelize)[https://github.com/mickhansen/graphql-sequelize]
+- [NodeJs](https://nodejs.org/) >= 4
+- [Sequelize](http://docs.sequelizejs.com/) v3/v4
+- [graphql](http://graphql.org/learn/)
+- [graphql-sequelize](https://github.com/mickhansen/graphql-sequelize)
 
 ## Features 
 
@@ -16,12 +16,137 @@ Opininated Sequelize to GraphQL bridge, extending out graphql-sequelize with dyn
 - Exposing classMethods as mutation/query options.
 - Permissions Mechanism to restrict access to parts of the schema.
 
-## ES6/Babel Support
-We use the stage-0 feature set from babel (03/07/2017) as well as await & async. To improve compatibility we target Node v4 as the build distribution for the npm package, but we include the source distribution for those who wish to optimize their implementation. Recommend using babel with "babel-preset-stage0" and "babel-preset-env".
+
+## API
+
+### Model
+The model object is the bread and butter of the setup, it basically serves two purposes, creating the data model in sequelize and the graphql model.
+
+| Key | type |  Description |
+| --- | --- | --- |
+| name | [String(sequelize.define.modelName)](http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define)) | Model name  |
+| define | [Object(sequelize.define.attributes)](http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define) | Model fields | 
+| options | [Object(sequelize.define.options)](http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define) | Model sequelize.define options |
+| relationships | Array(Model.Relationship) | Model relationships |
+| expose | Object(Model.Expose) | this is used to make classMethods/instanceMethods available via queries or mutations in graphql
+| classMethods | Object | static typed functions that are set on the model under sequelize (for v3 this will be copied into options instead) |
+| instanceMethods | Object | functions that are set on the model's prototype under sequelize (for v3 this will be copied into options instead) |
+
+#### Model.Expose
+```
+TODO
+```
+#### Model.Relationship
+
+| Key | type |  Description |
+| --- | --- | --- |
+| name | String | Relationship field name for model |
+| type | [String(sequelize.association)](http://docs.sequelizejs.com/class/lib/associations/base.js~Association.html) | Executes the association function on the model. |
+| model | String(Model.name) | target model of the association |
+| options | Object(sequelize.association.options)[http://docs.sequelizejs.com/class/lib/associations/base.js~Association.html] | The available options depends on the type of association you pick |
+
+#### connect
+This creates sequelize models and injects appropriate metadata for the createSchema function
 
 ```javascript
-import {connect, createSchema} from "sql2gql/src";
+import {connect} from "sql2gql";
 ```
+
+| Parameter |  Description |
+| --- | --- |
+| Array(Model) | Array of models |
+| [Sequelize.instance](http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection) | Sequelize Instance |
+
+#### createSchema
+Generates a graphql schema from the metadata stored in the sequelize instance.
+
+```javascript
+import {createSchema} from "sql2gql";
+```
+
+| Parameter |  Description |
+| --- | --- |
+| [Sequelize.instance](http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection) | Sequelize Instance |
+| Object(createSchema.options) | createSchema options |
+
+#### createSchema.options
+Generates a graphql schema from the metadata stored in the sequelize instance.
+
+Returns Object(GraphqlSchema)
+
+| Key | type |  Description |
+| --- | --- | --- |
+| name | String | Relationship field name for model |
+| permissions | Object(createSchema.options.permissions) | hooks to constrain visibility of fields and functions
+| query | Object(GraphqlSchema) | merges into base RootQuery field via Object.assign
+| mutation | Object(GraphqlSchema) | merges into base Mutation field via Object.assign
+
+#### createSchema.options.permissions
+hooks to constrain visibility of fields and functions will only hide elements by default if hook is defined,
+
+| Key | type |  Description |
+| --- | --- | --- |
+| model | Function(modelName: String) => Boolean | False ensures the model itself is no where available across the entire schema |
+| relationship | Function(modelName: String,relationshipName: String, targetModelName: String) => Boolean | False ensures model field option "modelName {relationshipName}" is unavailable |
+| query | Function(modelName: String) => Boolean | False ensures query option "query {model {modelName}}" is unavailable |
+| queryClassMethods | Function(modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
+| mutation | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName}}" is unavailable |
+| mutationUpdate | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{update}}}" is unavailable |
+| mutationCreate | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{create}}}" is unavailable |
+| mutationDelete | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{delete}}}" is unavailable |
+| mutationUpdateAll | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{updateAll}}}" is unavailable |
+| mutationDeleteAll | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{deleteAll}}}" is unavailable |
+| mutationClassMethods | Function(modelName: String, methodName: String) => Boolean | False ensures mutation option "mutation {classMethods {modelName {methodName}}}" is unavailable |
+
+
+#### GraphqlSchema
+[graphql-sequlize helpers](https://github.com/mickhansen/graphql-sequelize#args-helpers)
+
+##### Query
+```graphql
+query {
+  models {
+    modelName(defaultListArgs): GraphQLList<Model> {
+      field
+      relationship(args) {
+        field
+      }
+    }
+  }
+  classMethods {
+    modelName {
+      functionName(params) {
+        {definedModel}
+      }
+    }
+  }
+}
+```
+
+##### Mutation - TBC
+```graphql
+mutation {
+  models {
+    modelName {
+      create(input: modelDefinition) {
+        field
+      }
+
+      update(where: SequelizeJSONType, input: modelDefinition) {
+        field
+      }
+    }
+  }
+  classMethods {
+    modelName {
+      functionName(params) {
+        fields
+      }
+    }
+  }
+}
+```
+
 
 ## Example
 
@@ -38,7 +163,6 @@ import {
   GraphQLObjectType,
   GraphQLInt,
 } from "graphql";
-
 
 const TaskModel = {
   name: "Task",
@@ -143,9 +267,4 @@ const schemas = [TaskModel];
   const result = await graphql(schema, "query { models { Task { id, name } } }");
   return expect(result.data.models.Task.length).toEqual(3);
 })();
-
-
-
-
-
 ```

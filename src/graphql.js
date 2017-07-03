@@ -243,8 +243,8 @@ async function createMutationFunctions(models, keys, typeCollection, mutationCol
           type: requiredInput,
         },
       },
-      resolve(_, {input}, req, info) {
-        return models[modelName].create(input, {user: req.user});
+      resolve(_, args, req, info) {
+        return models[modelName].create(args.input, {rootValue: {req, args}});
       },
     };
     let update = {
@@ -252,7 +252,7 @@ async function createMutationFunctions(models, keys, typeCollection, mutationCol
       args: Object.assign(defaultArgs(models[modelName]), {input: {type: optionalInput}}),
       resolve: resolver(models[modelName], {
         after: (item, args, req, gql) => {
-          return item.update(args.input, {user: req.user});
+          return item.update(args.input, {rootValue: {req, args}});
         },
       }),
     };
@@ -261,7 +261,7 @@ async function createMutationFunctions(models, keys, typeCollection, mutationCol
       args: defaultArgs(models[modelName]),
       resolve: resolver(models[modelName], {
         after: function(item, args, req, gql) {
-          return item.destroy({user: req.user})
+          return item.destroy({rootValue: {req, args}})
             .then(() => true);
         },
       }),

@@ -15,9 +15,9 @@ var _logger2 = _interopRequireDefault(_logger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const log = (0, _logger2.default)("seeql::database:");
+const log = (0, _logger2.default)("sql2gql::database:");
 
-function connect(schemas, instance, options) {
+function connect(schemas, instance) {
   loadSchemas(schemas, instance);
   return instance;
 }
@@ -25,10 +25,20 @@ function connect(schemas, instance, options) {
 function loadSchemas(schemas, instance, options = {}) {
   const { defaultAttr, defaultModel } = options;
   schemas.forEach(schema => {
+    let { classMethods, instanceMethods } = schema;
+    if (!/^4/.test(_sequelize2.default.version)) {
+      // v3 compatibilty
+      if (classMethods) {
+        schema.options.classMethods = classMethods;
+      }
+      if (instanceMethods) {
+        schema.options.instanceMethods = instanceMethods;
+      }
+    }
     instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
     instance.models[schema.name].$gqlsql = schema;
     if (/^4/.test(_sequelize2.default.version)) {
-      let { classMethods, instanceMethods } = schema;
+      // v4 compatibilty
       if (schema.options) {
         if (schema.options.classMethods) {
           classMethods = schema.options.classMethods;

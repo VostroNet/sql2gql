@@ -3,7 +3,7 @@ import logger from "./utils/logger";
 const log = logger("sql2gql::database:");
 
 
-export default function connect(schemas, instance, options) {
+export default function connect(schemas, instance) {
   loadSchemas(schemas, instance);
   return instance;
 }

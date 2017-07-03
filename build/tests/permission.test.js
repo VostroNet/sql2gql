@@ -66,8 +66,8 @@ describe("permissions", () => {
   it("relationship", _asyncToGenerator(function* () {
     const schema = yield (0, _index.createSchema)(instance, {
       permission: {
-        relationship(modelName, relationshipName, targetType) {
-          if (modelName === "Task" && targetType === "TaskItem") {
+        relationship(modelName, relationshipName, targetModelName) {
+          if (modelName === "Task" && targetModelName === "TaskItem") {
             return false;
           }
           return true;
