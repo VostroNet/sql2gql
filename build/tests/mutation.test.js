@@ -28,11 +28,38 @@ describe("mutations", () => {
         }
       }
     }`;
-    yield (0, _graphql.graphql)(schema, mutation);
+    const mutationResult = yield (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResult);
     const query = "query { models { Task { id, name } } }";
     const queryResult = yield (0, _graphql.graphql)(schema, query);
+    (0, _utils.validateResult)(queryResult);
     return (0, _expect2.default)(queryResult.data.models.Task.length).toEqual(1);
   }));
+  it("create - override", _asyncToGenerator(function* () {
+    const instance = yield (0, _utils.createSqlInstance)();
+    const schema = yield (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "item1", options: {hidden: "nowhere"}}) {
+            id, 
+            name
+            options {
+              hidden
+            }
+          }
+        }
+      }
+    }`;
+    const mutationResult = yield (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResult);
+    (0, _expect2.default)(mutationResult.data.models.Task.create.options.hidden).toEqual("nowhere");
+
+    const queryResult = yield (0, _graphql.graphql)(schema, "query { models { Task { id, name, options {hidden} } } }");
+    (0, _utils.validateResult)(queryResult);
+    return (0, _expect2.default)(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
+  }));
+
   it("update", _asyncToGenerator(function* () {
     const instance = yield (0, _utils.createSqlInstance)();
     const { Task } = instance.models;
@@ -52,6 +79,7 @@ describe("mutations", () => {
       }
     }`;
     const result = yield (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(result);
     return (0, _expect2.default)(result.data.models.Task.update.name).toEqual("UPDATED");
   }));
   it("delete", _asyncToGenerator(function* () {
@@ -70,11 +98,11 @@ describe("mutations", () => {
       }
     }`;
     const result = yield (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(result);
     (0, _expect2.default)(result.data.models.Task.delete).toEqual(true);
-    // console.log("delete result", result);
     const query = `query { models { Task(where: {id: ${item.id}}) { id, name } } }`;
     const queryResult = yield (0, _graphql.graphql)(schema, query);
-    // console.log("query result", queryResult);
+    (0, _utils.validateResult)(queryResult);
     return (0, _expect2.default)(queryResult.data.models.Task.length).toEqual(0);
   }));
   it("updateAll", _asyncToGenerator(function* () {
@@ -98,9 +126,12 @@ describe("mutations", () => {
         }
       }
     }`;
-    yield (0, _graphql.graphql)(schema, mutation);
+    const mutationResult = yield (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResult);
     const item2Result = yield (0, _graphql.graphql)(schema, `query { models { Task(where: {id: ${items[1].id}}) { id, name } } }`);
+    (0, _utils.validateResult)(item2Result);
     const item3Result = yield (0, _graphql.graphql)(schema, `query { models { Task(where: {id: ${items[2].id}}) { id, name } } }`);
+    (0, _utils.validateResult)(item3Result);
     (0, _expect2.default)(item2Result.data.models.Task[0].name).toEqual("UPDATED");
     (0, _expect2.default)(item3Result.data.models.Task[0].name).toEqual("UPDATED");
   }));
@@ -123,6 +154,7 @@ describe("mutations", () => {
       }
     }`;
     const result = yield (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(result);
     // console.log("result", result.data);
     (0, _expect2.default)(result.data.models.Task.deleteAll.length).toEqual(2);
     const queryResults = yield (0, _graphql.graphql)(schema, "query { models { Task { id, name } } }");
@@ -147,6 +179,7 @@ describe("mutations", () => {
       }
     }`;
     const result = yield (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(result);
     return (0, _expect2.default)(result.data.models.Task.reverseName.name).toEqual("reverseName2");
   }));
 });

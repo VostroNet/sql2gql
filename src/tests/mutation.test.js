@@ -1,5 +1,5 @@
 import expect from "expect";
-import {createSqlInstance} from "./utils";
+import {createSqlInstance, validateResult} from "./utils";
 import {graphql} from "graphql";
 import {createSchema} from "../index";
 
@@ -18,11 +18,38 @@ describe("mutations", () => {
         }
       }
     }`;
-    await graphql(schema, mutation);
+    const mutationResult = await graphql(schema, mutation);
+    validateResult(mutationResult);
     const query = "query { models { Task { id, name } } }";
     const queryResult = await graphql(schema, query);
+    validateResult(queryResult);
     return expect(queryResult.data.models.Task.length).toEqual(1);
   });
+  it("create - override", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "item1", options: {hidden: "nowhere"}}) {
+            id, 
+            name
+            options {
+              hidden
+            }
+          }
+        }
+      }
+    }`;
+    const mutationResult = await graphql(schema, mutation);
+    validateResult(mutationResult);
+    expect(mutationResult.data.models.Task.create.options.hidden).toEqual("nowhere");
+
+    const queryResult = await graphql(schema, "query { models { Task { id, name, options {hidden} } } }");
+    validateResult(queryResult);
+    return expect(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
+  });
+
   it("update", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
@@ -42,6 +69,7 @@ describe("mutations", () => {
       }
     }`;
     const result = await graphql(schema, mutation);
+    validateResult(result);
     return expect(result.data.models.Task.update.name).toEqual("UPDATED");
   });
   it("delete", async() => {
@@ -60,11 +88,11 @@ describe("mutations", () => {
       }
     }`;
     const result = await graphql(schema, mutation);
+    validateResult(result);
     expect(result.data.models.Task.delete).toEqual(true);
-    // console.log("delete result", result);
     const query = `query { models { Task(where: {id: ${item.id}}) { id, name } } }`;
     const queryResult = await graphql(schema, query);
-    // console.log("query result", queryResult);
+    validateResult(queryResult);
     return expect(queryResult.data.models.Task.length).toEqual(0);
   });
   it("updateAll", async() => {
@@ -92,9 +120,12 @@ describe("mutations", () => {
         }
       }
     }`;
-    await graphql(schema, mutation);
+    const mutationResult = await graphql(schema, mutation);
+    validateResult(mutationResult);
     const item2Result = await graphql(schema, `query { models { Task(where: {id: ${items[1].id}}) { id, name } } }`);
+    validateResult(item2Result);
     const item3Result = await graphql(schema, `query { models { Task(where: {id: ${items[2].id}}) { id, name } } }`);
+    validateResult(item3Result);
     expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
     expect(item3Result.data.models.Task[0].name).toEqual("UPDATED");
   });
@@ -121,6 +152,7 @@ describe("mutations", () => {
       }
     }`;
     const result = await graphql(schema, mutation);
+    validateResult(result);
     // console.log("result", result.data);
     expect(result.data.models.Task.deleteAll.length).toEqual(2);
     const queryResults = await graphql(schema, "query { models { Task { id, name } } }");
@@ -145,6 +177,7 @@ describe("mutations", () => {
       }
     }`;
     const result = await graphql(schema, mutation);
+    validateResult(result);
     return expect(result.data.models.Task.reverseName.name).toEqual("reverseName2");
   });
 });

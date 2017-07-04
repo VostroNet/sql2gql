@@ -27,14 +27,11 @@ describe("queries", () => {
     })]);
     const schema = yield (0, _index.createSchema)(instance);
     const result = yield (0, _graphql.graphql)(schema, "query { models { Task { id, name } } }");
+    (0, _utils.validateResult)(result);
     return (0, _expect2.default)(result.data.models.Task.length).toEqual(3);
   }));
   it("classMethod", _asyncToGenerator(function* () {
     const instance = yield (0, _utils.createSqlInstance)();
-    // const {Task} = instance.models;
-    // await Task.create({
-    //   name: "item2",
-    // });
     const schema = yield (0, _index.createSchema)(instance);
 
     const query = `query {
@@ -47,7 +44,21 @@ describe("queries", () => {
       }
     }`;
     const result = yield (0, _graphql.graphql)(schema, query);
+    (0, _utils.validateResult)(result);
     return (0, _expect2.default)(result.data.classMethods.Task.getHiddenData.hidden).toEqual("Hi");
+  }));
+  it("override", _asyncToGenerator(function* () {
+    const instance = yield (0, _utils.createSqlInstance)();
+    const schema = yield (0, _index.createSchema)(instance);
+    const { Task } = instance.models;
+    yield Task.create({
+      name: "item1",
+      options: JSON.stringify({ "hidden": "invisibot" })
+    });
+    const result = yield (0, _graphql.graphql)(schema, "query { models { Task { id, name, options {hidden} } } }");
+    (0, _utils.validateResult)(result);
+    // console.log("result", result.data.models.Task[0]);
+    return (0, _expect2.default)(result.data.models.Task[0].options.hidden).toEqual("invisibot");
   }));
 });
 //# sourceMappingURL=query.test.js.map

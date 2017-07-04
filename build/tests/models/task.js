@@ -27,6 +27,34 @@ exports.default = {
           msg: "Your task name must be between 1 and 50 characters"
         }
       }
+    },
+    options: {
+      type: _sequelize2.default.STRING,
+      allowNull: true
+    }
+  },
+  before(findOptions, args, context, info) {
+    // console.log("before", arguments);
+    return findOptions;
+  },
+  after(result, args, context, info) {
+    // console.log("after", result);
+    return result;
+  },
+  override: {
+    options: {
+      type: {
+        name: "TaskOptions",
+        fields: {
+          hidden: { type: _graphql.GraphQLString }
+        }
+      },
+      output(result, args, context, info) {
+        return JSON.parse(result.get("options"));
+      },
+      input(field, args, context, info) {
+        return JSON.stringify(field);
+      }
     }
   },
   relationships: [{

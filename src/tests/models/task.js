@@ -26,6 +26,34 @@ export default {
         },
       },
     },
+    options: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
+  },
+  before(findOptions, args, context, info) {
+    // console.log("before", arguments);
+    return findOptions;
+  },
+  after(result, args, context, info) {
+    // console.log("after", result);
+    return result;
+  },
+  override: {
+    options: {
+      type: {
+        name: "TaskOptions",
+        fields: {
+          hidden: {type: GraphQLString},
+        },
+      },
+      output(result, args, context, info) {
+        return JSON.parse(result.get("options"));
+      },
+      input(field, args, context, info) {
+        return JSON.stringify(field);
+      },
+    },
   },
   relationships: [{
     type: "hasMany",

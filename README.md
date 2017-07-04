@@ -27,15 +27,38 @@ The model object is the bread and butter of the setup, it basically serves two p
 | name | [String(sequelize.define.modelName)](http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define)) | Model name  |
 | define | [Object(sequelize.define.attributes)](http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define) | Model fields | 
 | options | [Object(sequelize.define.options)](http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define) | Model sequelize.define options |
-| relationships | Array(Model.Relationship) | Model relationships |
+| relationships | Array[Model.Relationship] | Model relationships |
 | expose | Object(Model.Expose) | this is used to make classMethods/instanceMethods available via queries or mutations in graphql
 | classMethods | Object | static typed functions that are set on the model under sequelize (for v3 this will be copied into options instead) |
 | instanceMethods | Object | functions that are set on the model's prototype under sequelize (for v3 this will be copied into options instead) |
+| ignoreFields | Array[String] | TODO |
+| before | (findOptions, args, context, info) =>  return findOptions | This function is executed before graphql-sequelize resolver is tasked, you must return the findOptions for it to be able to continue |
+| after | (result, args, context, info) => return result | This function is executed after graphql-sequelize resolver has completed, but before the result is passed up to graphql |
+| override | HashObject[fieldName -> Model.override] | overrides the field resolver functions to allow for complex types on on simple fields e.g. JSON,JSONB |
+| resolver | () => Object | the replaces graphql-sequelize resolver completely |
+
+#### Model.Override
+
+| Key | type |  Description |
+| --- | --- | --- |
+| type | {name: String, fields: [GraphQLFieldConfigMap](http://graphql.org/graphql-js/type/#graphqlobjecttype)} | GraphQLObject definition |
+| output | (result, args, context, info) => fieldData | This function processes outgoing data for the the field, the result is the parent model. |
+| output | (field, args, context, info) => fieldData | This function processes incoming data for the the field, the field param is the input argument set for the field. |
 
 #### Model.Expose
-```
-TODO
-```
+
+| Key | type |  Description |
+| --- | --- | --- |
+| classMethods | Object({query: Model.Expose.Definition, mutation: Model.Expose.Definition}) | Object containing the graphql definition of classMethods you wish to expose on either query or mutation |
+
+#### Model.Expose.Definition
+This object is a HashObject which the key must match the function name targeted.
+
+| Key | type |  Description |
+| --- | --- | --- |
+| type | String or [GraphQLObjectType](http://graphql.org/graphql-js/type/#graphqlobjecttype) | If this is a string it will use the models generated graphql type as the return value, other wise if it is [GraphQLObjectType](http://graphql.org/graphql-js/type/#graphqlobjecttype) it will use this instead  |
+| args | Key value hash object that require [GraphQLInputObjectType](http://graphql.org/graphql-js/type/#graphqlinputobjecttype)  |
+
 #### Model.Relationship
 
 | Key | type |  Description |
@@ -43,7 +66,7 @@ TODO
 | name | String | Relationship field name for model |
 | type | [String(sequelize.association)](http://docs.sequelizejs.com/class/lib/associations/base.js~Association.html) | Executes the association function on the model. |
 | model | String(Model.name) | target model of the association |
-| options | Object(sequelize.association.options)[http://docs.sequelizejs.com/class/lib/associations/base.js~Association.html] | The available options depends on the type of association you pick |
+| options | [Object(sequelize.association.options)](http://docs.sequelizejs.com/class/lib/associations/base.js~Association.html) | The available options depends on the type of association you pick |
 
 #### connect
 This creates sequelize models and injects appropriate metadata for the createSchema function
@@ -72,31 +95,33 @@ import {createSchema} from "sql2gql";
 #### createSchema.options
 Generates a graphql schema from the metadata stored in the sequelize instance.
 
-Returns Object(GraphqlSchema)
+Returns Object([GraphQLSchema](http://graphql.org/graphql-js/type/#graphqlschema))
 
 | Key | type |  Description |
 | --- | --- | --- |
 | name | String | Relationship field name for model |
-| permissions | Object(createSchema.options.permissions) | hooks to constrain visibility of fields and functions
-| query | Object(GraphqlSchema) | merges into base RootQuery field via Object.assign
-| mutation | Object(GraphqlSchema) | merges into base Mutation field via Object.assign
+| permissions | Object(createSchema.options.permissions) | optional hooks to constrain visibility of fields and functions
+| query | Object([GraphQLSchema](http://graphql.org/graphql-js/type/#graphqlschema)) | merges into base RootQuery field via Object.assign |
+| mutation | Object([GraphQLSchema](http://graphql.org/graphql-js/type/#graphqlschema)) | merges into base Mutation field via Object.assign |
+| before | (model: Model, findOptions, args, context, info) =>  return findOptions | |
+| after | (model: Model, result, args, context, info) => return result | |
 
 #### createSchema.options.permissions
 hooks to constrain visibility of fields and functions will only hide elements by default if hook is defined,
 
 | Key | type |  Description |
 | --- | --- | --- |
-| model | Function(modelName: String) => Boolean | False ensures the model itself is no where available across the entire schema |
-| relationship | Function(modelName: String,relationshipName: String, targetModelName: String) => Boolean | False ensures model field option "modelName {relationshipName}" is unavailable |
-| query | Function(modelName: String) => Boolean | False ensures query option "query {model {modelName}}" is unavailable |
-| queryClassMethods | Function(modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
-| mutation | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName}}" is unavailable |
-| mutationUpdate | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{update}}}" is unavailable |
-| mutationCreate | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{create}}}" is unavailable |
-| mutationDelete | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{delete}}}" is unavailable |
-| mutationUpdateAll | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{updateAll}}}" is unavailable |
-| mutationDeleteAll | Function(modelName) => Boolean | False ensures mutation option "mutation {models {modelName{deleteAll}}}" is unavailable |
-| mutationClassMethods | Function(modelName: String, methodName: String) => Boolean | False ensures mutation option "mutation {classMethods {modelName {methodName}}}" is unavailable |
+| model | (modelName: String) => Boolean | False ensures the model itself is no where available across the entire schema |
+| relationship | (modelName: String,relationshipName: String, targetModelName: String) => Boolean | False ensures model field option "modelName {relationshipName}" is unavailable |
+| query | (modelName: String) => Boolean | False ensures query option "query {model {modelName}}" is unavailable |
+| queryClassMethods | (modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
+| mutation | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName}}" is unavailable |
+| mutationUpdate | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{update}}}" is unavailable |
+| mutationCreate | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{create}}}" is unavailable |
+| mutationDelete | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{delete}}}" is unavailable |
+| mutationUpdateAll | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{updateAll}}}" is unavailable |
+| mutationDeleteAll | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{deleteAll}}}" is unavailable |
+| mutationClassMethods | (modelName: String, methodName: String) => Boolean | False ensures mutation option "mutation {classMethods {modelName {methodName}}}" is unavailable |
 
 
 #### GraphqlSchema
@@ -123,7 +148,7 @@ query {
 }
 ```
 
-##### Mutation - TBC
+##### Mutation
 ```graphql
 mutation {
   models {
@@ -131,16 +156,11 @@ mutation {
       create(input: modelDefinition) {
         field
       }
-
       update(where: SequelizeJSONType, input: modelDefinition) {
         field
       }
-    }
-  }
-  classMethods {
-    modelName {
-      functionName(params) {
-        fields
+      classMethod(params) {
+        field
       }
     }
   }
@@ -149,6 +169,7 @@ mutation {
 
 
 ## Example
+[Github Repo](https://github.com/VostroNet/sql2gql-example)
 
 ```javascript
 
@@ -180,8 +201,40 @@ const TaskModel = {
         },
       },
     },
+    options: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
   },
-  relationships: [],
+  before(findOptions, args, context, info) {
+    // console.log("before", arguments);
+    return findOptions;
+  },
+  after(result, args, context, info) {
+    // console.log("after", result);
+    return result;
+  },
+  override: {
+    options: {
+      type: {
+        name: "TaskOptions",
+        fields: {
+          hidden: {type: GraphQLString},
+        },
+      },
+      output(result, args, context, info) {
+        return JSON.parse(result.get("options"));
+      },
+      input(field, args, context, info) {
+        return JSON.stringify(field);
+      },
+    },
+  },
+  relationships: [{
+    type: "hasMany",
+    model: "TaskItem",
+    name: "items",
+  }],
   expose: {
     classMethods: {
       mutations: {
@@ -209,18 +262,38 @@ const TaskModel = {
           }),
           args: {},
         },
+        getHiddenData2: {
+          type: new GraphQLObjectType({
+            name: "TaskHiddenData2",
+            fields: () => ({
+              hidden: {type: GraphQLString},
+            }),
+          }),
+          args: {},
+        },
       },
     },
   },
-  classMethods: {
-    getHiddenData(args, req) {
-      return {
-        hidden: "Hi",
-      };
-    }
-  },
   options: {
     tableName: "tasks",
+    classMethods: {
+      reverseName({input: {amount}}, req) {
+        return {
+          id: 1,
+          name: `reverseName${amount}`,
+        };
+      },
+      getHiddenData(args, req) {
+        return {
+          hidden: "Hi",
+        };
+      },
+      getHiddenData2(args, req) {
+        return {
+          hidden: "Hi2",
+        };
+      },
+    },
     hooks: {
       beforeFind(options) {
         return undefined;
@@ -238,6 +311,7 @@ const TaskModel = {
     indexes: [
       // {unique: true, fields: ["name"]},
     ],
+    //instanceMethods: {}, //TODO: figure out a way to expose this on graphql
   },
 };
 
@@ -251,20 +325,24 @@ const schemas = [TaskModel];
   });
   connect(schemas, instance, {}); // this populates the sequelize instance with the appropriate models and referential information for schema generation
   await instance.sync();
-  const {Task} = instance.models;
-  await Promise.all([
-    Task.create({
-      name: "item1",
-    }),
-    Task.create({
-      name: "item2",
-    }),
-    Task.create({
-      name: "item3",
-    }),
-  ]);
+
   const schema = await createSchema(instance); //creates graphql schema
-  const result = await graphql(schema, "query { models { Task { id, name } } }");
-  return expect(result.data.models.Task.length).toEqual(3);
+  const mutation = `mutation {
+    models {
+      Task {
+        create(input: {name: "item1", options: {hidden: "nowhere"}}) {
+          id, 
+          name
+          options {
+            hidden
+          }
+        }
+      }
+    }
+  }`; // create item in database
+  const mutationResult = await graphql(schema, mutation);
+  expect(mutationResult.data.models.Task.create.options.hidden).toEqual("nowhere");
+  const queryResult = await graphql(schema, "query { models { Task { id, name, options {hidden} } } }"); // retrieves information from database
+  return expect(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
 })();
 ```

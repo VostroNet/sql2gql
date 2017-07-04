@@ -37,7 +37,7 @@ let generateTypes = (() => {
             var _ref4 = _asyncToGenerator(function* (relName) {
               let relationship = models[modelName].relationships[relName];
               let targetType = typeCollection[relationship.source];
-              let targetOpts = options[relationship.source];
+              // let targetOpts = options[relationship.source];
               if (!targetType) {
                 //target does not exist.. excluded from base types?
                 return;
@@ -50,7 +50,7 @@ let generateTypes = (() => {
                   }
                 }
               }
-              const { before, after, afterList } = createBeforeAfter(targetOpts, options);
+              const { before, after, afterList } = createBeforeAfter(models[modelName], options);
               if (!targetType) {
                 throw `targetType ${targetType} not defined for relationship`;
               }
@@ -107,7 +107,6 @@ let createQueryLists = (() => {
     yield Promise.all(modelNames.map((() => {
       var _ref6 = _asyncToGenerator(function* (modelName) {
         if (typeCollection[modelName]) {
-          //TODO: make this also a permission filter?
           if (options.permission) {
             if (options.permission.query) {
               const result = yield options.permission.query(modelName, options.permission.options);
@@ -116,8 +115,8 @@ let createQueryLists = (() => {
               }
             }
           }
-          let targetOpts = options[modelName];
-          const { before, after } = createBeforeAfter(targetOpts, options);
+          // let targetOpts = options[modelName];
+          const { before, after } = createBeforeAfter(models[modelName], options);
           fields[modelName] = {
             type: new _graphql.GraphQLList(typeCollection[modelName]),
             args: (0, _graphqlSequelize.defaultListArgs)(),
@@ -160,6 +159,20 @@ let createMutationFunctions = (() => {
         let requiredInput = createMutationInput(modelName, models[modelName], fields, "Required");
         let optionalInput = createMutationInput(modelName, models[modelName], fields, "Optional", true);
         let mutationFields = {};
+
+        const modelDefinition = getModelDefinition(models[modelName]);
+        const createFunc = function (_, args, req, info) {
+          let input = args.input;
+          if (modelDefinition.override) {
+            input = Object.keys(modelDefinition.override).reduce(function (data, fieldName) {
+              if (modelDefinition.override[fieldName].input) {
+                data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, req, info);
+              }
+              return data;
+            }, input);
+          }
+          return models[modelName].create(input, { rootValue: { req, args } });
+        };
         let create = {
           type: typeCollection[modelName],
           args: {
@@ -167,17 +180,28 @@ let createMutationFunctions = (() => {
               type: requiredInput
             }
           },
-          resolve(_, args, req, info) {
-            return models[modelName].create(args.input, { rootValue: { req, args } });
-          }
+          resolve: createFunc
         };
+
+        // console.log("createMutationFunctions - create", create);
+        const updateFunc = function (item, args, req, gql) {
+          let input = args.input;
+          if (modelDefinition.override) {
+            input = Object.keys(modelDefinition.override).reduce(function (data, fieldName) {
+              if (modelDefinition.override[fieldName].input) {
+                data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, req, gql);
+              }
+              return data;
+            }, input);
+          }
+          return item.update(input, { rootValue: { req, args } });
+        };
+
         let update = {
           type: typeCollection[modelName],
           args: Object.assign((0, _graphqlSequelize.defaultArgs)(models[modelName]), { input: { type: optionalInput } }),
           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-            after: function (item, args, req, gql) {
-              return item.update(args.input, { rootValue: { req, args } });
-            }
+            after: updateFunc
           })
         };
         let del = {
@@ -195,7 +219,7 @@ let createMutationFunctions = (() => {
           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
             after: function (items, args, req, gql) {
               return Promise.all(items.map(function (item) {
-                return item.update(args.input, { user: req.user });
+                return updateFunc(item, args, req, gql);
               }));
             }
           })
@@ -205,7 +229,7 @@ let createMutationFunctions = (() => {
           args: (0, _graphqlSequelize.defaultListArgs)(models[modelName]),
           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
             after: function (items, args, req, gql) {
-              return Promise.all(items.map(item => item.destroy({ user: req.user }).then(() => true))); //TODO: needs to return id with boolean value
+              return Promise.all(items.map(item => item.destroy({ rootValue: { req, args } }).then(() => true))); //TODO: needs to return id with boolean value
             }
           })
         };
@@ -261,7 +285,7 @@ let createMutationFunctions = (() => {
           mutationFields.deleteAll = deleteAll;
         }
 
-        const { mutations } = (models[modelName].$gqlsql.expose || {}).classMethods || {};
+        const { mutations } = (getModelDefinition(models[modelName]).expose || {}).classMethods || {};
         if (mutations) {
           yield Promise.all(Object.keys(mutations).map((() => {
             var _ref9 = _asyncToGenerator(function* (methodName) {
@@ -324,7 +348,7 @@ let createQueryFunctions = (() => {
           return;
         }
         let { fields } = typeCollection[modelName]._typeConfig; //eslint-disable-line
-        const { query } = (models[modelName].$gqlsql.expose || {}).classMethods || {};
+        const { query } = (getModelDefinition(models[modelName]).expose || {}).classMethods || {};
         let queryFields = {};
         if (query) {
           yield Promise.all(Object.keys(query).map((() => {
@@ -385,6 +409,10 @@ var _graphqlSequelize = require("graphql-sequelize");
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
+function getModelDefinition(model) {
+  return model.$sqlgql;
+}
+
 function resetInterfaces(impl) {
   delete impl._interfaces; //eslint-disable-line
   impl.getInterfaces().forEach(type => {
@@ -393,17 +421,35 @@ function resetInterfaces(impl) {
 }
 
 function createBaseType(modelName, models, options) {
-  let opts = options[modelName] || {};
-  let fields = (0, _graphqlSequelize.attributeFields)(models[modelName], {
-    exclude: opts.ignoreFields || []
+  const model = models[modelName];
+  const modelDefinition = getModelDefinition(model);
+  let fields = (0, _graphqlSequelize.attributeFields)(model, {
+    exclude: Object.keys(modelDefinition.override || {}).concat(modelDefinition.ignoreFields || [])
   });
+
+  // console.log("createBaseType", fields.options);
+  if (modelDefinition.override) {
+    Object.keys(modelDefinition.override).forEach(fieldName => {
+      const fieldDefinition = modelDefinition.define[fieldName];
+      const overrideFieldDefinition = modelDefinition.override[fieldName];
+      let type = new _graphql.GraphQLObjectType(overrideFieldDefinition.type);
+      if (!fieldDefinition.allowNull) {
+        type = new _graphql.GraphQLNonNull(type);
+      }
+      fields[fieldName] = {
+        type,
+        resolve: overrideFieldDefinition.output
+      };
+    });
+  }
+  // console.log("createBaseType", fields);
   let resolve;
-  if (opts.resolver) {
-    resolve = opts.resolver;
+  if (modelDefinition.resolver) {
+    resolve = modelDefinition.resolver;
   } else {
-    resolve = (0, _graphqlSequelize.resolver)(models[modelName], {
-      before: opts.before,
-      after: opts.after
+    resolve = (0, _graphqlSequelize.resolver)(model, {
+      before: modelDefinition.before,
+      after: modelDefinition.after
     });
   }
   return new _graphql.GraphQLObjectType({
@@ -413,22 +459,25 @@ function createBaseType(modelName, models, options) {
     resolve: resolve
   });
 }
-function createBeforeAfter(modelOpts, options) {
+function createBeforeAfter(model, options) {
   let targetBeforeFuncs = [],
       targetAfterFuncs = [];
+  const modelDefinition = getModelDefinition(model);
   if (options.before) {
-    targetBeforeFuncs.push(options.before);
+    targetBeforeFuncs.push(function (findOptions, args, context, info) {
+      return options.before(modelDefinition, findOptions, args, context, info);
+    });
   }
   if (options.after) {
-    targetAfterFuncs.push(options.after);
+    targetAfterFuncs.push(function (result, args, context, info) {
+      return options.after(modelDefinition, result, args, context, info);
+    });
   }
-  if (modelOpts) {
-    if (modelOpts.before) {
-      targetBeforeFuncs.push(modelOpts.before);
-    }
-    if (modelOpts.after) {
-      targetAfterFuncs.push(modelOpts.after);
-    }
+  if (modelDefinition.before) {
+    targetBeforeFuncs.push(modelDefinition.before);
+  }
+  if (modelDefinition.after) {
+    targetAfterFuncs.push(modelDefinition.after);
   }
   const targetBefore = (findOptions, args, context, info) => {
     if (targetBeforeFuncs.length === 0) {
@@ -443,7 +492,7 @@ function createBeforeAfter(modelOpts, options) {
     if (targetAfterFuncs.length === 0) {
       return result;
     }
-    return targetAfter.reduce((prev, curr) => {
+    return targetAfterFuncs.reduce((prev, curr) => {
       return curr(prev, args, context, info);
     }, result);
   };
@@ -464,9 +513,11 @@ function createBeforeAfter(modelOpts, options) {
 }
 
 function createMutationInput(modelName, model, gqlFields, prefix, allOptional = false) {
+  const modelDefinition = getModelDefinition(model);
   let fields = {};
   Object.keys(gqlFields).forEach(fieldName => {
     const sqlFields = model.fieldRawAttributesMap;
+    // const fieldDefinition = model.define[fieldName];
     if (sqlFields[fieldName]) {
       if (!sqlFields[fieldName]._autoGenerated && !sqlFields[fieldName].autoIncrement) {
         //eslint-disable-line
@@ -476,11 +527,39 @@ function createMutationInput(modelName, model, gqlFields, prefix, allOptional = 
             gqlField = { type: gqlField.type.ofType };
           }
         }
+        if (modelDefinition.override) {
+          const overrideFieldDefinition = modelDefinition.override[fieldName];
+
+          if (overrideFieldDefinition) {
+            const fieldDefinition = modelDefinition.define[fieldName];
+            const allowNull = fieldDefinition.allowNull;
+            const type = overrideFieldDefinition.inputType || overrideFieldDefinition.type;
+            let name = type.name;
+            if (!overrideFieldDefinition.inputType) {
+              name += "Input";
+            }
+            if (allOptional) {
+              name = `Optional${name}`;
+            }
+            const inputType = new _graphql.GraphQLInputObjectType({
+              name,
+              fields: type.fields
+            });
+            if (allowNull || allOptional) {
+              gqlField = { type: inputType };
+            } else {
+              // console.log("createMutationInput - GraphQLNonNull", name, allowNull);
+              gqlField = { type: new _graphql.GraphQLNonNull(inputType) };
+            }
+          }
+        }
+        // if (!(gqlField.type instanceof GraphQLInputObjectType)) {
+        // console.log("GraphQLInputObjectType", fieldName, gqlField);
+        // }
         fields[fieldName] = gqlField;
       }
     }
   });
-
   return new _graphql.GraphQLInputObjectType({
     name: `${modelName}${prefix}Input`,
     fields
@@ -491,7 +570,7 @@ exports.default = (() => {
   var _ref13 = _asyncToGenerator(function* (instance, options = {}) {
     const { query, mutations } = options;
     let validKeys = Object.keys(instance.models).reduce(function (o, key) {
-      if (instance.models[key].$gqlsql) {
+      if (getModelDefinition(instance.models[key])) {
         // o[key] = instance.models[key];
         o.push(key);
       }

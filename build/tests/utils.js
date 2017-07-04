@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.createSqlInstance = createSqlInstance;
+exports.validateResult = validateResult;
 
 var _sequelize = require("sequelize");
 
@@ -12,6 +13,10 @@ var _sequelize2 = _interopRequireDefault(_sequelize);
 var _sourceMapSupport = require("source-map-support");
 
 var _sourceMapSupport2 = _interopRequireDefault(_sourceMapSupport);
+
+var _expect = require("expect");
+
+var _expect2 = _interopRequireDefault(_expect);
 
 var _index = require("../index");
 
@@ -27,6 +32,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 _sourceMapSupport2.default.install();
 
+
 const schemas = [_task2.default, _taskItem2.default];
 function createSqlInstance() {
   let instance = new _sequelize2.default("database", "username", "password", {
@@ -35,5 +41,12 @@ function createSqlInstance() {
   });
   (0, _index.connect)(schemas, instance, {});
   return instance.sync().then(() => instance);
+}
+
+function validateResult(result) {
+  if ((result.errors || []).length > 0) {
+    console.log("Graphql Error", result.errors);
+  }
+  (0, _expect2.default)((result.data.errors || []).length).toEqual(0);
 }
 //# sourceMappingURL=utils.js.map

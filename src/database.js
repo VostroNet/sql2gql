@@ -22,7 +22,7 @@ function loadSchemas(schemas, instance, options = {}) {
       }
     }
     instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
-    instance.models[schema.name].$gqlsql = schema;
+    instance.models[schema.name].$sqlgql = schema;
     if (/^4/.test(Sequelize.version)) {// v4 compatibilty
       if (schema.options) {
         if (schema.options.classMethods) {
