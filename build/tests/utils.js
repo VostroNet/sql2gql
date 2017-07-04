@@ -33,14 +33,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 _sourceMapSupport2.default.install();
 
 
-const schemas = [_task2.default, _taskItem2.default];
+var schemas = [_task2.default, _taskItem2.default];
 function createSqlInstance() {
-  let instance = new _sequelize2.default("database", "username", "password", {
+  var instance = new _sequelize2.default("database", "username", "password", {
     dialect: "sqlite",
     logging: false
   });
   (0, _index.connect)(schemas, instance, {});
-  return instance.sync().then(() => instance);
+  return instance.sync().then(function () {
+    return instance;
+  });
 }
 
 function validateResult(result) {

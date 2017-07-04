@@ -4,7 +4,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-exports.default = function (prefix = "") {
+exports.default = function () {
+  var prefix = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : "";
+
   return {
     err: (0, _debug2.default)(`${prefix}err`),
     error: (0, _debug2.default)(`${prefix}error`),

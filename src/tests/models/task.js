@@ -32,11 +32,9 @@ export default {
     },
   },
   before(findOptions, args, context, info) {
-    // console.log("before", arguments);
     return findOptions;
   },
   after(result, args, context, info) {
-    // console.log("after", result);
     return result;
   },
   override: {

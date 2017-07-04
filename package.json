@@ -5,10 +5,20 @@
   "main": "build/index.js",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/_mocha --no-timeouts ./build/tests/**/*.test.js",
-    "prepublish": "gulp compile:publish"
+    "prepublishOnly": "yarn && gulp compile:publish"
   },
   "author": "Matthew Mckenzie",
   "license": "GPL-3.0",
+  "homepage": "https://github.com/VostroNet/sql2gql",
+  "bugs": {
+    "url": "https://github.com/VostroNet/sql2gql/issues"
+  },
+  "files": [
+    "build/database.js",
+    "build/graphql.js",
+    "build/index.js",
+    "build/utils/logger.js"
+  ],
   "devEngines": {
     "node": "4.x || 5.x || 6.x || 7.x",
     "npm": "2.x || 3.x || 4.x || 5.x"

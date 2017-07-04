@@ -172,14 +172,14 @@ mutation {
 [Github Repo](https://github.com/VostroNet/sql2gql-example)
 
 ```javascript
-
 import Sequelize from "sequelize";
 import {connect, createSchema} from "sql2gql";
-
+import expect from "expect";
 import {
+  graphql,
   GraphQLString,
   GraphQLNonNull,
-  GraphQLBoolean,
+  // GraphQLBoolean,
   GraphQLInputObjectType,
   GraphQLObjectType,
   GraphQLInt,
@@ -345,4 +345,5 @@ const schemas = [TaskModel];
   const queryResult = await graphql(schema, "query { models { Task { id, name, options {hidden} } } }"); // retrieves information from database
   return expect(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
 })();
+
 ```
