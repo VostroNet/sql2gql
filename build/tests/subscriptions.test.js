@@ -29,6 +29,7 @@ describe("subscriptions", () => {
         operationName: "X",
         callback(args, result) {
           try {
+            (0, _utils.validateResult)(result);
             const { data: { afterCreateTask } } = result;
             (0, _expect2.default)(afterCreateTask.id).toEqual(1);
             return resolve();
@@ -61,6 +62,7 @@ describe("subscriptions", () => {
         operationName: "X",
         callback(args, result) {
           try {
+            (0, _utils.validateResult)(result);
             const { data: { afterUpdateTask } } = result;
             (0, _expect2.default)(afterUpdateTask.name).toEqual("UPDATED");
             return resolve();
@@ -92,6 +94,7 @@ describe("subscriptions", () => {
         operationName: "X",
         callback(args, result) {
           try {
+            (0, _utils.validateResult)(result);
             const { data: { afterDestroyTask } } = result;
             (0, _expect2.default)(afterDestroyTask.id).toEqual(1);
             return resolve();

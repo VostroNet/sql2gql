@@ -10,12 +10,12 @@ export function connect(schemas, sqlInstance, options) {
 
 
 export function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions = {}) {
-  const {hooks} = schemaOptions;
-  const schemaHook = hooks[hookName];
   return async function(instance, options) {
+    const {hooks} = schemaOptions;
+    const schemaHook = hooks[hookName];
     if (schemaHook) {
       try {
-        instance = await schemaHook.apply(instance, [instance, options]);
+        await schemaHook.apply(instance, [instance, options]);
       } catch (err) {
         log.debug(`${hookName} threw error, will not fire subscription event`, {err});
         return undefined;

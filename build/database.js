@@ -27,13 +27,13 @@ function connect(schemas, sqlInstance, options) {
 }
 
 function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions = {}) {
-  const { hooks } = schemaOptions;
-  const schemaHook = hooks[hookName];
   return (() => {
     var _ref = _asyncToGenerator(function* (instance, options) {
+      const { hooks } = schemaOptions;
+      const schemaHook = hooks[hookName];
       if (schemaHook) {
         try {
-          instance = yield schemaHook.apply(instance, [instance, options]);
+          yield schemaHook.apply(instance, [instance, options]);
         } catch (err) {
           log.debug(`${hookName} threw error, will not fire subscription event`, { err });
           return undefined;

@@ -1,5 +1,5 @@
 import expect from "expect";
-import {createSqlInstance} from "./utils";
+import {createSqlInstance, validateResult} from "./utils";
 // import {graphql, execute, subscribe} from "graphql";
 import {createSchema} from "../index";
 
@@ -19,6 +19,7 @@ describe("subscriptions", () => {
         operationName: "X",
         callback(args, result) {
           try {
+            validateResult(result);
             const {data: {afterCreateTask}} = result;
             expect(afterCreateTask.id).toEqual(1);
             return resolve();
@@ -51,6 +52,7 @@ describe("subscriptions", () => {
         operationName: "X",
         callback(args, result) {
           try {
+            validateResult(result);
             const {data: {afterUpdateTask}} = result;
             expect(afterUpdateTask.name).toEqual("UPDATED");
             return resolve();
@@ -82,6 +84,7 @@ describe("subscriptions", () => {
         operationName: "X",
         callback(args, result) {
           try {
+            validateResult(result);
             const {data: {afterDestroyTask}} = result;
             expect(afterDestroyTask.id).toEqual(1);
             return resolve();
