@@ -83,13 +83,15 @@ describe("mutations", () => {
     const mutation = `mutation {
       models {
         Task {
-          delete(id: ${item.id})
+          delete(id: ${item.id}) {
+            id
+          }
         }
       }
     }`;
     const result = await graphql(schema, mutation);
     validateResult(result);
-    expect(result.data.models.Task.delete).toEqual(true);
+    expect(result.data.models.Task.delete.id).toEqual(1);
     const query = `query { models { Task(where: {id: ${item.id}}) { id, name } } }`;
     const queryResult = await graphql(schema, query);
     validateResult(queryResult);
@@ -147,7 +149,9 @@ describe("mutations", () => {
     const mutation = `mutation {
       models {
         Task {
-          deleteAll(where: {name: {in: ["item2", "item3"]}})
+          deleteAll(where: {name: {in: ["item2", "item3"]}}) {
+            id
+          }
         }
       }
     }`;

@@ -9,12 +9,12 @@ import TaskModel from "./models/task";
 import TaskItemModel from "./models/task-item";
 
 const schemas = [TaskModel, TaskItemModel];
-export function createSqlInstance() {
+export function createSqlInstance(options) {
   let instance = new Sequelize("database", "username", "password", {
     dialect: "sqlite",
     logging: false,
   });
-  connect(schemas, instance, {});
+  connect(schemas, instance, Object.assign({}, options));
   return instance.sync().then(() => instance);
 }
 

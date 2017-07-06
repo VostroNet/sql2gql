@@ -3,7 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = connect;
+exports.connect = connect;
+exports.createSubscriptionHook = createSubscriptionHook;
+exports.loadSchemas = loadSchemas;
 
 var _sequelize = require("sequelize");
 
@@ -15,22 +17,74 @@ var _logger2 = _interopRequireDefault(_logger);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var log = (0, _logger2.default)("sql2gql::database:");
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
-function connect(schemas, instance) {
-  loadSchemas(schemas, instance);
-  return instance;
+const log = (0, _logger2.default)("sql2gql::database:");
+
+function connect(schemas, sqlInstance, options) {
+  loadSchemas(schemas, sqlInstance, options);
+  return sqlInstance;
 }
 
-function loadSchemas(schemas, instance) {
-  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  var defaultAttr = options.defaultAttr,
-      defaultModel = options.defaultModel;
+function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions = {}) {
+  return (() => {
+    var _ref = _asyncToGenerator(function* (instance, options) {
+      const { hooks } = schemaOptions;
+      const schemaHook = hooks[hookName];
+      if (schemaHook) {
+        try {
+          yield schemaHook.apply(instance, [instance, options]);
+        } catch (err) {
+          log.debug(`${hookName} threw error, will not fire subscription event`, { err });
+          return undefined;
+        }
+      }
+      return pubsub.publish(subscriptionName, { instance, options, hookName });
+    });
 
-  schemas.forEach(function (schema) {
-    var classMethods = schema.classMethods,
-        instanceMethods = schema.instanceMethods;
+    return function (_x, _x2) {
+      return _ref.apply(this, arguments);
+    };
+  })();
+}
 
+function loadSchemas(schemas, sqlInstance, options = {}) {
+  sqlInstance.$sqlgql = {};
+  const { defaultAttr, defaultModel } = options;
+  let pubsub, subscriptionHooks;
+  if (options.subscriptions) {
+    if (!options.subscriptions.pubsub) {
+      throw "PubSub is required for subscriptions to work - {options.subscriptions.pubsub} is undefined";
+    }
+    pubsub = options.subscriptions.pubsub;
+    subscriptionHooks = options.subscriptions.hooks || ["afterCreate", "afterDestroy", "afterUpdate"];
+    sqlInstance.$sqlgql = Object.assign(sqlInstance.$sqlgql, {
+      subscriptions: {
+        pubsub
+      }
+    });
+  }
+
+  schemas.forEach(schema => {
+    let schemaOptions = Object.assign({}, defaultModel, schema.options);
+    if (pubsub) {
+      //TODO Restrict or Enable hooks per model
+      schema.$subscriptions = subscriptionHooks.reduce((data, hookName) => {
+        const subscriptionName = `${hookName}${schema.name}`;
+        const hookFunc = createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions);
+        data.names[hookName] = subscriptionName;
+        data.hooks[hookName] = hookFunc;
+        return data;
+      }, {
+        names: {},
+        hooks: {}
+      });
+      schemaOptions = Object.assign(schemaOptions, {
+        hooks: Object.assign(schemaOptions.hooks || {}, schema.$subscriptions.hooks)
+      });
+    }
+
+    let { classMethods, instanceMethods } = schema;
     if (!/^4/.test(_sequelize2.default.version)) {
       // v3 compatibilty
       if (classMethods) {
@@ -40,8 +94,8 @@ function loadSchemas(schemas, instance) {
         schema.options.instanceMethods = instanceMethods;
       }
     }
-    instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
-    instance.models[schema.name].$sqlgql = schema;
+    sqlInstance.define(schema.name, Object.assign({}, defaultAttr, schema.define), schemaOptions);
+    sqlInstance.models[schema.name].$sqlgql = schema;
     if (/^4/.test(_sequelize2.default.version)) {
       // v4 compatibilty
       if (schema.options) {
@@ -53,28 +107,26 @@ function loadSchemas(schemas, instance) {
         }
       }
       if (classMethods) {
-        Object.keys(classMethods).forEach(function (classMethod) {
-          instance.models[schema.name][classMethod] = classMethods[classMethod];
+        Object.keys(classMethods).forEach(classMethod => {
+          sqlInstance.models[schema.name][classMethod] = classMethods[classMethod];
         });
       }
       if (instanceMethods) {
-        Object.keys(instanceMethods).forEach(function (instanceMethod) {
-          instance.models[schema.name].prototype[instanceMethod] = instanceMethods[instanceMethod];
+        Object.keys(instanceMethods).forEach(instanceMethod => {
+          sqlInstance.models[schema.name].prototype[instanceMethod] = instanceMethods[instanceMethod];
         });
       }
     }
   });
-  schemas.forEach(function (schema) {
-    (schema.relationships || []).forEach(function (relationship) {
-      createRelationship(instance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({ as: relationship.name }, relationship.options));
+  schemas.forEach(schema => {
+    (schema.relationships || []).forEach(relationship => {
+      createRelationship(sqlInstance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({ as: relationship.name }, relationship.options));
     });
   });
 }
 
-function createRelationship(instance, targetModel, sourceModel, name, type) {
-  var options = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
-
-  var model = instance.models[targetModel];
+function createRelationship(sqlInstance, targetModel, sourceModel, name, type, options = {}) {
+  let model = sqlInstance.models[targetModel];
   if (!model.relationships) {
     model.relationships = {};
   }
@@ -83,11 +135,11 @@ function createRelationship(instance, targetModel, sourceModel, name, type) {
       type: type,
       source: sourceModel,
       target: targetModel,
-      rel: model[type](instance.models[sourceModel], options)
+      rel: model[type](sqlInstance.models[sourceModel], options)
     };
   } catch (err) {
     log.error("Error Mapping relationship", { model, sourceModel, name, type, options, err });
   }
-  instance.models[targetModel] = model;
+  sqlInstance.models[targetModel] = model;
 }
 //# sourceMappingURL=database.js.map

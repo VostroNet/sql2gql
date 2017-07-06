@@ -81,22 +81,18 @@ exports.default = {
         getHiddenData: {
           type: new _graphql.GraphQLObjectType({
             name: "TaskHiddenData",
-            fields: function fields() {
-              return {
-                hidden: { type: _graphql.GraphQLString }
-              };
-            }
+            fields: () => ({
+              hidden: { type: _graphql.GraphQLString }
+            })
           }),
           args: {}
         },
         getHiddenData2: {
           type: new _graphql.GraphQLObjectType({
             name: "TaskHiddenData2",
-            fields: function fields() {
-              return {
-                hidden: { type: _graphql.GraphQLString }
-              };
-            }
+            fields: () => ({
+              hidden: { type: _graphql.GraphQLString }
+            })
           }),
           args: {}
         }
@@ -106,9 +102,7 @@ exports.default = {
   options: {
     tableName: "tasks",
     classMethods: {
-      reverseName(_ref, req) {
-        var amount = _ref.input.amount;
-
+      reverseName({ input: { amount } }, req) {
         return {
           id: 1,
           name: `reverseName${amount}`
