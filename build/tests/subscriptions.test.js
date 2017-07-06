@@ -16,95 +16,166 @@ function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, a
 // import {graphql, execute, subscribe} from "graphql";
 
 
-describe("subscriptions", () => {
-  it("afterCreate", _asyncToGenerator(function* () {
-    const pubsub = new _graphqlSubscriptions.PubSub();
-    const instance = yield (0, _utils.createSqlInstance)({ subscriptions: { pubsub } });
-    const schema = yield (0, _index.createSchema)(instance);
-    const subManager = new _graphqlSubscriptions.SubscriptionManager({ pubsub, schema });
-    const query = "subscription X { afterCreateTask {id} }";
-    yield new Promise(function (resolve, reject) {
-      subManager.subscribe({
-        query,
-        operationName: "X",
-        callback(args, result) {
-          try {
-            (0, _utils.validateResult)(result);
-            const { data: { afterCreateTask } } = result;
-            (0, _expect2.default)(afterCreateTask.id).toEqual(1);
-            return resolve();
-          } catch (err) {
-            return reject(err);
-          }
+describe("subscriptions", function () {
+  it("afterCreate", _asyncToGenerator(regeneratorRuntime.mark(function _callee() {
+    var pubsub, instance, schema, subManager, query;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            pubsub = new _graphqlSubscriptions.PubSub();
+            _context.next = 3;
+            return (0, _utils.createSqlInstance)({ subscriptions: { pubsub } });
+
+          case 3:
+            instance = _context.sent;
+            _context.next = 6;
+            return (0, _index.createSchema)(instance);
+
+          case 6:
+            schema = _context.sent;
+            subManager = new _graphqlSubscriptions.SubscriptionManager({ pubsub, schema });
+            query = "subscription X { afterCreateTask {id} }";
+            _context.next = 11;
+            return new Promise(function (resolve, reject) {
+              subManager.subscribe({
+                query,
+                operationName: "X",
+                callback(args, result) {
+                  try {
+                    (0, _utils.validateResult)(result);
+                    var afterCreateTask = result.data.afterCreateTask;
+
+                    (0, _expect2.default)(afterCreateTask.id).toEqual(1);
+                    return resolve();
+                  } catch (err) {
+                    return reject(err);
+                  }
+                }
+              });
+              var Task = instance.models.Task;
+
+              Task.create({
+                name: "item1"
+              });
+            });
+
+          case 11:
+          case "end":
+            return _context.stop();
         }
-      });
-      const { Task } = instance.models;
-      Task.create({
-        name: "item1"
-      });
-    });
-  }));
-  it("afterUpdate", _asyncToGenerator(function* () {
-    const pubsub = new _graphqlSubscriptions.PubSub();
-    const sqlInstance = yield (0, _utils.createSqlInstance)({ subscriptions: { pubsub } });
-    const schema = yield (0, _index.createSchema)(sqlInstance);
-    const subManager = new _graphqlSubscriptions.SubscriptionManager({ pubsub, schema });
-    const query = "subscription X { afterUpdateTask {id, name} }";
-    const { Task } = sqlInstance.models;
+      }
+    }, _callee, undefined);
+  })));
+  it("afterUpdate", _asyncToGenerator(regeneratorRuntime.mark(function _callee2() {
+    var pubsub, sqlInstance, schema, subManager, query, Task, task;
+    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+      while (1) {
+        switch (_context2.prev = _context2.next) {
+          case 0:
+            pubsub = new _graphqlSubscriptions.PubSub();
+            _context2.next = 3;
+            return (0, _utils.createSqlInstance)({ subscriptions: { pubsub } });
 
-    const task = yield Task.create({
-      name: "item1"
-    });
+          case 3:
+            sqlInstance = _context2.sent;
+            _context2.next = 6;
+            return (0, _index.createSchema)(sqlInstance);
 
-    yield new Promise(function (resolve, reject) {
-      subManager.subscribe({
-        query,
-        operationName: "X",
-        callback(args, result) {
-          try {
-            (0, _utils.validateResult)(result);
-            const { data: { afterUpdateTask } } = result;
-            (0, _expect2.default)(afterUpdateTask.name).toEqual("UPDATED");
-            return resolve();
-          } catch (err) {
-            return reject(err);
-          }
+          case 6:
+            schema = _context2.sent;
+            subManager = new _graphqlSubscriptions.SubscriptionManager({ pubsub, schema });
+            query = "subscription X { afterUpdateTask {id, name} }";
+            Task = sqlInstance.models.Task;
+            _context2.next = 12;
+            return Task.create({
+              name: "item1"
+            });
+
+          case 12:
+            task = _context2.sent;
+            _context2.next = 15;
+            return new Promise(function (resolve, reject) {
+              subManager.subscribe({
+                query,
+                operationName: "X",
+                callback(args, result) {
+                  try {
+                    (0, _utils.validateResult)(result);
+                    var afterUpdateTask = result.data.afterUpdateTask;
+
+                    (0, _expect2.default)(afterUpdateTask.name).toEqual("UPDATED");
+                    return resolve();
+                  } catch (err) {
+                    return reject(err);
+                  }
+                }
+              });
+              task.update({
+                name: "UPDATED"
+              });
+            });
+
+          case 15:
+          case "end":
+            return _context2.stop();
         }
-      });
-      task.update({
-        name: "UPDATED"
-      });
-    });
-  }));
-  it("afterDestroy", _asyncToGenerator(function* () {
-    const pubsub = new _graphqlSubscriptions.PubSub();
-    const sqlInstance = yield (0, _utils.createSqlInstance)({ subscriptions: { pubsub } });
-    const schema = yield (0, _index.createSchema)(sqlInstance);
-    const subManager = new _graphqlSubscriptions.SubscriptionManager({ pubsub, schema });
-    const query = "subscription X { afterDestroyTask {id} }";
-    const { Task } = sqlInstance.models;
+      }
+    }, _callee2, undefined);
+  })));
+  it("afterDestroy", _asyncToGenerator(regeneratorRuntime.mark(function _callee3() {
+    var pubsub, sqlInstance, schema, subManager, query, Task, task;
+    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+      while (1) {
+        switch (_context3.prev = _context3.next) {
+          case 0:
+            pubsub = new _graphqlSubscriptions.PubSub();
+            _context3.next = 3;
+            return (0, _utils.createSqlInstance)({ subscriptions: { pubsub } });
 
-    const task = yield Task.create({
-      name: "item1"
-    });
+          case 3:
+            sqlInstance = _context3.sent;
+            _context3.next = 6;
+            return (0, _index.createSchema)(sqlInstance);
 
-    yield new Promise(function (resolve, reject) {
-      subManager.subscribe({
-        query,
-        operationName: "X",
-        callback(args, result) {
-          try {
-            (0, _utils.validateResult)(result);
-            const { data: { afterDestroyTask } } = result;
-            (0, _expect2.default)(afterDestroyTask.id).toEqual(1);
-            return resolve();
-          } catch (err) {
-            return reject(err);
-          }
+          case 6:
+            schema = _context3.sent;
+            subManager = new _graphqlSubscriptions.SubscriptionManager({ pubsub, schema });
+            query = "subscription X { afterDestroyTask {id} }";
+            Task = sqlInstance.models.Task;
+            _context3.next = 12;
+            return Task.create({
+              name: "item1"
+            });
+
+          case 12:
+            task = _context3.sent;
+            _context3.next = 15;
+            return new Promise(function (resolve, reject) {
+              subManager.subscribe({
+                query,
+                operationName: "X",
+                callback(args, result) {
+                  try {
+                    (0, _utils.validateResult)(result);
+                    var afterDestroyTask = result.data.afterDestroyTask;
+
+                    (0, _expect2.default)(afterDestroyTask.id).toEqual(1);
+                    return resolve();
+                  } catch (err) {
+                    return reject(err);
+                  }
+                }
+              });
+              task.destroy();
+            });
+
+          case 15:
+          case "end":
+            return _context3.stop();
         }
-      });
-      task.destroy();
-    });
-  }));
+      }
+    }, _callee3, undefined);
+  })));
 });
 //# sourceMappingURL=subscriptions.test.js.map
