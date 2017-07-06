@@ -1,1 +1,1 @@
-{"version":3,"sources":["index.js"],"names":["connect","createSchema"],"mappings":";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAEA;;;;AACA;;;;;;AACO,IAAMA,8CAAN;AACA,IAAMC,uDAAN,C,CAA8B","file":"index.js","sourceRoot":"../src/"}
+{"version":3,"sources":["index.js"],"names":["database","graphql","connect","createSchema"],"mappings":";;;;;;;;;;;AACA;;IAAYA,Q;;AACZ;;IAAYC,O;;;;AACL,MAAMC,4BAAUF,SAASE,OAAzB;AACA,MAAMC,sCAAeF,QAAQE,YAA7B,C,CAA2C","file":"index.js","sourceRoot":"../src/"}

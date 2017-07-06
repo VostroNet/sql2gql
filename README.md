@@ -14,7 +14,8 @@ Opininated Sequelize to GraphQL bridge, extending out graphql-sequelize with dyn
 
 - Dynamic mapping of sequelize models and relationships to graphql for query and mutation.
 - Exposing classMethods as mutation/query options.
-- Permissions Mechanism to restrict access to parts of the schema.
+- Permissions to restrict access to parts of the graphql schema on generation.
+- Generation of [subscriptions](https://github.com/apollographql/graphql-subscriptions) from sequelize hooks
 
 
 ## API
@@ -36,6 +37,7 @@ The model object is the bread and butter of the setup, it basically serves two p
 | after | (result, args, context, info) => return result | This function is executed after graphql-sequelize resolver has completed, but before the result is passed up to graphql |
 | override | HashObject[fieldName -> Model.override] | overrides the field resolver functions to allow for complex types on on simple fields e.g. JSON,JSONB |
 | resolver | () => Object | the replaces graphql-sequelize resolver completely |
+| subscriptions | HashObject[hookName -> (instance, args, req, gql) => {return instance}] | overrides default action of subscription hook event, this occurs after all sequelize hooks and must return a model. |
 
 #### Model.Override
 
@@ -78,7 +80,7 @@ import {connect} from "sql2gql";
 | Parameter |  Description |
 | --- | --- |
 | Array(Model) | Array of models |
-| [Sequelize.instance](http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection) | Sequelize Instance |
+| [Sequelize.instance](http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection) | Sequelize connection instance |
 
 #### createSchema
 Generates a graphql schema from the metadata stored in the sequelize instance.
@@ -89,7 +91,7 @@ import {createSchema} from "sql2gql";
 
 | Parameter |  Description |
 | --- | --- |
-| [Sequelize.instance](http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection) | Sequelize Instance |
+| [Sequelize.connection](http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection) | Sequelize connection instance |
 | Object(createSchema.options) | createSchema options |
 
 #### createSchema.options
@@ -105,6 +107,14 @@ Returns Object([GraphQLSchema](http://graphql.org/graphql-js/type/#graphqlschema
 | mutation | Object([GraphQLSchema](http://graphql.org/graphql-js/type/#graphqlschema)) | merges into base Mutation field via Object.assign |
 | before | (model: Model, findOptions, args, context, info) =>  return findOptions | |
 | after | (model: Model, result, args, context, info) => return result | |
+| subscriptions | Object[createSchema.options.subscriptions] | config options for the subscriptions |
+#### createSchema.options.subscriptions
+
+| Key | type |  Description |
+| --- | --- | --- |
+| hookNames | [String] | list of hooks that will be registered per model, please see [Sequelize.Hooks](http://docs.sequelizejs.com/manual/tutorial/hooks.html) for the full list of available. ["afterCreate", "afterDestroy", "afterUpdate"] are the default settings. Currently only (instance, options) typed hooks are automatically support as each subscription is configured to return the type of the model it is for.|
+| pubsub | [PubSub](https://github.com/apollographql/graphql-subscriptions) | pubsub is required for handling events between sequelize and the graphql instance. Please see [GraphQL Subscriptions](http://dev.apollodata.com/tools/graphql-subscriptions/index.html) for more information |
+
 
 #### createSchema.options.permissions
 hooks to constrain visibility of fields and functions will only hide elements by default if hook is defined,
@@ -167,6 +177,20 @@ mutation {
 }
 ```
 
+##### Subscription 
+[Reference](https://github.com/apollographql/graphql-subscriptions)
+```graphql
+subscription X {
+  afterCreateTask {
+    id,
+    name
+  }
+  afterUpdateTask {
+    id,
+    name
+  }
+}
+```
 
 ## Example
 [Github Repo](https://github.com/VostroNet/sql2gql-example)
@@ -179,7 +203,6 @@ import {
   graphql,
   GraphQLString,
   GraphQLNonNull,
-  // GraphQLBoolean,
   GraphQLInputObjectType,
   GraphQLObjectType,
   GraphQLInt,
@@ -207,11 +230,9 @@ const TaskModel = {
     },
   },
   before(findOptions, args, context, info) {
-    // console.log("before", arguments);
     return findOptions;
   },
   after(result, args, context, info) {
-    // console.log("after", result);
     return result;
   },
   override: {
@@ -347,3 +368,9 @@ const schemas = [TaskModel];
 })();
 
 ```
+## ChangeLog
+1.1.0
+- delete mutations now return object that it has deleted instead of boolean - **[Breaking change from 1.0.0]**
+- subscriptions are now supported, defaults will hook into afterCreate, afterUpdate, afterDestroy on the sequelize models
+- added extend to options in createScheme for supporting unknown/future root variables 
+- set all functions to export to allow for anyone wanting to use the api directly

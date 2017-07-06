@@ -3,15 +3,65 @@ import logger from "./utils/logger";
 const log = logger("sql2gql::database:");
 
 
-export default function connect(schemas, instance) {
-  loadSchemas(schemas, instance);
-  return instance;
+export function connect(schemas, sqlInstance, options) {
+  loadSchemas(schemas, sqlInstance, options);
+  return sqlInstance;
 }
 
 
-function loadSchemas(schemas, instance, options = {}) {
+export function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions = {}) {
+  const {hooks} = schemaOptions;
+  const schemaHook = hooks[hookName];
+  return async function(instance, options) {
+    if (schemaHook) {
+      try {
+        await schemaHook.apply(instance, [instance, options]);
+      } catch (err) {
+        log.debug(`${hookName} threw error, will not fire subscription event`, {err});
+        return undefined;
+      }
+    }
+    return pubsub.publish(subscriptionName, {instance, options, hookName});
+  };
+}
+
+export function loadSchemas(schemas, sqlInstance, options = {}) {
+  sqlInstance.$sqlgql = {};
   const {defaultAttr, defaultModel} = options;
+  let pubsub, subscriptionHooks;
+  if (options.subscriptions) {
+    if (!options.subscriptions.pubsub) {
+      throw "PubSub is required for subscriptions to work - {options.subscriptions.pubsub} is undefined";
+    }
+    pubsub = options.subscriptions.pubsub;
+    subscriptionHooks = options.subscriptions.hooks || ["afterCreate", "afterDestroy", "afterUpdate"];
+    sqlInstance.$sqlgql = Object.assign(sqlInstance.$sqlgql, {
+      subscriptions: {
+        pubsub,
+      },
+    });
+  }
+
+
+
   schemas.forEach((schema) => {
+    let schemaOptions = Object.assign({}, defaultModel, schema.options);
+    if (pubsub) { //TODO Restrict or Enable hooks per model
+      schema.$subscriptions = subscriptionHooks.reduce((data, hookName) => {
+        const subscriptionName = `${hookName}${schema.name}`;
+        const hookFunc = createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions);
+        data.names[hookName] = subscriptionName;
+        data.hooks[hookName] = hookFunc;
+        return data;
+      }, {
+        names: {},
+        hooks: {},
+      });
+      schemaOptions = Object.assign(schemaOptions, {
+        hooks: Object.assign(schemaOptions.hooks || {}, schema.$subscriptions.hooks),
+      });
+    }
+
     let {classMethods, instanceMethods} = schema;
     if (!(/^4/.test(Sequelize.version))) { // v3 compatibilty
       if (classMethods) {
@@ -21,8 +71,8 @@ function loadSchemas(schemas, instance, options = {}) {
         schema.options.instanceMethods = instanceMethods;
       }
     }
-    instance.define(schema.name, Object.assign({}, defaultAttr, schema.define), Object.assign({}, defaultModel, schema.options));
-    instance.models[schema.name].$sqlgql = schema;
+    sqlInstance.define(schema.name, Object.assign({}, defaultAttr, schema.define), schemaOptions);
+    sqlInstance.models[schema.name].$sqlgql = schema;
     if (/^4/.test(Sequelize.version)) {// v4 compatibilty
       if (schema.options) {
         if (schema.options.classMethods) {
@@ -34,25 +84,25 @@ function loadSchemas(schemas, instance, options = {}) {
       }
       if (classMethods) {
         Object.keys(classMethods).forEach((classMethod) => {
-          instance.models[schema.name][classMethod] = classMethods[classMethod];
+          sqlInstance.models[schema.name][classMethod] = classMethods[classMethod];
         });
       }
       if (instanceMethods) {
         Object.keys(instanceMethods).forEach((instanceMethod) => {
-          instance.models[schema.name].prototype[instanceMethod] = instanceMethods[instanceMethod];
+          sqlInstance.models[schema.name].prototype[instanceMethod] = instanceMethods[instanceMethod];
         });
       }
     }
   });
   schemas.forEach((schema) => {
     (schema.relationships || []).forEach((relationship) => {
-      createRelationship(instance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({as: relationship.name}, relationship.options));
+      createRelationship(sqlInstance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({as: relationship.name}, relationship.options));
     });
   });
 }
 
-function createRelationship(instance, targetModel, sourceModel, name, type, options = {}) {
-  let model = instance.models[targetModel];
+function createRelationship(sqlInstance, targetModel, sourceModel, name, type, options = {}) {
+  let model = sqlInstance.models[targetModel];
   if (!model.relationships) {
     model.relationships = {};
   }
@@ -61,11 +111,11 @@ function createRelationship(instance, targetModel, sourceModel, name, type, opti
       type: type,
       source: sourceModel,
       target: targetModel,
-      rel: model[type](instance.models[sourceModel], options),
+      rel: model[type](sqlInstance.models[sourceModel], options),
     };
   } catch (err) {
     log.error("Error Mapping relationship", {model, sourceModel, name, type, options, err});
   }
-  instance.models[targetModel] = model;
+  sqlInstance.models[targetModel] = model;
 }
 
