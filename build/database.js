@@ -33,7 +33,7 @@ function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, sche
     var _ref = _asyncToGenerator(function* (instance, options) {
       if (schemaHook) {
         try {
-          yield schemaHook.apply(instance, [instance, options]);
+          instance = yield schemaHook.apply(instance, [instance, options]);
         } catch (err) {
           log.debug(`${hookName} threw error, will not fire subscription event`, { err });
           return undefined;

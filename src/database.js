@@ -15,7 +15,7 @@ export function createSubscriptionHook(schema, hookName, subscriptionName, pubsu
   return async function(instance, options) {
     if (schemaHook) {
       try {
-        await schemaHook.apply(instance, [instance, options]);
+        instance = await schemaHook.apply(instance, [instance, options]);
       } catch (err) {
         log.debug(`${hookName} threw error, will not fire subscription event`, {err});
         return undefined;
