@@ -367,7 +367,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                         modelDefinition = getModelDefinition(models[modelName]);
 
                         createFunc = function () {
-                          var _ref9 = _asyncToGenerator(regeneratorRuntime.mark(function _callee7(_, args, req, info) {
+                          var _ref9 = _asyncToGenerator(regeneratorRuntime.mark(function _callee7(_, args, context, info) {
                             var input, model;
                             return regeneratorRuntime.wrap(function _callee7$(_context7) {
                               while (1) {
@@ -378,7 +378,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     if (modelDefinition.override) {
                                       input = Object.keys(modelDefinition.override).reduce(function (data, fieldName) {
                                         if (modelDefinition.override[fieldName].input) {
-                                          data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, req, info);
+                                          data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info);
                                         }
                                         return data;
                                       }, input);
@@ -391,7 +391,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                     _context7.next = 5;
                                     return modelDefinition.before({
-                                      params: input, args, req, info,
+                                      params: input, args, context, info,
                                       modelDefinition,
                                       type: events.MUTATION_CREATE
                                     });
@@ -401,7 +401,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                   case 6:
                                     _context7.next = 8;
-                                    return models[modelName].create(input, { rootValue: { req, args } });
+                                    return models[modelName].create(input, { rootValue: { context, args } });
 
                                   case 8:
                                     model = _context7.sent;
@@ -413,7 +413,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                     _context7.next = 12;
                                     return modelDefinition.after({
-                                      result: model, args, req, info,
+                                      result: model, args, context, info,
                                       modelDefinition,
                                       type: events.MUTATION_CREATE
                                     });
@@ -448,7 +448,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                         };
 
                         updateFunc = function () {
-                          var _ref10 = _asyncToGenerator(regeneratorRuntime.mark(function _callee8(model, args, req, info) {
+                          var _ref10 = _asyncToGenerator(regeneratorRuntime.mark(function _callee8(model, args, context, info) {
                             var input;
                             return regeneratorRuntime.wrap(function _callee8$(_context8) {
                               while (1) {
@@ -459,7 +459,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     if (modelDefinition.override) {
                                       input = Object.keys(modelDefinition.override).reduce(function (data, fieldName) {
                                         if (modelDefinition.override[fieldName].input) {
-                                          data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, req, info);
+                                          data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info);
                                         }
                                         return data;
                                       }, input);
@@ -472,7 +472,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                     _context8.next = 5;
                                     return modelDefinition.before({
-                                      params: input, args, req, info,
+                                      params: input, args, context, info,
                                       model, modelDefinition,
                                       type: events.MUTATION_UPDATE
                                     });
@@ -482,7 +482,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                   case 6:
                                     _context8.next = 8;
-                                    return model.update(input, { rootValue: { req, args } });
+                                    return model.update(input, { rootValue: { context, args } });
 
                                   case 8:
                                     model = _context8.sent;
@@ -494,7 +494,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                     _context8.next = 12;
                                     return modelDefinition.after({
-                                      result: model, args, req, info,
+                                      result: model, args, context, info,
                                       modelDefinition,
                                       type: events.MUTATION_UPDATE
                                     });
@@ -530,7 +530,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                           args: (0, _graphqlSequelize.defaultArgs)(models[modelName]),
                           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
                             after: function () {
-                              var _ref11 = _asyncToGenerator(regeneratorRuntime.mark(function _callee9(model, args, req, info) {
+                              var _ref11 = _asyncToGenerator(regeneratorRuntime.mark(function _callee9(model, args, context, info) {
                                 return regeneratorRuntime.wrap(function _callee9$(_context9) {
                                   while (1) {
                                     switch (_context9.prev = _context9.next) {
@@ -542,7 +542,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                         _context9.next = 3;
                                         return modelDefinition.before({
-                                          params: model, args, req, info,
+                                          params: model, args, context, info,
                                           model, modelDefinition,
                                           type: events.MUTATION_DELETE
                                         });
@@ -552,7 +552,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                       case 4:
                                         _context9.next = 6;
-                                        return model.destroy({ rootValue: { req, args } });
+                                        return model.destroy({ rootValue: { context, args } });
 
                                       case 6:
                                         if (!modelDefinition.after) {
@@ -562,7 +562,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                         _context9.next = 9;
                                         return modelDefinition.after({
-                                          result: model, args, req, info,
+                                          result: model, args, context, info,
                                           modelDefinition,
                                           type: events.MUTATION_DELETE
                                         });
@@ -593,9 +593,9 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                           type: new _graphql.GraphQLList(typeCollection[modelName]),
                           args: Object.assign((0, _graphqlSequelize.defaultListArgs)(models[modelName]), { input: { type: optionalInput } }),
                           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-                            after: function after(items, args, req, gql) {
+                            after: function after(items, args, context, gql) {
                               return Promise.all(items.map(function (item) {
-                                return updateFunc(item, args, req, gql);
+                                return updateFunc(item, args, context, gql);
                               }));
                             }
                           })
@@ -604,9 +604,9 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                           type: new _graphql.GraphQLList(typeCollection[modelName]),
                           args: (0, _graphqlSequelize.defaultListArgs)(models[modelName]),
                           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-                            after: function after(items, args, req, gql) {
+                            after: function after(items, args, context, gql) {
                               return Promise.all(items.map(function (item) {
-                                return item.destroy({ rootValue: { req, args } }).then(function () {
+                                return item.destroy({ rootValue: { context, args } }).then(function () {
                                   return item;
                                 });
                               })); //TODO: needs to return id with boolean value
@@ -784,8 +784,8 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                       type: _context10.t0,
                                       args: _context10.t1,
 
-                                      resolve(item, args, req, gql) {
-                                        return models[modelName][methodName].apply(models[modelName], [args, req]);
+                                      resolve(item, args, context, gql) {
+                                        return models[modelName][methodName].apply(models[modelName], [args, context]);
                                       }
                                     };
 
@@ -927,8 +927,8 @@ var createQueryFunctions = exports.createQueryFunctions = function () {
                                       type: _context13.t0,
                                       args: _context13.t1,
 
-                                      resolve(item, args, req, gql) {
-                                        return models[modelName][methodName].apply(models[modelName], [args, req]);
+                                      resolve(item, args, context, gql) {
+                                        return models[modelName][methodName].apply(models[modelName], [args, context]);
                                       }
                                     };
 
@@ -1025,13 +1025,13 @@ var createSubscriptionFunctions = exports.createSubscriptionFunctions = function
                           var subscriptionName = $subscriptions.names[hookName];
                           subCollection[subscriptionName] = {
                             type: typeCollection[modelName],
-                            resolve(item, args, req, gql) {
+                            resolve(item, args, context, gql) {
                               var instance = item.instance,
                                   options = item.options,
                                   hookName = item.hookName;
 
                               if (subscriptions[hookName]) {
-                                return subscriptions[hookName](instance, args, req, gql);
+                                return subscriptions[hookName](instance, args, context, gql);
                               }
                               return instance;
                             },

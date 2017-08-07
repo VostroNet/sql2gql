@@ -298,18 +298,18 @@ const TaskModel = {
   options: {
     tableName: "tasks",
     classMethods: {
-      reverseName({input: {amount}}, req) {
+      reverseName({input: {amount}}, context) {
         return {
           id: 1,
           name: `reverseName${amount}`,
         };
       },
-      getHiddenData(args, req) {
+      getHiddenData(args, context) {
         return {
           hidden: "Hi",
         };
       },
-      getHiddenData2(args, req) {
+      getHiddenData2(args, context) {
         return {
           hidden: "Hi2",
         };
@@ -378,3 +378,7 @@ const schemas = [TaskModel];
 1.2.0
 
 - changed before and after hooks on the model definition to include mutations, the arguments have been reduced to a single object - **[Breaking change from 1.1.0]**
+
+1.2.1
+
+- fixed before, after hooks arguments for mutations 
