@@ -9,6 +9,8 @@ import {
   GraphQLInt,
 } from "graphql";
 
+import {events} from "../../index";
+
 
 export default {
   name: "Task",
@@ -26,16 +28,30 @@ export default {
         },
       },
     },
+    mutationCheck: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
     options: {
       type: Sequelize.STRING,
       allowNull: true,
     },
   },
-  before(findOptions, args, context, info) {
-    return findOptions;
+  before(req) {
+    if (req.type === events.MUTATION_CREATE) {
+      return Object.assign({}, req.params, {
+        mutationCheck: "create",
+      });
+    }
+    if (req.type === events.MUTATION_UPDATE) {
+      return Object.assign({}, req.params, {
+        mutationCheck: "update",
+      });
+    }
+    return req.params;
   },
-  after(result, args, context, info) {
-    return result;
+  after(req) {
+    return req.result;
   },
   override: {
     options: {

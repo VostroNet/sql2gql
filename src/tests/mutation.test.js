@@ -184,4 +184,46 @@ describe("mutations", () => {
     validateResult(result);
     return expect(result.data.models.Task.reverseName.name).toEqual("reverseName2");
   });
+  it("create - before hook", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "item1"}) {
+            id, 
+            name,
+            mutationCheck
+          }
+        }
+      }
+    }`;
+    const mutationResult = await graphql(schema, mutation);
+    validateResult(mutationResult);
+    return expect(mutationResult.data.models.Task.create.mutationCheck).toEqual("create");
+  });
+
+  it("update - before hook", async() => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    const item = await Task.create({
+      name: "item2",
+    });
+    const schema = await createSchema(instance);
+
+    const mutation = `mutation {
+      models {
+        Task {
+          update(id: ${item.id}, input: {name: "UPDATED"}) {
+            id, 
+            name,
+            mutationCheck
+          }
+        }
+      }
+    }`;
+    const result = await graphql(schema, mutation);
+    validateResult(result);
+    return expect(result.data.models.Task.update.mutationCheck).toEqual("update");
+  });
 });

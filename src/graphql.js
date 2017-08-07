@@ -14,6 +14,13 @@ import {
   // typeMapper,
 } from "graphql-sequelize";
 
+export const events = {
+  "QUERY": 1,
+  "MUTATION_CREATE": 2,
+  "MUTATION_UPDATE": 3,
+  "MUTATION_DELETE": 4
+}
+
 export function getModelDefinition(model) {
   return model.$sqlgql;
 }
@@ -69,20 +76,40 @@ export function createBeforeAfter(model, options) {
   let targetBeforeFuncs = [], targetAfterFuncs = [];
   const modelDefinition = getModelDefinition(model);
   if (options.before) {
-    targetBeforeFuncs.push(function(findOptions, args, context, info) {
-      return options.before(modelDefinition, findOptions, args, context, info);
+    targetBeforeFuncs.push(function(params, args, context, info) {
+      return options.before({
+        params, args, context, info,
+         modelDefinition,
+        type: events.QUERY
+      });
     });
   }
   if (options.after) {
     targetAfterFuncs.push(function(result, args, context, info) {
-      return options.after(modelDefinition, result, args, context, info);
+      return options.after({
+        result, args, context, info,
+        modelDefinition,
+        type: events.QUERY
+      });
     });
   }
   if (modelDefinition.before) {
-    targetBeforeFuncs.push(modelDefinition.before);
+    targetBeforeFuncs.push(function(params, args, context, info) {
+      return modelDefinition.before({
+        params, args, context, info,
+        modelDefinition,
+        type: events.QUERY
+      });
+    });
   }
   if (modelDefinition.after) {
-    targetAfterFuncs.push(modelDefinition.after);
+    targetAfterFuncs.push(function(result, args, context, info) {
+      return modelDefinition.after({
+        result, args, context, info,
+        modelDefinition: modelDefinition,
+        type: events.QUERY
+      });
+    });
   }
   const targetBefore = (findOptions, args, context, info) => {
     if (targetBeforeFuncs.length === 0) {
@@ -289,7 +316,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
     let mutationFields = {};
 
     const modelDefinition = getModelDefinition(models[modelName]);
-    const createFunc = (_, args, req, info) => {
+    const createFunc = async(_, args, req, info) => {
       let input = args.input;
       if (modelDefinition.override) {
         input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
@@ -299,7 +326,22 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
           return data;
         }, input);
       }
-      return models[modelName].create(input, {rootValue: {req, args}});
+      if(modelDefinition.before) {
+        input = await modelDefinition.before({
+          params: input, args, req, info,
+          modelDefinition,
+          type: events.MUTATION_CREATE
+        });
+      }
+      let model = await models[modelName].create(input, {rootValue: {req, args}})
+      if (modelDefinition.after) {
+        return await modelDefinition.after({
+          result: model, args, req, info,
+          modelDefinition,
+          type: events.MUTATION_CREATE
+        });
+      }
+      return model;
     };
     let create = {
       type: typeCollection[modelName],
@@ -310,19 +352,32 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
       },
       resolve: createFunc,
     };
-
-    // console.log("createMutationFunctions - create", create);
-    const updateFunc = (item, args, req, gql) => {
+    const updateFunc = async(model, args, req, info) => {
       let input = args.input;
       if (modelDefinition.override) {
         input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
           if (modelDefinition.override[fieldName].input) {
-            data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, req, gql);
+            data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, req, info);
           }
           return data;
         }, input);
       }
-      return item.update(input, {rootValue: {req, args}});
+      if (modelDefinition.before) {
+        input = await modelDefinition.before({
+          params: input, args, req, info,
+          model, modelDefinition,
+          type: events.MUTATION_UPDATE
+        });
+      }
+      model = await model.update(input, {rootValue: {req, args}});
+      if (modelDefinition.after) {
+        return await modelDefinition.after({
+          result: model, args, req, info, 
+          modelDefinition,
+          type: events.MUTATION_UPDATE
+        });
+      }
+      return model;
     };
 
     let update = {
@@ -336,9 +391,23 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
       type: typeCollection[modelName],
       args: defaultArgs(models[modelName]),
       resolve: resolver(models[modelName], {
-        after: function(item, args, req, gql) {
-          return item.destroy({rootValue: {req, args}})
-            .then(() => item);
+        after: async function(model, args, req, info) {
+          if (modelDefinition.before) {
+            model = await modelDefinition.before({
+              params: model, args, req, info,
+              model, modelDefinition,
+              type: events.MUTATION_DELETE
+            });
+          }
+          await model.destroy({rootValue: {req, args}})
+          if (modelDefinition.after) {
+            return await modelDefinition.after({
+              result: model, args, req, info, 
+              modelDefinition,
+              type: events.MUTATION_DELETE
+            });
+          }
+          return model;
         },
       }),
     };

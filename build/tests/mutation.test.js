@@ -406,5 +406,100 @@ describe("mutations", function () {
       }
     }, _callee7, undefined);
   })));
+  it("create - before hook", _asyncToGenerator(regeneratorRuntime.mark(function _callee8() {
+    var instance, schema, mutation, mutationResult;
+    return regeneratorRuntime.wrap(function _callee8$(_context8) {
+      while (1) {
+        switch (_context8.prev = _context8.next) {
+          case 0:
+            _context8.next = 2;
+            return (0, _utils.createSqlInstance)();
+
+          case 2:
+            instance = _context8.sent;
+            _context8.next = 5;
+            return (0, _index.createSchema)(instance);
+
+          case 5:
+            schema = _context8.sent;
+            mutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "item1"}) {
+            id, 
+            name,
+            mutationCheck
+          }
+        }
+      }
+    }`;
+            _context8.next = 9;
+            return (0, _graphql.graphql)(schema, mutation);
+
+          case 9:
+            mutationResult = _context8.sent;
+
+            (0, _utils.validateResult)(mutationResult);
+            return _context8.abrupt("return", (0, _expect2.default)(mutationResult.data.models.Task.create.mutationCheck).toEqual("create"));
+
+          case 12:
+          case "end":
+            return _context8.stop();
+        }
+      }
+    }, _callee8, undefined);
+  })));
+
+  it("update - before hook", _asyncToGenerator(regeneratorRuntime.mark(function _callee9() {
+    var instance, Task, item, schema, mutation, result;
+    return regeneratorRuntime.wrap(function _callee9$(_context9) {
+      while (1) {
+        switch (_context9.prev = _context9.next) {
+          case 0:
+            _context9.next = 2;
+            return (0, _utils.createSqlInstance)();
+
+          case 2:
+            instance = _context9.sent;
+            Task = instance.models.Task;
+            _context9.next = 6;
+            return Task.create({
+              name: "item2"
+            });
+
+          case 6:
+            item = _context9.sent;
+            _context9.next = 9;
+            return (0, _index.createSchema)(instance);
+
+          case 9:
+            schema = _context9.sent;
+            mutation = `mutation {
+      models {
+        Task {
+          update(id: ${item.id}, input: {name: "UPDATED"}) {
+            id, 
+            name,
+            mutationCheck
+          }
+        }
+      }
+    }`;
+            _context9.next = 13;
+            return (0, _graphql.graphql)(schema, mutation);
+
+          case 13:
+            result = _context9.sent;
+
+            (0, _utils.validateResult)(result);
+            return _context9.abrupt("return", (0, _expect2.default)(result.data.models.Task.update.mutationCheck).toEqual("update"));
+
+          case 16:
+          case "end":
+            return _context9.stop();
+        }
+      }
+    }, _callee9, undefined);
+  })));
 });
 //# sourceMappingURL=mutation.test.js.map

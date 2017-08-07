@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.createSchema = exports.connect = undefined;
+exports.events = exports.createSchema = exports.connect = undefined;
 
 require("core-js/modules/es6.typed.array-buffer");
 
@@ -103,4 +103,5 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 var connect = exports.connect = database.connect;
 var createSchema = exports.createSchema = graphql.createSchema; //TODO: better way to lay this out?
+var events = exports.events = graphql.events;
 //# sourceMappingURL=index.js.map

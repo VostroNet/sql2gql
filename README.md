@@ -33,8 +33,8 @@ The model object is the bread and butter of the setup, it basically serves two p
 | classMethods | Object | static typed functions that are set on the model under sequelize (for v3 this will be copied into options instead) |
 | instanceMethods | Object | functions that are set on the model's prototype under sequelize (for v3 this will be copied into options instead) |
 | ignoreFields | Array[String] | TODO |
-| before | (findOptions, args, context, info) =>  return findOptions | This function is executed before graphql-sequelize resolver is tasked, you must return the findOptions for it to be able to continue |
-| after | (result, args, context, info) => return result | This function is executed after graphql-sequelize resolver has completed, but before the result is passed up to graphql |
+| before | ({params, args, context, info, type}) =>  return params | This function is executed before graphql-sequelize resolver is tasked, you must return the params for it to be able to continue |
+| after | ({result, args, context, info, type}) => return result | This function is executed after graphql-sequelize resolver has completed but before the result is passed up to graphql for queries, , , type determines ns |
 | override | HashObject[fieldName -> Model.override] | overrides the field resolver functions to allow for complex types on on simple fields e.g. JSON,JSONB |
 | resolver | () => Object | the replaces graphql-sequelize resolver completely |
 | subscriptions | HashObject[hookName -> (instance, args, req, gql) => {return instance}] | overrides default action of subscription hook event, this occurs after all sequelize hooks and must return a model. |
@@ -374,3 +374,7 @@ const schemas = [TaskModel];
 - subscriptions are now supported, defaults will hook into afterCreate, afterUpdate, afterDestroy on the sequelize models
 - added extend to options in createScheme for supporting unknown/future root variables 
 - set all functions to export to allow for anyone wanting to use the api directly
+
+1.2.0
+
+- changed before and after hooks on the model definition to include mutations, the arguments have been reduced to a single object - **[Breaking change from 1.1.0]**

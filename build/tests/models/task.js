@@ -10,6 +10,8 @@ var _sequelize2 = _interopRequireDefault(_sequelize);
 
 var _graphql = require("graphql");
 
+var _index = require("../../index");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 exports.default = {
@@ -28,16 +30,30 @@ exports.default = {
         }
       }
     },
+    mutationCheck: {
+      type: _sequelize2.default.STRING,
+      allowNull: true
+    },
     options: {
       type: _sequelize2.default.STRING,
       allowNull: true
     }
   },
-  before(findOptions, args, context, info) {
-    return findOptions;
+  before(req) {
+    if (req.type === _index.events.MUTATION_CREATE) {
+      return Object.assign({}, req.params, {
+        mutationCheck: "create"
+      });
+    }
+    if (req.type === _index.events.MUTATION_UPDATE) {
+      return Object.assign({}, req.params, {
+        mutationCheck: "update"
+      });
+    }
+    return req.params;
   },
-  after(result, args, context, info) {
-    return result;
+  after(req) {
+    return req.result;
   },
   override: {
     options: {
