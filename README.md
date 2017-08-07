@@ -382,3 +382,8 @@ const schemas = [TaskModel];
 1.2.1
 
 - fixed before, after hooks arguments for mutations 
+
+1.2.2
+
+- adding rootValue and context to the findOptions statement provided to sequelize. accessible from the hook beforeFind. 
+- updated base model before after hooks.

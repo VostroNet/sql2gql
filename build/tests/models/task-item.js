@@ -36,8 +36,20 @@ exports.default = {
     tableName: "task-items",
     classMethods: {},
     hooks: {
-      beforeFind(options) {
-        return undefined;
+      beforeFind() {
+        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        var _ref = options.rootValue || {},
+            filterName = _ref.filterName;
+
+        if (filterName) {
+          options.where = {
+            name: {
+              $ne: filterName
+            }
+          };
+        }
+        return options;
       },
       beforeCreate(instance, options, cb) {
         return undefined;

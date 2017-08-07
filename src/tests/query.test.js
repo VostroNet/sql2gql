@@ -53,4 +53,20 @@ describe("queries", () => {
     // console.log("result", result.data.models.Task[0]);
     return expect(result.data.models.Task[0].options.hidden).toEqual("invisibot");
   });
+
+  it("filter hooks", async() => {
+    const instance = await createSqlInstance();
+    const {Task, TaskItem} = instance.models;
+    const model = await Task.create({
+      name: "item1",
+    });
+    await TaskItem.create({
+      name: "filterMe",
+      taskId: model.get("id"),
+    });
+    const schema = await createSchema(instance);
+    const result = await graphql(schema, "query { models { Task { id, name, items {id} } } }", {filterName: "filterMe"});
+    validateResult(result);
+    return expect(result.data.models.Task[0].items.length).toEqual(0);
+  });
 });

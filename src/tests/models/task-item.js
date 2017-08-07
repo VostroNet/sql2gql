@@ -26,8 +26,16 @@ export default {
     tableName: "task-items",
     classMethods: {},
     hooks: {
-      beforeFind(options) {
-        return undefined;
+      beforeFind(options = {}) {
+        const {filterName} = (options.rootValue || {});
+        if (filterName) {
+          options.where = {
+            name: {
+              $ne: filterName,
+            },
+          };
+        }
+        return options;
       },
       beforeCreate(instance, options, cb) {
         return undefined;

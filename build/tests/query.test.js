@@ -140,5 +140,54 @@ describe("queries", function () {
       }
     }, _callee3, undefined);
   })));
+
+  it("filter hooks", _asyncToGenerator(regeneratorRuntime.mark(function _callee4() {
+    var instance, _instance$models, Task, TaskItem, model, schema, result;
+
+    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+      while (1) {
+        switch (_context4.prev = _context4.next) {
+          case 0:
+            _context4.next = 2;
+            return (0, _utils.createSqlInstance)();
+
+          case 2:
+            instance = _context4.sent;
+            _instance$models = instance.models, Task = _instance$models.Task, TaskItem = _instance$models.TaskItem;
+            _context4.next = 6;
+            return Task.create({
+              name: "item1"
+            });
+
+          case 6:
+            model = _context4.sent;
+            _context4.next = 9;
+            return TaskItem.create({
+              name: "filterMe",
+              taskId: model.get("id")
+            });
+
+          case 9:
+            _context4.next = 11;
+            return (0, _index.createSchema)(instance);
+
+          case 11:
+            schema = _context4.sent;
+            _context4.next = 14;
+            return (0, _graphql.graphql)(schema, "query { models { Task { id, name, items {id} } } }", { filterName: "filterMe" });
+
+          case 14:
+            result = _context4.sent;
+
+            (0, _utils.validateResult)(result);
+            return _context4.abrupt("return", (0, _expect2.default)(result.data.models.Task[0].items.length).toEqual(0));
+
+          case 17:
+          case "end":
+            return _context4.stop();
+        }
+      }
+    }, _callee4, undefined);
+  })));
 });
 //# sourceMappingURL=query.test.js.map

@@ -96,7 +96,7 @@ var generateTypes = exports.generateTypes = function () {
                         _context3.next = 6;
                         return Promise.all(Object.keys(models[modelName].relationships).map(function () {
                           var _ref4 = _asyncToGenerator(regeneratorRuntime.mark(function _callee2(relName) {
-                            var relationship, targetType, result, _createBeforeAfter, before, after, afterList;
+                            var relationship, targetType, result, _createBeforeAfter2, before, after, afterList;
 
                             return regeneratorRuntime.wrap(function _callee2$(_context2) {
                               while (1) {
@@ -138,7 +138,7 @@ var generateTypes = exports.generateTypes = function () {
                                     return _context2.abrupt("return");
 
                                   case 11:
-                                    _createBeforeAfter = createBeforeAfter(models[modelName], options), before = _createBeforeAfter.before, after = _createBeforeAfter.after, afterList = _createBeforeAfter.afterList;
+                                    _createBeforeAfter2 = createBeforeAfter(models[modelName], options), before = _createBeforeAfter2.before, after = _createBeforeAfter2.after, afterList = _createBeforeAfter2.afterList;
 
                                     if (targetType) {
                                       _context2.next = 14;
@@ -234,7 +234,7 @@ var createQueryLists = exports.createQueryLists = function () {
             _context6.next = 2;
             return Promise.all(modelNames.map(function () {
               var _ref6 = _asyncToGenerator(regeneratorRuntime.mark(function _callee5(modelName) {
-                var result, _createBeforeAfter2, before, after;
+                var result, _createBeforeAfter3, before, after;
 
                 return regeneratorRuntime.wrap(function _callee5$(_context5) {
                   while (1) {
@@ -270,7 +270,7 @@ var createQueryLists = exports.createQueryLists = function () {
 
                       case 8:
                         // let targetOpts = options[modelName];
-                        _createBeforeAfter2 = createBeforeAfter(models[modelName], options), before = _createBeforeAfter2.before, after = _createBeforeAfter2.after;
+                        _createBeforeAfter3 = createBeforeAfter(models[modelName], options), before = _createBeforeAfter3.before, after = _createBeforeAfter3.after;
 
                         fields[modelName] = {
                           type: new _graphql.GraphQLList(typeCollection[modelName]),
@@ -1243,8 +1243,6 @@ function createBaseType(modelName, models, options) {
   var fields = (0, _graphqlSequelize.attributeFields)(model, {
     exclude: Object.keys(modelDefinition.override || {}).concat(modelDefinition.ignoreFields || [])
   });
-
-  // console.log("createBaseType", fields.options);
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach(function (fieldName) {
       var fieldDefinition = modelDefinition.define[fieldName];
@@ -1259,15 +1257,15 @@ function createBaseType(modelName, models, options) {
       };
     });
   }
-  // console.log("createBaseType", fields);
   var resolve = void 0;
   if (modelDefinition.resolver) {
     resolve = modelDefinition.resolver;
   } else {
-    resolve = (0, _graphqlSequelize.resolver)(model, {
-      before: modelDefinition.before,
-      after: modelDefinition.after
-    });
+    var _createBeforeAfter = createBeforeAfter(model, options),
+        before = _createBeforeAfter.before,
+        after = _createBeforeAfter.after;
+
+    resolve = (0, _graphqlSequelize.resolver)(model, { before, after });
   }
   return new _graphql.GraphQLObjectType({
     name: modelName,
@@ -1317,6 +1315,9 @@ function createBeforeAfter(model, options) {
     });
   }
   var targetBefore = function targetBefore(findOptions, args, context, info) {
+    // console.log("weee", {context, rootValue: info.rootValue})
+    findOptions.context = context;
+    findOptions.rootValue = info.rootValue;
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
     }

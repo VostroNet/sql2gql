@@ -18,8 +18,8 @@ export const events = {
   "QUERY": 1,
   "MUTATION_CREATE": 2,
   "MUTATION_UPDATE": 3,
-  "MUTATION_DELETE": 4
-}
+  "MUTATION_DELETE": 4,
+};
 
 export function getModelDefinition(model) {
   return model.$sqlgql;
@@ -39,8 +39,6 @@ export function createBaseType(modelName, models, options) {
     exclude: Object.keys(modelDefinition.override || {})
       .concat(modelDefinition.ignoreFields || []),
   });
-
-  // console.log("createBaseType", fields.options);
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach((fieldName) => {
       const fieldDefinition = modelDefinition.define[fieldName];
@@ -55,15 +53,12 @@ export function createBaseType(modelName, models, options) {
       };
     });
   }
-  // console.log("createBaseType", fields);
   let resolve;
   if (modelDefinition.resolver) {
     resolve = modelDefinition.resolver;
   } else {
-    resolve = resolver(model, {
-      before: modelDefinition.before,
-      after: modelDefinition.after,
-    });
+    const {before, after} = createBeforeAfter(model, options);
+    resolve = resolver(model, {before, after});
   }
   return new GraphQLObjectType({
     name: modelName,
@@ -79,7 +74,7 @@ export function createBeforeAfter(model, options) {
     targetBeforeFuncs.push(function(params, args, context, info) {
       return options.before({
         params, args, context, info,
-         modelDefinition,
+        modelDefinition,
         type: events.QUERY
       });
     });
@@ -112,6 +107,9 @@ export function createBeforeAfter(model, options) {
     });
   }
   const targetBefore = (findOptions, args, context, info) => {
+    // console.log("weee", {context, rootValue: info.rootValue})
+    findOptions.context = context;
+    findOptions.rootValue = info.rootValue;
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
     }
