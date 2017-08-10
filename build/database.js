@@ -28,57 +28,80 @@ function connect(schemas, sqlInstance, options) {
 
 function createSubscriptionHook(schema, hookName, subscriptionName, pubsub) {
   var schemaOptions = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+  var hooks = schemaOptions.hooks;
 
-  return function () {
+  var schemaHook = hooks[hookName];
+  if (schemaHook) {
+    if (schemaHook.isSubHook) {
+      log.error("returning existing hook", { schemaHookName: schemaHook.hookName, hookName });
+      return schemaHook; //#12 return existing hook;
+    }
+  }
+  var f = function () {
     var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee(instance, options) {
-      var hooks, schemaHook;
       return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
           switch (_context.prev = _context.next) {
             case 0:
-              hooks = schemaOptions.hooks;
-              schemaHook = hooks[hookName];
-
               if (!schemaHook) {
-                _context.next = 12;
+                _context.next = 14;
                 break;
               }
 
-              _context.prev = 3;
-              _context.next = 6;
+              _context.prev = 1;
+
+              if (schemaHook.isSubHook) {
+                _context.next = 7;
+                break;
+              }
+
+              _context.next = 5;
               return schemaHook.apply(instance, [instance, options]);
 
-            case 6:
-              _context.next = 12;
+            case 5:
+              _context.next = 8;
               break;
 
+            case 7:
+              log.error("attempting to call itself. check for BUGFIX#12", { hookName });
+
             case 8:
-              _context.prev = 8;
-              _context.t0 = _context["catch"](3);
+              _context.next = 14;
+              break;
+
+            case 10:
+              _context.prev = 10;
+              _context.t0 = _context["catch"](1);
 
               log.debug(`${hookName} threw error, will not fire subscription event`, { err: _context.t0 });
               return _context.abrupt("return", undefined);
 
-            case 12:
+            case 14:
               return _context.abrupt("return", pubsub.publish(subscriptionName, { instance, options, hookName }));
 
-            case 13:
+            case 15:
             case "end":
               return _context.stop();
           }
         }
-      }, _callee, this, [[3, 8]]);
+      }, _callee, this, [[1, 10]]);
     }));
 
-    return function (_x2, _x3) {
+    return function f(_x2, _x3) {
       return _ref.apply(this, arguments);
     };
   }();
+  f.isSubHook = true; // check for BUGFIX#12
+  f.hookName = hookName;
+  f.schemaName = schema.name;
+  return f;
 }
 
 function loadSchemas(schemas, sqlInstance) {
   var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
+  // const schemas = s.slice(0);
+  // console.log("calling loadSchemas");
   sqlInstance.$sqlgql = {};
   var defaultAttr = options.defaultAttr,
       defaultModel = options.defaultModel;
@@ -98,7 +121,13 @@ function loadSchemas(schemas, sqlInstance) {
     });
   }
 
-  schemas.forEach(function (schema) {
+  var sc = schemas.map(function (s) {
+    //BUGFIX #12 - clone schema and hooks as we like to polute the object
+    var schema = Object.assign({}, s, {
+      options: Object.assign({}, s.options, {
+        hooks: Object.assign({}, (s.options || {}).hooks)
+      })
+    });
     var schemaOptions = Object.assign({}, defaultModel, schema.options);
     if (pubsub) {
       //TODO Restrict or Enable hooks per model
@@ -152,10 +181,13 @@ function loadSchemas(schemas, sqlInstance) {
         });
       }
     }
+    return schema;
   });
-  schemas.forEach(function (schema) {
+  sc.forEach(function (schema) {
     (schema.relationships || []).forEach(function (relationship) {
-      createRelationship(sqlInstance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({ as: relationship.name }, relationship.options));
+      createRelationship(sqlInstance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({
+        as: relationship.name
+      }, relationship.options));
     });
   });
 }

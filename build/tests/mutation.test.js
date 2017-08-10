@@ -10,6 +10,10 @@ var _graphql = require("graphql");
 
 var _index = require("../index");
 
+var _sequelize = require("sequelize");
+
+var _sequelize2 = _interopRequireDefault(_sequelize);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
@@ -500,6 +504,252 @@ describe("mutations", function () {
         }
       }
     }, _callee9, undefined);
+  })));
+  it("create - hook variables {rootValue}", _asyncToGenerator(regeneratorRuntime.mark(function _callee10() {
+    var taskModel, instance, schema, createMutation, createResult;
+    return regeneratorRuntime.wrap(function _callee10$(_context10) {
+      while (1) {
+        switch (_context10.prev = _context10.next) {
+          case 0:
+            _context10.t0 = {
+              name: {
+                type: _sequelize2.default.STRING,
+                allowNull: false
+              }
+            };
+            _context10.t1 = {
+              beforeFind(options) {
+                (0, _expect2.default)(options.rootValue).toExist("rootValue is missing");
+                (0, _expect2.default)(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+                return undefined;
+              },
+              beforeCreate(instance, options) {
+                (0, _expect2.default)(options.rootValue).toExist("rootValue is missing");
+                (0, _expect2.default)(options.rootValue.req).toEqual("exists", `beforeCreate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+                return undefined;
+              },
+              beforeUpdate(instance, options) {
+                (0, _expect2.default)(false).toEqual(true, "beforeUpdate");
+              },
+              beforeDestroy(instance, options) {
+                (0, _expect2.default)(false).toEqual(true, "beforeDestroy");
+              }
+            };
+            _context10.t2 = {
+              tableName: "tasks",
+              hooks: _context10.t1
+            };
+            taskModel = {
+              name: "Task",
+              define: _context10.t0,
+              options: _context10.t2
+            };
+            instance = new _sequelize2.default("database", "username", "password", {
+              dialect: "sqlite",
+              logging: false
+            });
+
+            (0, _index.connect)([taskModel], instance, {});
+            _context10.next = 8;
+            return instance.sync();
+
+          case 8:
+            _context10.next = 10;
+            return (0, _index.createSchema)(instance);
+
+          case 10:
+            schema = _context10.sent;
+            createMutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "CREATED"}) {
+            id, 
+            name
+          }
+        }
+      }
+    }`;
+            _context10.next = 14;
+            return (0, _graphql.graphql)(schema, createMutation, { req: "exists" });
+
+          case 14:
+            createResult = _context10.sent;
+
+            (0, _utils.validateResult)(createResult);
+
+          case 16:
+          case "end":
+            return _context10.stop();
+        }
+      }
+    }, _callee10, undefined);
+  })));
+  it("update - hook variables {rootValue}", _asyncToGenerator(regeneratorRuntime.mark(function _callee11() {
+    var taskModel, instance, Task, item, schema, updateMutation, updateResult;
+    return regeneratorRuntime.wrap(function _callee11$(_context11) {
+      while (1) {
+        switch (_context11.prev = _context11.next) {
+          case 0:
+            _context11.t0 = {
+              name: {
+                type: _sequelize2.default.STRING,
+                allowNull: false
+              }
+            };
+            _context11.t1 = {
+              beforeFind(options) {
+                (0, _expect2.default)(options.rootValue).toExist("rootValue is missing");
+                (0, _expect2.default)(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+                return undefined;
+              },
+              beforeUpdate(instance, options) {
+                (0, _expect2.default)(options.rootValue).toExist("rootValue is missing");
+                (0, _expect2.default)(options.rootValue.req).toEqual("exists", `beforeUpdate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+                return undefined;
+              },
+              beforeDestroy(instance, options) {
+                (0, _expect2.default)(false).toEqual(true, "beforeDestroy");
+              }
+            };
+            _context11.t2 = {
+              tableName: "tasks",
+              hooks: _context11.t1
+            };
+            taskModel = {
+              name: "Task",
+              define: _context11.t0,
+              options: _context11.t2
+            };
+            instance = new _sequelize2.default("database", "username", "password", {
+              dialect: "sqlite",
+              logging: false
+            });
+
+            (0, _index.connect)([taskModel], instance, {});
+            _context11.next = 8;
+            return instance.sync();
+
+          case 8:
+            Task = instance.models.Task;
+            _context11.next = 11;
+            return Task.create({
+              name: "item2"
+            });
+
+          case 11:
+            item = _context11.sent;
+            _context11.next = 14;
+            return (0, _index.createSchema)(instance);
+
+          case 14:
+            schema = _context11.sent;
+            updateMutation = `mutation {
+      models {
+        Task {
+          update(id: ${item.id}, input: {name: "UPDATED"}) {
+            id, 
+            name
+          }
+        }
+      }
+    }`;
+            _context11.next = 18;
+            return (0, _graphql.graphql)(schema, updateMutation, { req: "exists" });
+
+          case 18:
+            updateResult = _context11.sent;
+
+            (0, _utils.validateResult)(updateResult);
+
+          case 20:
+          case "end":
+            return _context11.stop();
+        }
+      }
+    }, _callee11, undefined);
+  })));
+  it("delete - hook variables {rootValue, context}", _asyncToGenerator(regeneratorRuntime.mark(function _callee12() {
+    var taskModel, instance, Task, item, schema, deleteMutation, deleteResult;
+    return regeneratorRuntime.wrap(function _callee12$(_context12) {
+      while (1) {
+        switch (_context12.prev = _context12.next) {
+          case 0:
+            _context12.t0 = {
+              name: {
+                type: _sequelize2.default.STRING,
+                allowNull: false
+              }
+            };
+            _context12.t1 = {
+              beforeFind(options) {
+                (0, _expect2.default)(options.rootValue).toExist("rootValue  is missing");
+                (0, _expect2.default)(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+                return undefined;
+              },
+              beforeUpdate(instance, options) {
+                (0, _expect2.default)(false).toEqual(true, "beforeUpdate");
+              },
+              beforeDestroy(instance, options) {
+                (0, _expect2.default)(options.rootValue).toExist();
+                (0, _expect2.default)(options.rootValue.req).toEqual("exists", `beforeDestroy: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+                return undefined;
+              }
+            };
+            _context12.t2 = {
+              tableName: "tasks",
+              hooks: _context12.t1
+            };
+            taskModel = {
+              name: "Task",
+              define: _context12.t0,
+              options: _context12.t2
+            };
+            instance = new _sequelize2.default("database", "username", "password", {
+              dialect: "sqlite",
+              logging: false
+            });
+
+            (0, _index.connect)([taskModel], instance, {});
+            _context12.next = 8;
+            return instance.sync();
+
+          case 8:
+            Task = instance.models.Task;
+            _context12.next = 11;
+            return Task.create({
+              name: "item2"
+            });
+
+          case 11:
+            item = _context12.sent;
+            _context12.next = 14;
+            return (0, _index.createSchema)(instance);
+
+          case 14:
+            schema = _context12.sent;
+            deleteMutation = `mutation {
+      models {
+        Task {
+          delete(id: ${item.id}) {
+            id
+          }
+        }
+      }
+    }`;
+            _context12.next = 18;
+            return (0, _graphql.graphql)(schema, deleteMutation, { req: "exists" });
+
+          case 18:
+            deleteResult = _context12.sent;
+
+            (0, _utils.validateResult)(deleteResult);
+
+          case 20:
+          case "end":
+            return _context12.stop();
+        }
+      }
+    }, _callee12, undefined);
   })));
 });
 //# sourceMappingURL=mutation.test.js.map

@@ -64,7 +64,7 @@ var generateTypes = exports.generateTypes = function () {
                 }, _callee, _this);
               }));
 
-              return function (_x4) {
+              return function (_x5) {
                 return _ref2.apply(this, arguments);
               };
             }()));
@@ -184,7 +184,7 @@ var generateTypes = exports.generateTypes = function () {
                             }, _callee2, _this);
                           }));
 
-                          return function (_x6) {
+                          return function (_x7) {
                             return _ref4.apply(this, arguments);
                           };
                         }()));
@@ -201,7 +201,7 @@ var generateTypes = exports.generateTypes = function () {
                 }, _callee3, _this);
               }));
 
-              return function (_x5) {
+              return function (_x6) {
                 return _ref3.apply(this, arguments);
               };
             }()));
@@ -217,7 +217,7 @@ var generateTypes = exports.generateTypes = function () {
     }, _callee4, this);
   }));
 
-  return function generateTypes(_x2, _x3) {
+  return function generateTypes(_x3, _x4) {
     return _ref.apply(this, arguments);
   };
 }();
@@ -289,7 +289,7 @@ var createQueryLists = exports.createQueryLists = function () {
                 }, _callee5, _this2);
               }));
 
-              return function (_x12) {
+              return function (_x13) {
                 return _ref6.apply(this, arguments);
               };
             }()));
@@ -305,7 +305,7 @@ var createQueryLists = exports.createQueryLists = function () {
     }, _callee6, this);
   }));
 
-  return function createQueryLists(_x8, _x9, _x10, _x11) {
+  return function createQueryLists(_x9, _x10, _x11, _x12) {
     return _ref5.apply(this, arguments);
   };
 }();
@@ -321,7 +321,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
             _context12.next = 2;
             return Promise.all(keys.map(function () {
               var _ref8 = _asyncToGenerator(regeneratorRuntime.mark(function _callee11(modelName) {
-                var result, fields, requiredInput, optionalInput, mutationFields, modelDefinition, createFunc, create, updateFunc, update, del, updateAll, deleteAll, _result, _result2, _result3, _result4, _result5, _ref12, mutations;
+                var result, fields, requiredInput, optionalInput, mutationFields, modelDefinition, createFunc, create, updateFunc, deleteFunc, _createBeforeAfter4, before, afterUpdate, afterUpdateList, _createBeforeAfter5, afterDelete, afterDeleteList, update, del, updateAll, deleteAll, _result, _result2, _result3, _result4, _result5, _ref12, mutations;
 
                 return regeneratorRuntime.wrap(function _callee11$(_context11) {
                   while (1) {
@@ -401,7 +401,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                   case 6:
                                     _context7.next = 8;
-                                    return models[modelName].create(input, { rootValue: { context, args } });
+                                    return models[modelName].create(input, { context, rootValue: Object.assign({}, info.rootValue, { args }) });
 
                                   case 8:
                                     model = _context7.sent;
@@ -432,7 +432,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                             }, _callee7, _this3);
                           }));
 
-                          return function createFunc(_x20, _x21, _x22, _x23) {
+                          return function createFunc(_x21, _x22, _x23, _x24) {
                             return _ref9.apply(this, arguments);
                           };
                         }();
@@ -482,7 +482,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                   case 6:
                                     _context8.next = 8;
-                                    return model.update(input, { rootValue: { context, args } });
+                                    return model.update(input, { context, rootValue: Object.assign({}, info.rootValue, { args }) });
 
                                   case 8:
                                     model = _context8.sent;
@@ -513,236 +513,235 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                             }, _callee8, _this3);
                           }));
 
-                          return function updateFunc(_x24, _x25, _x26, _x27) {
+                          return function updateFunc(_x25, _x26, _x27, _x28) {
                             return _ref10.apply(this, arguments);
                           };
                         }();
 
+                        deleteFunc = function () {
+                          var _ref11 = _asyncToGenerator(regeneratorRuntime.mark(function _callee9(model, args, context, info) {
+                            return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                              while (1) {
+                                switch (_context9.prev = _context9.next) {
+                                  case 0:
+                                    if (!modelDefinition.before) {
+                                      _context9.next = 4;
+                                      break;
+                                    }
+
+                                    _context9.next = 3;
+                                    return modelDefinition.before({
+                                      params: model, args, context, info,
+                                      model, modelDefinition,
+                                      type: events.MUTATION_DELETE
+                                    });
+
+                                  case 3:
+                                    model = _context9.sent;
+
+                                  case 4:
+                                    _context9.next = 6;
+                                    return model.destroy({ context, rootValue: Object.assign({}, info.rootValue, { args }) });
+
+                                  case 6:
+                                    if (!modelDefinition.after) {
+                                      _context9.next = 10;
+                                      break;
+                                    }
+
+                                    _context9.next = 9;
+                                    return modelDefinition.after({
+                                      result: model, args, context, info,
+                                      modelDefinition,
+                                      type: events.MUTATION_DELETE
+                                    });
+
+                                  case 9:
+                                    return _context9.abrupt("return", _context9.sent);
+
+                                  case 10:
+                                    return _context9.abrupt("return", model);
+
+                                  case 11:
+                                  case "end":
+                                    return _context9.stop();
+                                }
+                              }
+                            }, _callee9, _this3);
+                          }));
+
+                          return function deleteFunc(_x29, _x30, _x31, _x32) {
+                            return _ref11.apply(this, arguments);
+                          };
+                        }();
+
+                        // const {before, after, afterList} = createBeforeAfter(models[modelName], options, {after: [updateFunc]});
+
+
+                        _createBeforeAfter4 = createBeforeAfter(models[modelName], options, { after: [updateFunc] }), before = _createBeforeAfter4.before, afterUpdate = _createBeforeAfter4.after, afterUpdateList = _createBeforeAfter4.afterList;
+                        _createBeforeAfter5 = createBeforeAfter(models[modelName], options, { after: [deleteFunc] }), afterDelete = _createBeforeAfter5.after, afterDeleteList = _createBeforeAfter5.afterList;
                         update = {
                           type: typeCollection[modelName],
                           args: Object.assign((0, _graphqlSequelize.defaultArgs)(models[modelName]), { input: { type: optionalInput } }),
                           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-                            after: updateFunc
+                            before: before,
+                            after: afterUpdate
                           })
                         };
                         del = {
                           type: typeCollection[modelName],
                           args: (0, _graphqlSequelize.defaultArgs)(models[modelName]),
                           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-                            after: function () {
-                              var _ref11 = _asyncToGenerator(regeneratorRuntime.mark(function _callee9(model, args, context, info) {
-                                return regeneratorRuntime.wrap(function _callee9$(_context9) {
-                                  while (1) {
-                                    switch (_context9.prev = _context9.next) {
-                                      case 0:
-                                        if (!modelDefinition.before) {
-                                          _context9.next = 4;
-                                          break;
-                                        }
-
-                                        _context9.next = 3;
-                                        return modelDefinition.before({
-                                          params: model, args, context, info,
-                                          model, modelDefinition,
-                                          type: events.MUTATION_DELETE
-                                        });
-
-                                      case 3:
-                                        model = _context9.sent;
-
-                                      case 4:
-                                        _context9.next = 6;
-                                        return model.destroy({ rootValue: { context, args } });
-
-                                      case 6:
-                                        if (!modelDefinition.after) {
-                                          _context9.next = 10;
-                                          break;
-                                        }
-
-                                        _context9.next = 9;
-                                        return modelDefinition.after({
-                                          result: model, args, context, info,
-                                          modelDefinition,
-                                          type: events.MUTATION_DELETE
-                                        });
-
-                                      case 9:
-                                        return _context9.abrupt("return", _context9.sent);
-
-                                      case 10:
-                                        return _context9.abrupt("return", model);
-
-                                      case 11:
-                                      case "end":
-                                        return _context9.stop();
-                                    }
-                                  }
-                                }, _callee9, this);
-                              }));
-
-                              function after(_x28, _x29, _x30, _x31) {
-                                return _ref11.apply(this, arguments);
-                              }
-
-                              return after;
-                            }()
+                            before: before,
+                            after: afterDelete
                           })
                         };
                         updateAll = {
                           type: new _graphql.GraphQLList(typeCollection[modelName]),
                           args: Object.assign((0, _graphqlSequelize.defaultListArgs)(models[modelName]), { input: { type: optionalInput } }),
                           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-                            after: function after(items, args, context, gql) {
-                              return Promise.all(items.map(function (item) {
-                                return updateFunc(item, args, context, gql);
-                              }));
-                            }
+                            before: before,
+                            after: afterUpdateList
                           })
                         };
                         deleteAll = {
                           type: new _graphql.GraphQLList(typeCollection[modelName]),
                           args: (0, _graphqlSequelize.defaultListArgs)(models[modelName]),
                           resolve: (0, _graphqlSequelize.resolver)(models[modelName], {
-                            after: function after(items, args, context, gql) {
-                              return Promise.all(items.map(function (item) {
-                                return item.destroy({ rootValue: { context, args } }).then(function () {
-                                  return item;
-                                });
-                              })); //TODO: needs to return id with boolean value
-                            }
+                            before: before,
+                            after: afterDeleteList
                           })
                         };
 
                         if (!options.permission) {
-                          _context11.next = 64;
+                          _context11.next = 67;
                           break;
                         }
 
                         if (!options.permission.mutationCreate) {
-                          _context11.next = 29;
+                          _context11.next = 32;
                           break;
                         }
 
-                        _context11.next = 25;
+                        _context11.next = 28;
                         return options.permission.mutationCreate(modelName, options.permission.options);
 
-                      case 25:
+                      case 28:
                         _result = _context11.sent;
 
                         if (_result) {
                           mutationFields.create = create;
                         }
-                        _context11.next = 30;
+                        _context11.next = 33;
                         break;
 
-                      case 29:
+                      case 32:
                         mutationFields.create = create;
 
-                      case 30:
+                      case 33:
                         if (!options.permission.mutationUpdate) {
-                          _context11.next = 37;
+                          _context11.next = 40;
                           break;
                         }
 
-                        _context11.next = 33;
+                        _context11.next = 36;
                         return options.permission.mutationUpdate(modelName, options.permission.options);
 
-                      case 33:
+                      case 36:
                         _result2 = _context11.sent;
 
                         if (_result2) {
                           mutationFields.update = update;
                         }
-                        _context11.next = 38;
+                        _context11.next = 41;
                         break;
 
-                      case 37:
+                      case 40:
                         mutationFields.update = update;
 
-                      case 38:
+                      case 41:
                         if (!options.permission.mutationDelete) {
-                          _context11.next = 45;
+                          _context11.next = 48;
                           break;
                         }
 
-                        _context11.next = 41;
+                        _context11.next = 44;
                         return options.permission.mutationDelete(modelName, options.permission.options);
 
-                      case 41:
+                      case 44:
                         _result3 = _context11.sent;
 
                         if (_result3) {
                           mutationFields.delete = del;
                         }
-                        _context11.next = 46;
+                        _context11.next = 49;
                         break;
 
-                      case 45:
+                      case 48:
                         mutationFields.delete = del;
 
-                      case 46:
+                      case 49:
                         if (!options.permission.mutationUpdateAll) {
-                          _context11.next = 53;
+                          _context11.next = 56;
                           break;
                         }
 
-                        _context11.next = 49;
+                        _context11.next = 52;
                         return options.permission.mutationUpdateAll(modelName, options.permission.options);
 
-                      case 49:
+                      case 52:
                         _result4 = _context11.sent;
 
                         if (_result4) {
                           mutationFields.updateAll = updateAll;
                         }
-                        _context11.next = 54;
+                        _context11.next = 57;
                         break;
 
-                      case 53:
+                      case 56:
                         mutationFields.updateAll = updateAll;
 
-                      case 54:
+                      case 57:
                         if (!options.permission.mutationDeleteAll) {
-                          _context11.next = 61;
+                          _context11.next = 64;
                           break;
                         }
 
-                        _context11.next = 57;
+                        _context11.next = 60;
                         return options.permission.mutationDeleteAll(modelName, options.permission.options);
 
-                      case 57:
+                      case 60:
                         _result5 = _context11.sent;
 
                         if (_result5) {
                           mutationFields.deleteAll = deleteAll;
                         }
-                        _context11.next = 62;
-                        break;
-
-                      case 61:
-                        mutationFields.deleteAll = deleteAll;
-
-                      case 62:
-                        _context11.next = 69;
+                        _context11.next = 65;
                         break;
 
                       case 64:
+                        mutationFields.deleteAll = deleteAll;
+
+                      case 65:
+                        _context11.next = 72;
+                        break;
+
+                      case 67:
                         mutationFields.create = create;
                         mutationFields.update = update;
                         mutationFields.delete = del;
                         mutationFields.updateAll = updateAll;
                         mutationFields.deleteAll = deleteAll;
 
-                      case 69:
+                      case 72:
                         _ref12 = (getModelDefinition(models[modelName]).expose || {}).classMethods || {}, mutations = _ref12.mutations;
 
                         if (!mutations) {
-                          _context11.next = 73;
+                          _context11.next = 76;
                           break;
                         }
 
-                        _context11.next = 73;
+                        _context11.next = 76;
                         return Promise.all(Object.keys(mutations).map(function () {
                           var _ref13 = _asyncToGenerator(regeneratorRuntime.mark(function _callee10(methodName) {
                             var _mutations$methodName, type, args, _result6, outputType;
@@ -797,14 +796,14 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                             }, _callee10, _this3);
                           }));
 
-                          return function (_x32) {
+                          return function (_x33) {
                             return _ref13.apply(this, arguments);
                           };
                         }()));
 
-                      case 73:
+                      case 76:
                         if (!(Object.keys(mutationFields).length > 0)) {
-                          _context11.next = 76;
+                          _context11.next = 79;
                           break;
                         }
 
@@ -820,7 +819,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                           }
                         };
 
-                      case 76:
+                      case 79:
                       case "end":
                         return _context11.stop();
                     }
@@ -828,7 +827,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                 }, _callee11, _this3);
               }));
 
-              return function (_x19) {
+              return function (_x20) {
                 return _ref8.apply(this, arguments);
               };
             }()));
@@ -844,7 +843,7 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
     }, _callee12, this);
   }));
 
-  return function createMutationFunctions(_x14, _x15, _x16, _x17, _x18) {
+  return function createMutationFunctions(_x15, _x16, _x17, _x18, _x19) {
     return _ref7.apply(this, arguments);
   };
 }();
@@ -940,7 +939,7 @@ var createQueryFunctions = exports.createQueryFunctions = function () {
                             }, _callee13, _this4);
                           }));
 
-                          return function (_x38) {
+                          return function (_x39) {
                             return _ref17.apply(this, arguments);
                           };
                         }()));
@@ -971,7 +970,7 @@ var createQueryFunctions = exports.createQueryFunctions = function () {
                 }, _callee14, _this4);
               }));
 
-              return function (_x37) {
+              return function (_x38) {
                 return _ref15.apply(this, arguments);
               };
             }()));
@@ -987,7 +986,7 @@ var createQueryFunctions = exports.createQueryFunctions = function () {
     }, _callee15, this);
   }));
 
-  return function createQueryFunctions(_x33, _x34, _x35, _x36) {
+  return function createQueryFunctions(_x34, _x35, _x36, _x37) {
     return _ref14.apply(this, arguments);
   };
 }();
@@ -1049,7 +1048,7 @@ var createSubscriptionFunctions = exports.createSubscriptionFunctions = function
                 }, _callee16, _this5);
               }));
 
-              return function (_x44) {
+              return function (_x45) {
                 return _ref19.apply(this, arguments);
               };
             }()));
@@ -1065,7 +1064,7 @@ var createSubscriptionFunctions = exports.createSubscriptionFunctions = function
     }, _callee17, this);
   }));
 
-  return function createSubscriptionFunctions(_x39, _x40, _x41, _x42, _x43) {
+  return function createSubscriptionFunctions(_x40, _x41, _x42, _x43, _x44) {
     return _ref18.apply(this, arguments);
   };
 }();
@@ -1202,7 +1201,7 @@ var createSchema = exports.createSchema = function () {
     }, _callee18, this);
   }));
 
-  return function createSchema(_x46) {
+  return function createSchema(_x47) {
     return _ref20.apply(this, arguments);
   };
 }();
@@ -1275,8 +1274,13 @@ function createBaseType(modelName, models, options) {
   });
 }
 function createBeforeAfter(model, options) {
+  var hooks = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
   var targetBeforeFuncs = [],
       targetAfterFuncs = [];
+  if (hooks.after) {
+    targetAfterFuncs = targetAfterFuncs.concat(hooks.after);
+  }
   var modelDefinition = getModelDefinition(model);
   if (options.before) {
     targetBeforeFuncs.push(function (params, args, context, info) {
@@ -1313,6 +1317,9 @@ function createBeforeAfter(model, options) {
         type: events.QUERY
       });
     });
+  }
+  if (hooks.before) {
+    targetBeforeFuncs = targetBeforeFuncs.concat(hooks.before);
   }
   var targetBefore = function targetBefore(findOptions, args, context, info) {
     // console.log("weee", {context, rootValue: info.rootValue})
