@@ -1,8 +1,8 @@
 import expect from "expect";
 import {createSqlInstance, validateResult} from "./utils";
 import {graphql} from "graphql";
-import {createSchema} from "../index";
-
+import {createSchema, connect} from "../index";
+import Sequelize from "sequelize";
 
 describe("mutations", () => {
   it("create", async() => {
@@ -225,5 +225,163 @@ describe("mutations", () => {
     const result = await graphql(schema, mutation);
     validateResult(result);
     return expect(result.data.models.Task.update.mutationCheck).toEqual("update");
+  });
+  it("create - hook variables {rootValue}", async() => {
+    const taskModel = {
+      name: "Task",
+      define: {
+        name: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+      },
+      options: {
+        tableName: "tasks",
+        hooks: {
+          beforeFind(options) {
+            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            return undefined;
+          },
+          beforeCreate(instance, options) {
+            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue.req).toEqual("exists", `beforeCreate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            return undefined;
+          },
+          beforeUpdate(instance, options) {
+            expect(false).toEqual(true, "beforeUpdate");
+          },
+          beforeDestroy(instance, options) {
+            expect(false).toEqual(true, "beforeDestroy");
+          },
+        },
+      },
+    };
+
+    let instance = new Sequelize("database", "username", "password", {
+      dialect: "sqlite",
+      logging: false,
+    });
+    connect([taskModel], instance, {});
+    await instance.sync();
+    const schema = await createSchema(instance);
+
+    const createMutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "CREATED"}) {
+            id, 
+            name
+          }
+        }
+      }
+    }`;
+    const createResult = await graphql(schema, createMutation, {req: "exists"});
+    validateResult(createResult);
+  });
+  it("update - hook variables {rootValue}", async() => {
+    const taskModel = {
+      name: "Task",
+      define: {
+        name: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+      },
+      options: {
+        tableName: "tasks",
+        hooks: {
+          beforeFind(options) {
+            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            return undefined;
+          },
+          beforeUpdate(instance, options) {
+            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue.req).toEqual("exists", `beforeUpdate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            return undefined;
+          },
+          beforeDestroy(instance, options) {
+            expect(false).toEqual(true, "beforeDestroy");
+          },
+        },
+      },
+    };
+
+    let instance = new Sequelize("database", "username", "password", {
+      dialect: "sqlite",
+      logging: false,
+    });
+    connect([taskModel], instance, {});
+    await instance.sync();
+    const {Task} = instance.models;
+    const item = await Task.create({
+      name: "item2",
+    });
+    const schema = await createSchema(instance);
+    const updateMutation = `mutation {
+      models {
+        Task {
+          update(id: ${item.id}, input: {name: "UPDATED"}) {
+            id, 
+            name
+          }
+        }
+      }
+    }`;
+    const updateResult = await graphql(schema, updateMutation, {req: "exists"});
+    validateResult(updateResult);
+  });
+  it("delete - hook variables {rootValue, context}", async() => {
+    const taskModel = {
+      name: "Task",
+      define: {
+        name: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+      },
+      options: {
+        tableName: "tasks",
+        hooks: {
+          beforeFind(options) {
+            expect(options.rootValue).toExist("rootValue  is missing");
+            expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            return undefined;
+          },
+          beforeUpdate(instance, options) {
+            expect(false).toEqual(true, "beforeUpdate");
+          },
+          beforeDestroy(instance, options) {
+            expect(options.rootValue).toExist();
+            expect(options.rootValue.req).toEqual("exists", `beforeDestroy: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            return undefined;
+          },
+        },
+      },
+    };
+
+    let instance = new Sequelize("database", "username", "password", {
+      dialect: "sqlite",
+      logging: false,
+    });
+    connect([taskModel], instance, {});
+    await instance.sync();
+    const {Task} = instance.models;
+    const item = await Task.create({
+      name: "item2",
+    });
+    const schema = await createSchema(instance);
+    const deleteMutation = `mutation {
+      models {
+        Task {
+          delete(id: ${item.id}) {
+            id
+          }
+        }
+      }
+    }`;
+    const deleteResult = await graphql(schema, deleteMutation, {req: "exists"});
+    validateResult(deleteResult);
   });
 });
