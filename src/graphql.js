@@ -67,8 +67,11 @@ export function createBaseType(modelName, models, options) {
     resolve: resolve,
   });
 }
-export function createBeforeAfter(model, options) {
+export function createBeforeAfter(model, options, hooks = {}) {
   let targetBeforeFuncs = [], targetAfterFuncs = [];
+  if (hooks.after) {
+    targetAfterFuncs = targetAfterFuncs.concat(hooks.after);
+  }
   const modelDefinition = getModelDefinition(model);
   if (options.before) {
     targetBeforeFuncs.push(function(params, args, context, info) {
@@ -105,6 +108,9 @@ export function createBeforeAfter(model, options) {
         type: events.QUERY
       });
     });
+  }
+  if(hooks.before) {
+    targetBeforeFuncs = targetBeforeFuncs.concat(hooks.before);
   }
   const targetBefore = (findOptions, args, context, info) => {
     // console.log("weee", {context, rootValue: info.rootValue})
@@ -313,6 +319,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
     let optionalInput = createMutationInput(modelName, models[modelName], fields, "Optional", true);
     let mutationFields = {};
 
+
     const modelDefinition = getModelDefinition(models[modelName]);
     const createFunc = async(_, args, context, info) => {
       let input = args.input;
@@ -324,14 +331,14 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
           return data;
         }, input);
       }
-      if(modelDefinition.before) {
+      if (modelDefinition.before) {
         input = await modelDefinition.before({
           params: input, args, context, info,
           modelDefinition,
           type: events.MUTATION_CREATE
         });
       }
-      let model = await models[modelName].create(input, {rootValue: {context, args}})
+      let model = await models[modelName].create(input, {context, rootValue: Object.assign({}, info.rootValue, {args})});
       if (modelDefinition.after) {
         return await modelDefinition.after({
           result: model, args, context, info,
@@ -367,64 +374,68 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
           type: events.MUTATION_UPDATE
         });
       }
-      model = await model.update(input, {rootValue: {context, args}});
+      model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args})});
       if (modelDefinition.after) {
         return await modelDefinition.after({
-          result: model, args, context, info, 
+          result: model, args, context, info,
           modelDefinition,
           type: events.MUTATION_UPDATE
         });
       }
       return model;
     };
+    const deleteFunc = async(model, args, context, info) => {
+      if (modelDefinition.before) {
+        model = await modelDefinition.before({
+          params: model, args, context, info,
+          model, modelDefinition,
+          type: events.MUTATION_DELETE
+        });
+      }
+      await model.destroy({context, rootValue: Object.assign({}, info.rootValue, {args})});
+      if (modelDefinition.after) {
+        return await modelDefinition.after({
+          result: model, args, context, info,
+          modelDefinition,
+          type: events.MUTATION_DELETE
+        });
+      }
+      return model;
+    };
 
+    // const {before, after, afterList} = createBeforeAfter(models[modelName], options, {after: [updateFunc]});
+    const {before, after: afterUpdate, afterList: afterUpdateList} = createBeforeAfter(models[modelName], options, {after: [updateFunc]});
+    const {after: afterDelete, afterList: afterDeleteList} = createBeforeAfter(models[modelName], options, {after: [deleteFunc]});
     let update = {
       type: typeCollection[modelName],
       args: Object.assign(defaultArgs(models[modelName]), {input: {type: optionalInput}}),
       resolve: resolver(models[modelName], {
-        after: updateFunc,
+        before: before,
+        after: afterUpdate,
       }),
     };
     let del = {
       type: typeCollection[modelName],
       args: defaultArgs(models[modelName]),
       resolve: resolver(models[modelName], {
-        after: async function(model, args, context, info) {
-          if (modelDefinition.before) {
-            model = await modelDefinition.before({
-              params: model, args, context, info,
-              model, modelDefinition,
-              type: events.MUTATION_DELETE
-            });
-          }
-          await model.destroy({rootValue: {context, args}})
-          if (modelDefinition.after) {
-            return await modelDefinition.after({
-              result: model, args, context, info, 
-              modelDefinition,
-              type: events.MUTATION_DELETE
-            });
-          }
-          return model;
-        },
+        before: before,
+        after: afterDelete,
       }),
     };
     let updateAll = {
       type: new GraphQLList(typeCollection[modelName]),
       args: Object.assign(defaultListArgs(models[modelName]), {input: {type: optionalInput}}),
       resolve: resolver(models[modelName], {
-        after: (items, args, context, gql) => {
-          return Promise.all(items.map((item) => updateFunc(item, args, context, gql)));
-        },
+        before: before,
+        after: afterUpdateList,
       }),
     };
     let deleteAll = {
       type: new GraphQLList(typeCollection[modelName]),
       args: defaultListArgs(models[modelName]),
       resolve: resolver(models[modelName], {
-        after: function(items, args, context, gql) {
-          return Promise.all(items.map((item) => item.destroy({rootValue: {context, args}}).then(() => item))); //TODO: needs to return id with boolean value
-        },
+        before: before,
+        after: afterDeleteList,
       }),
     };
 
