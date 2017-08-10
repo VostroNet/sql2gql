@@ -10,12 +10,22 @@ export function connect(schemas, sqlInstance, options) {
 
 
 export function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions = {}) {
-  return async function(instance, options) {
-    const {hooks} = schemaOptions;
-    const schemaHook = hooks[hookName];
+  const {hooks} = schemaOptions;
+  const schemaHook = hooks[hookName];
+  if (schemaHook) {
+    if (schemaHook.isSubHook) {
+      log.error("returning existing hook", {schemaHookName: schemaHook.hookName, hookName});
+      return schemaHook; //#12 return existing hook;
+    }
+  }
+  const f = async function(instance, options) {
     if (schemaHook) {
       try {
-        await schemaHook.apply(instance, [instance, options]);
+        if (!schemaHook.isSubHook) {
+          await schemaHook.apply(instance, [instance, options]);
+        } else {
+          log.error("attempting to call itself. check for BUGFIX#12", {hookName});
+        }
       } catch (err) {
         log.debug(`${hookName} threw error, will not fire subscription event`, {err});
         return undefined;
@@ -23,9 +33,15 @@ export function createSubscriptionHook(schema, hookName, subscriptionName, pubsu
     }
     return pubsub.publish(subscriptionName, {instance, options, hookName});
   };
+  f.isSubHook = true;// check for BUGFIX#12
+  f.hookName = hookName;
+  f.schemaName = schema.name;
+  return f;
 }
 
 export function loadSchemas(schemas, sqlInstance, options = {}) {
+  // const schemas = s.slice(0);
+  // console.log("calling loadSchemas");
   sqlInstance.$sqlgql = {};
   const {defaultAttr, defaultModel} = options;
   let pubsub, subscriptionHooks;
@@ -43,8 +59,13 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
   }
 
 
-
-  schemas.forEach((schema) => {
+  const sc = schemas.map((s) => {
+    //BUGFIX #12 - clone schema and hooks as we like to polute the object
+    const schema = Object.assign({}, s, {
+      options: Object.assign({}, s.options, {
+        hooks: Object.assign({}, (s.options || {}).hooks),
+      }),
+    });
     let schemaOptions = Object.assign({}, defaultModel, schema.options);
     if (pubsub) { //TODO Restrict or Enable hooks per model
       schema.$subscriptions = subscriptionHooks.reduce((data, hookName) => {
@@ -93,10 +114,13 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
         });
       }
     }
+    return schema;
   });
-  schemas.forEach((schema) => {
+  sc.forEach((schema) => {
     (schema.relationships || []).forEach((relationship) => {
-      createRelationship(sqlInstance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({as: relationship.name}, relationship.options));
+      createRelationship(sqlInstance, schema.name, relationship.model, relationship.name, relationship.type, Object.assign({
+        as: relationship.name,
+      }, relationship.options));
     });
   });
 }

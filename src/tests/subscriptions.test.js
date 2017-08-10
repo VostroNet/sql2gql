@@ -1,10 +1,13 @@
 import expect from "expect";
 import {createSqlInstance, validateResult} from "./utils";
 // import {graphql, execute, subscribe} from "graphql";
-import {createSchema} from "../index";
+import {createSchema, connect} from "../index";
+
+import Sequelize from "sequelize";
 
 import {PubSub, SubscriptionManager} from "graphql-subscriptions";
 
+import {graphql} from "graphql";
 
 describe("subscriptions", () => {
   it("afterCreate", async() => {
@@ -96,4 +99,81 @@ describe("subscriptions", () => {
       task.destroy();
     });
   });
+  it("BUGFIX#12: create testing for recursive calls on after functions", async() => {
+    let modelTimeout;
+    let modelCount = 0;
+    const taskModel = {
+      name: "Task",
+      define: {
+        name: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+      },
+      before({params}) {
+        // return params;
+        return new Promise((resolve, reject) => {
+          try {
+            modelCount++;
+            expect(modelCount).toEqual(1);
+            if (modelTimeout) {
+              clearTimeout(modelTimeout);
+            }
+            modelTimeout = setTimeout(() => {
+              return resolve(params);
+            }, 100);
+            return undefined;
+          } catch (err) {
+            console.log("errr", err);
+            return reject(err);
+          }
+        });
+      },
+      options: {
+        tableName: "tasks",
+        hooks: {},
+      },
+    };
+    const pubsub = new PubSub();
+    let instance = new Sequelize("database", "username", "password", {
+      dialect: "sqlite",
+      logging: false,
+    });
+    const models = [taskModel];
+    connect(models, instance, {subscriptions: {pubsub}});
+    await instance.sync();
+    const schema = await createSchema(instance);
+    const subManager = new SubscriptionManager({pubsub, schema});
+    const query = "subscription X { afterCreateTask {id} }";
+    await new Promise(async(resolve, reject) => {
+      subManager.subscribe({
+        query,
+        operationName: "X",
+        callback(args, result) {
+          try {
+            validateResult(result);
+            const {data: {afterCreateTask}} = result;
+            expect(afterCreateTask.id).toEqual(1);
+            // expect(subCount).toEqual(1);
+            return resolve();
+          } catch (err) {
+            return reject(err);
+          }
+        },
+      });
+      const mutation = `mutation {
+        models {
+          Task {
+            create(input: {name: "item1"}) {
+              id, 
+              name
+            }
+          }
+        }
+      }`;
+      const mutationResult = await graphql(schema, mutation);
+      validateResult(mutationResult);
+    });
+  });
+
 });
