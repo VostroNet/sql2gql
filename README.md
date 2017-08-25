@@ -387,3 +387,7 @@ const schemas = [TaskModel];
 
 - adding rootValue and context to the findOptions statement provided to sequelize. accessible from the hook beforeFind. 
 - updated base model before after hooks.
+
+1.2.4
+
+- updated override to allow scalar and enum types to be set as the field type directly 

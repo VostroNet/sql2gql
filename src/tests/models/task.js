@@ -36,6 +36,10 @@ export default {
       type: Sequelize.STRING,
       allowNull: true,
     },
+    options2: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
   },
   before(req) {
     if (req.type === events.MUTATION_CREATE) {
@@ -63,6 +67,15 @@ export default {
       },
       output(result, args, context, info) {
         return JSON.parse(result.get("options"));
+      },
+      input(field, args, context, info) {
+        return JSON.stringify(field);
+      },
+    },
+    options2: {
+      type: GraphQLString,
+      output(result, args, context, info) {
+        return JSON.parse(result.get("options2"));
       },
       input(field, args, context, info) {
         return JSON.stringify(field);

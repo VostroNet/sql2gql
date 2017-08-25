@@ -37,6 +37,10 @@ exports.default = {
     options: {
       type: _sequelize2.default.STRING,
       allowNull: true
+    },
+    options2: {
+      type: _sequelize2.default.STRING,
+      allowNull: true
     }
   },
   before(req) {
@@ -65,6 +69,15 @@ exports.default = {
       },
       output(result, args, context, info) {
         return JSON.parse(result.get("options"));
+      },
+      input(field, args, context, info) {
+        return JSON.stringify(field);
+      }
+    },
+    options2: {
+      type: _graphql.GraphQLString,
+      output(result, args, context, info) {
+        return JSON.parse(result.get("options2"));
       },
       input(field, args, context, info) {
         return JSON.stringify(field);

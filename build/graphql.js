@@ -1246,7 +1246,12 @@ function createBaseType(modelName, models, options) {
     Object.keys(modelDefinition.override).forEach(function (fieldName) {
       var fieldDefinition = modelDefinition.define[fieldName];
       var overrideFieldDefinition = modelDefinition.override[fieldName];
-      var type = new _graphql.GraphQLObjectType(overrideFieldDefinition.type);
+      var type = void 0;
+      if (!(overrideFieldDefinition.type instanceof _graphql.GraphQLObjectType) && !(overrideFieldDefinition.type instanceof _graphql.GraphQLScalarType) && !(overrideFieldDefinition.type instanceof _graphql.GraphQLEnumType)) {
+        type = new _graphql.GraphQLObjectType(overrideFieldDefinition.type);
+      } else {
+        type = overrideFieldDefinition.type;
+      }
       if (!fieldDefinition.allowNull) {
         type = new _graphql.GraphQLNonNull(type);
       }
@@ -1387,10 +1392,16 @@ function createMutationInput(modelName, model, gqlFields, prefix) {
             if (allOptional) {
               name = `Optional${name}`;
             }
-            var inputType = new _graphql.GraphQLInputObjectType({
-              name,
-              fields: type.fields
-            });
+            var inputType = void 0;
+            if (!(overrideFieldDefinition.type instanceof _graphql.GraphQLInputObjectType) && !(overrideFieldDefinition.type instanceof _graphql.GraphQLScalarType) && !(overrideFieldDefinition.type instanceof _graphql.GraphQLEnumType)) {
+              inputType = new _graphql.GraphQLInputObjectType({
+                name,
+                fields: type.fields
+              });
+            } else {
+              inputType = type;
+            }
+
             if (allowNull || allOptional) {
               gqlField = { type: inputType };
             } else {

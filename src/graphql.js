@@ -2,10 +2,13 @@
 import {
   GraphQLSchema,
   GraphQLObjectType,
+  GraphQLScalarType,
+  GraphQLEnumType,
   GraphQLList,
   GraphQLInputObjectType,
   GraphQLNonNull,
 } from "graphql";
+
 import {
   resolver,
   defaultListArgs,
@@ -43,7 +46,14 @@ export function createBaseType(modelName, models, options) {
     Object.keys(modelDefinition.override).forEach((fieldName) => {
       const fieldDefinition = modelDefinition.define[fieldName];
       const overrideFieldDefinition = modelDefinition.override[fieldName];
-      let type = new GraphQLObjectType(overrideFieldDefinition.type);
+      let type;
+      if (!(overrideFieldDefinition.type instanceof GraphQLObjectType) &&
+        !(overrideFieldDefinition.type instanceof GraphQLScalarType) &&
+        !(overrideFieldDefinition.type instanceof GraphQLEnumType)) {
+        type = new GraphQLObjectType(overrideFieldDefinition.type);
+      } else {
+        type = overrideFieldDefinition.type;
+      }
       if (!fieldDefinition.allowNull) {
         type = new GraphQLNonNull(type);
       }
@@ -78,7 +88,7 @@ export function createBeforeAfter(model, options, hooks = {}) {
       return options.before({
         params, args, context, info,
         modelDefinition,
-        type: events.QUERY
+        type: events.QUERY,
       });
     });
   }
@@ -87,7 +97,7 @@ export function createBeforeAfter(model, options, hooks = {}) {
       return options.after({
         result, args, context, info,
         modelDefinition,
-        type: events.QUERY
+        type: events.QUERY,
       });
     });
   }
@@ -96,7 +106,7 @@ export function createBeforeAfter(model, options, hooks = {}) {
       return modelDefinition.before({
         params, args, context, info,
         modelDefinition,
-        type: events.QUERY
+        type: events.QUERY,
       });
     });
   }
@@ -105,11 +115,11 @@ export function createBeforeAfter(model, options, hooks = {}) {
       return modelDefinition.after({
         result, args, context, info,
         modelDefinition: modelDefinition,
-        type: events.QUERY
+        type: events.QUERY,
       });
     });
   }
-  if(hooks.before) {
+  if (hooks.before) {
     targetBeforeFuncs = targetBeforeFuncs.concat(hooks.before);
   }
   const targetBefore = (findOptions, args, context, info) => {
@@ -278,10 +288,18 @@ export function createMutationInput(modelName, model, gqlFields, prefix, allOpti
             if (allOptional) {
               name = `Optional${name}`;
             }
-            const inputType = new GraphQLInputObjectType({
-              name,
-              fields: type.fields,
-            });
+            let inputType;
+            if (!(overrideFieldDefinition.type instanceof GraphQLInputObjectType) &&
+              !(overrideFieldDefinition.type instanceof GraphQLScalarType) &&
+              !(overrideFieldDefinition.type instanceof GraphQLEnumType)) {
+              inputType = new GraphQLInputObjectType({
+                name,
+                fields: type.fields,
+              });
+            } else {
+              inputType = type;
+            }
+
             if (allowNull || allOptional) {
               gqlField = {type: inputType};
             } else {
