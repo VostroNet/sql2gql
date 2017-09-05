@@ -69,4 +69,26 @@ describe("queries", () => {
     validateResult(result);
     return expect(result.data.models.Task[0].items.length).toEqual(0);
   });
+  it("instance method", async() => {
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    await Promise.all([
+      Task.create({
+        name: "item1",
+      }),
+      Task.create({
+        name: "item2",
+      }),
+      Task.create({
+        name: "item3",
+      }),
+    ]);
+    const schema = await createSchema(instance);
+    const result = await graphql(schema, "query { models { Task { id, name, testInstanceMethod(input: {amount: 1}) { name } } } }");
+    validateResult(result);
+    expect(result.data.models.Task[0].testInstanceMethod.name).toEqual("item11");
+    expect(result.data.models.Task[1].testInstanceMethod.name).toEqual("item21");
+    expect(result.data.models.Task[2].testInstanceMethod.name).toEqual("item31");
+    return expect(result.data.models.Task.length).toEqual(3);
+  });
 });

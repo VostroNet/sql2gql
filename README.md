@@ -52,6 +52,7 @@ The model object is the bread and butter of the setup, it basically serves two p
 | Key | type |  Description |
 | --- | --- | --- |
 | classMethods | Object({query: Model.Expose.Definition, mutation: Model.Expose.Definition}) | Object containing the graphql definition of classMethods you wish to expose on either query or mutation |
+| instanceMethods | Object({query: Model.Expose.Definition}) | Object containing the graphql definition of instanceMethods you wish to expose as a field query |
 
 #### Model.Expose.Definition
 This object is a HashObject which the key must match the function name targeted.
@@ -125,6 +126,7 @@ hooks to constrain visibility of fields and functions will only hide elements by
 | relationship | (modelName: String,relationshipName: String, targetModelName: String) => Boolean | False ensures model field option "modelName {relationshipName}" is unavailable |
 | query | (modelName: String) => Boolean | False ensures query option "query {model {modelName}}" is unavailable |
 | queryClassMethods | (modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
+| queryInstanceMethods | (modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
 | mutation | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName}}" is unavailable |
 | mutationUpdate | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{update}}}" is unavailable |
 | mutationCreate | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{create}}}" is unavailable |
@@ -391,3 +393,6 @@ const schemas = [TaskModel];
 1.2.4
 
 - updated override to allow scalar and enum types to be set as the field type directly 
+
+1.2.5
+- added Instance Methods to the query field definition if exposed.

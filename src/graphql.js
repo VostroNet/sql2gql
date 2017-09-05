@@ -230,6 +230,47 @@ export async function generateTypes(models, keys, options = {}) {
       resetInterfaces(typeCollection[modelName]);
     }
   }));
+  await Promise.all(keys.map(async(modelName) => {
+
+    if (!typeCollection[modelName]) {
+      //target does not exist.. excluded from base types?
+      return;
+    }
+
+    const modelDefinition = getModelDefinition(models[modelName]);
+    // console.log("found instance methods", {modelName, expose: modelDefinition.expose} );
+    if (((modelDefinition.expose || {}).instanceMethods || {}).query) {
+      const instanceMethods = modelDefinition.expose.instanceMethods.query;
+      // console.log("found instance methods", instanceMethods);
+      let {fields} = typeCollection[modelName]._typeConfig; //eslint-disable-line
+      await Promise.all(Object.keys(instanceMethods).map(async(methodName) => {
+        const methodDefinition = instanceMethods[methodName];
+        const {type, args} = methodDefinition;
+        let targetType = (type instanceof String || typeof type === "string") ? typeCollection[type] : type;
+        if (!targetType) {
+          //target does not exist.. excluded from base types?
+          return;
+        }
+        if (options.permission) {
+          if (options.permission.queryInstanceMethods) {
+            const result = await options.permission.queryInstanceMethods(modelName, methodName, options.permission.options);
+            if (!result) {
+              return;
+            }
+          }
+        }
+        fields[methodName] = {
+          type: targetType,
+          args,
+          resolve: (source, args, context, info) => {
+            return source[methodName].apply(source, [args, context, info]);
+          },
+        };
+      }));
+      typeCollection[modelName]._typeConfig.fields = fields;//eslint-disable-line
+      resetInterfaces(typeCollection[modelName]);
+    }
+  }));
   return typeCollection;
 
 }
@@ -353,7 +394,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
         input = await modelDefinition.before({
           params: input, args, context, info,
           modelDefinition,
-          type: events.MUTATION_CREATE
+          type: events.MUTATION_CREATE,
         });
       }
       let model = await models[modelName].create(input, {context, rootValue: Object.assign({}, info.rootValue, {args})});
@@ -361,7 +402,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
         return await modelDefinition.after({
           result: model, args, context, info,
           modelDefinition,
-          type: events.MUTATION_CREATE
+          type: events.MUTATION_CREATE,
         });
       }
       return model;
@@ -389,7 +430,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
         input = await modelDefinition.before({
           params: input, args, context, info,
           model, modelDefinition,
-          type: events.MUTATION_UPDATE
+          type: events.MUTATION_UPDATE,
         });
       }
       model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args})});
@@ -397,7 +438,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
         return await modelDefinition.after({
           result: model, args, context, info,
           modelDefinition,
-          type: events.MUTATION_UPDATE
+          type: events.MUTATION_UPDATE,
         });
       }
       return model;
@@ -407,7 +448,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
         model = await modelDefinition.before({
           params: model, args, context, info,
           model, modelDefinition,
-          type: events.MUTATION_DELETE
+          type: events.MUTATION_DELETE,
         });
       }
       await model.destroy({context, rootValue: Object.assign({}, info.rootValue, {args})});
@@ -415,7 +456,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
         return await modelDefinition.after({
           result: model, args, context, info,
           modelDefinition,
-          type: events.MUTATION_DELETE
+          type: events.MUTATION_DELETE,
         });
       }
       return model;
@@ -606,7 +647,7 @@ export async function createSubscriptionFunctions(pubsub, models, keys, typeColl
         subCollection[subscriptionName] = {
           type: typeCollection[modelName],
           resolve(item, args, context, gql) {
-            const {instance, options, hookName} = item;
+            const {instance, hookName} = item;
             if (subscriptions[hookName]) {
               return subscriptions[hookName](instance, args, context, gql);
             }

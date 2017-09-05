@@ -189,5 +189,51 @@ describe("queries", function () {
       }
     }, _callee4, undefined);
   })));
+  it("instance method", _asyncToGenerator(regeneratorRuntime.mark(function _callee5() {
+    var instance, Task, schema, result;
+    return regeneratorRuntime.wrap(function _callee5$(_context5) {
+      while (1) {
+        switch (_context5.prev = _context5.next) {
+          case 0:
+            _context5.next = 2;
+            return (0, _utils.createSqlInstance)();
+
+          case 2:
+            instance = _context5.sent;
+            Task = instance.models.Task;
+            _context5.next = 6;
+            return Promise.all([Task.create({
+              name: "item1"
+            }), Task.create({
+              name: "item2"
+            }), Task.create({
+              name: "item3"
+            })]);
+
+          case 6:
+            _context5.next = 8;
+            return (0, _index.createSchema)(instance);
+
+          case 8:
+            schema = _context5.sent;
+            _context5.next = 11;
+            return (0, _graphql.graphql)(schema, "query { models { Task { id, name, testInstanceMethod(input: {amount: 1}) { name } } } }");
+
+          case 11:
+            result = _context5.sent;
+
+            (0, _utils.validateResult)(result);
+            (0, _expect2.default)(result.data.models.Task[0].testInstanceMethod.name).toEqual("item11");
+            (0, _expect2.default)(result.data.models.Task[1].testInstanceMethod.name).toEqual("item21");
+            (0, _expect2.default)(result.data.models.Task[2].testInstanceMethod.name).toEqual("item31");
+            return _context5.abrupt("return", (0, _expect2.default)(result.data.models.Task.length).toEqual(3));
+
+          case 17:
+          case "end":
+            return _context5.stop();
+        }
+      }
+    }, _callee5, undefined);
+  })));
 });
 //# sourceMappingURL=query.test.js.map

@@ -6,17 +6,17 @@ Object.defineProperty(exports, "__esModule", {
 exports.createSchema = exports.createSubscriptionFunctions = exports.createQueryFunctions = exports.createMutationFunctions = exports.createQueryLists = exports.generateTypes = exports.events = undefined;
 
 var generateTypes = exports.generateTypes = function () {
-  var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(models, keys) {
+  var _ref = _asyncToGenerator(regeneratorRuntime.mark(function _callee6(models, keys) {
     var _this = this;
 
     var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     var typeCollection;
-    return regeneratorRuntime.wrap(function _callee4$(_context4) {
+    return regeneratorRuntime.wrap(function _callee6$(_context6) {
       while (1) {
-        switch (_context4.prev = _context4.next) {
+        switch (_context6.prev = _context6.next) {
           case 0:
             typeCollection = {};
-            _context4.next = 3;
+            _context6.next = 3;
             return Promise.all(keys.map(function () {
               var _ref2 = _asyncToGenerator(regeneratorRuntime.mark(function _callee(modelName) {
                 var result;
@@ -70,7 +70,7 @@ var generateTypes = exports.generateTypes = function () {
             }()));
 
           case 3:
-            _context4.next = 5;
+            _context6.next = 5;
             return Promise.all(keys.map(function () {
               var _ref3 = _asyncToGenerator(regeneratorRuntime.mark(function _callee3(modelName) {
                 var fields;
@@ -207,14 +207,126 @@ var generateTypes = exports.generateTypes = function () {
             }()));
 
           case 5:
-            return _context4.abrupt("return", typeCollection);
+            _context6.next = 7;
+            return Promise.all(keys.map(function () {
+              var _ref5 = _asyncToGenerator(regeneratorRuntime.mark(function _callee5(modelName) {
+                var modelDefinition, instanceMethods, fields;
+                return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                  while (1) {
+                    switch (_context5.prev = _context5.next) {
+                      case 0:
+                        if (typeCollection[modelName]) {
+                          _context5.next = 2;
+                          break;
+                        }
 
-          case 6:
+                        return _context5.abrupt("return");
+
+                      case 2:
+                        modelDefinition = getModelDefinition(models[modelName]);
+                        // console.log("found instance methods", {modelName, expose: modelDefinition.expose} );
+
+                        if (!((modelDefinition.expose || {}).instanceMethods || {}).query) {
+                          _context5.next = 10;
+                          break;
+                        }
+
+                        instanceMethods = modelDefinition.expose.instanceMethods.query;
+                        // console.log("found instance methods", instanceMethods);
+
+                        fields = typeCollection[modelName]._typeConfig.fields; //eslint-disable-line
+
+                        _context5.next = 8;
+                        return Promise.all(Object.keys(instanceMethods).map(function () {
+                          var _ref6 = _asyncToGenerator(regeneratorRuntime.mark(function _callee4(methodName) {
+                            var methodDefinition, type, args, targetType, result;
+                            return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                              while (1) {
+                                switch (_context4.prev = _context4.next) {
+                                  case 0:
+                                    methodDefinition = instanceMethods[methodName];
+                                    type = methodDefinition.type, args = methodDefinition.args;
+                                    targetType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
+
+                                    if (targetType) {
+                                      _context4.next = 5;
+                                      break;
+                                    }
+
+                                    return _context4.abrupt("return");
+
+                                  case 5:
+                                    if (!options.permission) {
+                                      _context4.next = 12;
+                                      break;
+                                    }
+
+                                    if (!options.permission.queryInstanceMethods) {
+                                      _context4.next = 12;
+                                      break;
+                                    }
+
+                                    _context4.next = 9;
+                                    return options.permission.queryInstanceMethods(modelName, methodName, options.permission.options);
+
+                                  case 9:
+                                    result = _context4.sent;
+
+                                    if (result) {
+                                      _context4.next = 12;
+                                      break;
+                                    }
+
+                                    return _context4.abrupt("return");
+
+                                  case 12:
+                                    fields[methodName] = {
+                                      type: targetType,
+                                      args,
+                                      resolve: function resolve(source, args, context, info) {
+                                        return source[methodName].apply(source, [args, context, info]);
+                                      }
+                                    };
+
+                                  case 13:
+                                  case "end":
+                                    return _context4.stop();
+                                }
+                              }
+                            }, _callee4, _this);
+                          }));
+
+                          return function (_x9) {
+                            return _ref6.apply(this, arguments);
+                          };
+                        }()));
+
+                      case 8:
+                        typeCollection[modelName]._typeConfig.fields = fields; //eslint-disable-line
+                        resetInterfaces(typeCollection[modelName]);
+
+                      case 10:
+                      case "end":
+                        return _context5.stop();
+                    }
+                  }
+                }, _callee5, _this);
+              }));
+
+              return function (_x8) {
+                return _ref5.apply(this, arguments);
+              };
+            }()));
+
+          case 7:
+            return _context6.abrupt("return", typeCollection);
+
+          case 8:
           case "end":
-            return _context4.stop();
+            return _context6.stop();
         }
       }
-    }, _callee4, this);
+    }, _callee6, this);
   }));
 
   return function generateTypes(_x3, _x4) {
@@ -223,50 +335,50 @@ var generateTypes = exports.generateTypes = function () {
 }();
 
 var createQueryLists = exports.createQueryLists = function () {
-  var _ref5 = _asyncToGenerator(regeneratorRuntime.mark(function _callee6(models, modelNames, typeCollection, options) {
+  var _ref7 = _asyncToGenerator(regeneratorRuntime.mark(function _callee8(models, modelNames, typeCollection, options) {
     var _this2 = this;
 
     var fields = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
-    return regeneratorRuntime.wrap(function _callee6$(_context6) {
+    return regeneratorRuntime.wrap(function _callee8$(_context8) {
       while (1) {
-        switch (_context6.prev = _context6.next) {
+        switch (_context8.prev = _context8.next) {
           case 0:
-            _context6.next = 2;
+            _context8.next = 2;
             return Promise.all(modelNames.map(function () {
-              var _ref6 = _asyncToGenerator(regeneratorRuntime.mark(function _callee5(modelName) {
+              var _ref8 = _asyncToGenerator(regeneratorRuntime.mark(function _callee7(modelName) {
                 var result, _createBeforeAfter3, before, after;
 
-                return regeneratorRuntime.wrap(function _callee5$(_context5) {
+                return regeneratorRuntime.wrap(function _callee7$(_context7) {
                   while (1) {
-                    switch (_context5.prev = _context5.next) {
+                    switch (_context7.prev = _context7.next) {
                       case 0:
                         if (!typeCollection[modelName]) {
-                          _context5.next = 10;
+                          _context7.next = 10;
                           break;
                         }
 
                         if (!options.permission) {
-                          _context5.next = 8;
+                          _context7.next = 8;
                           break;
                         }
 
                         if (!options.permission.query) {
-                          _context5.next = 8;
+                          _context7.next = 8;
                           break;
                         }
 
-                        _context5.next = 5;
+                        _context7.next = 5;
                         return options.permission.query(modelName, options.permission.options);
 
                       case 5:
-                        result = _context5.sent;
+                        result = _context7.sent;
 
                         if (result) {
-                          _context5.next = 8;
+                          _context7.next = 8;
                           break;
                         }
 
-                        return _context5.abrupt("return");
+                        return _context7.abrupt("return");
 
                       case 8:
                         // let targetOpts = options[modelName];
@@ -283,80 +395,80 @@ var createQueryLists = exports.createQueryLists = function () {
 
                       case 10:
                       case "end":
-                        return _context5.stop();
+                        return _context7.stop();
                     }
                   }
-                }, _callee5, _this2);
+                }, _callee7, _this2);
               }));
 
-              return function (_x13) {
-                return _ref6.apply(this, arguments);
+              return function (_x15) {
+                return _ref8.apply(this, arguments);
               };
             }()));
 
           case 2:
-            return _context6.abrupt("return", fields);
+            return _context8.abrupt("return", fields);
 
           case 3:
           case "end":
-            return _context6.stop();
+            return _context8.stop();
         }
       }
-    }, _callee6, this);
+    }, _callee8, this);
   }));
 
-  return function createQueryLists(_x9, _x10, _x11, _x12) {
-    return _ref5.apply(this, arguments);
+  return function createQueryLists(_x11, _x12, _x13, _x14) {
+    return _ref7.apply(this, arguments);
   };
 }();
 
 var createMutationFunctions = exports.createMutationFunctions = function () {
-  var _ref7 = _asyncToGenerator(regeneratorRuntime.mark(function _callee12(models, keys, typeCollection, mutationCollection, options) {
+  var _ref9 = _asyncToGenerator(regeneratorRuntime.mark(function _callee14(models, keys, typeCollection, mutationCollection, options) {
     var _this3 = this;
 
-    return regeneratorRuntime.wrap(function _callee12$(_context12) {
+    return regeneratorRuntime.wrap(function _callee14$(_context14) {
       while (1) {
-        switch (_context12.prev = _context12.next) {
+        switch (_context14.prev = _context14.next) {
           case 0:
-            _context12.next = 2;
+            _context14.next = 2;
             return Promise.all(keys.map(function () {
-              var _ref8 = _asyncToGenerator(regeneratorRuntime.mark(function _callee11(modelName) {
-                var result, fields, requiredInput, optionalInput, mutationFields, modelDefinition, createFunc, create, updateFunc, deleteFunc, _createBeforeAfter4, before, afterUpdate, afterUpdateList, _createBeforeAfter5, afterDelete, afterDeleteList, update, del, updateAll, deleteAll, _result, _result2, _result3, _result4, _result5, _ref12, mutations;
+              var _ref10 = _asyncToGenerator(regeneratorRuntime.mark(function _callee13(modelName) {
+                var result, fields, requiredInput, optionalInput, mutationFields, modelDefinition, createFunc, create, updateFunc, deleteFunc, _createBeforeAfter4, before, afterUpdate, afterUpdateList, _createBeforeAfter5, afterDelete, afterDeleteList, update, del, updateAll, deleteAll, _result, _result2, _result3, _result4, _result5, _ref14, mutations;
 
-                return regeneratorRuntime.wrap(function _callee11$(_context11) {
+                return regeneratorRuntime.wrap(function _callee13$(_context13) {
                   while (1) {
-                    switch (_context11.prev = _context11.next) {
+                    switch (_context13.prev = _context13.next) {
                       case 0:
                         if (typeCollection[modelName]) {
-                          _context11.next = 2;
+                          _context13.next = 2;
                           break;
                         }
 
-                        return _context11.abrupt("return");
+                        return _context13.abrupt("return");
 
                       case 2:
                         if (!options.permission) {
-                          _context11.next = 9;
+                          _context13.next = 9;
                           break;
                         }
 
                         if (!options.permission.mutation) {
-                          _context11.next = 9;
+                          _context13.next = 9;
                           break;
                         }
 
-                        _context11.next = 6;
+                        _context13.next = 6;
                         return options.permission.mutation(modelName, options.permission.options);
 
                       case 6:
-                        result = _context11.sent;
+                        result = _context13.sent;
 
                         if (result) {
-                          _context11.next = 9;
+                          _context13.next = 9;
                           break;
                         }
 
-                        return _context11.abrupt("return");
+                        return _context13.abrupt("return");
 
                       case 9:
                         fields = typeCollection[modelName]._typeConfig.fields; //eslint-disable-line
@@ -367,11 +479,11 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                         modelDefinition = getModelDefinition(models[modelName]);
 
                         createFunc = function () {
-                          var _ref9 = _asyncToGenerator(regeneratorRuntime.mark(function _callee7(_, args, context, info) {
+                          var _ref11 = _asyncToGenerator(regeneratorRuntime.mark(function _callee9(_, args, context, info) {
                             var input, model;
-                            return regeneratorRuntime.wrap(function _callee7$(_context7) {
+                            return regeneratorRuntime.wrap(function _callee9$(_context9) {
                               while (1) {
-                                switch (_context7.prev = _context7.next) {
+                                switch (_context9.prev = _context9.next) {
                                   case 0:
                                     input = args.input;
 
@@ -385,11 +497,11 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     }
 
                                     if (!modelDefinition.before) {
-                                      _context7.next = 6;
+                                      _context9.next = 6;
                                       break;
                                     }
 
-                                    _context7.next = 5;
+                                    _context9.next = 5;
                                     return modelDefinition.before({
                                       params: input, args, context, info,
                                       modelDefinition,
@@ -397,21 +509,21 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     });
 
                                   case 5:
-                                    input = _context7.sent;
+                                    input = _context9.sent;
 
                                   case 6:
-                                    _context7.next = 8;
+                                    _context9.next = 8;
                                     return models[modelName].create(input, { context, rootValue: Object.assign({}, info.rootValue, { args }) });
 
                                   case 8:
-                                    model = _context7.sent;
+                                    model = _context9.sent;
 
                                     if (!modelDefinition.after) {
-                                      _context7.next = 13;
+                                      _context9.next = 13;
                                       break;
                                     }
 
-                                    _context7.next = 12;
+                                    _context9.next = 12;
                                     return modelDefinition.after({
                                       result: model, args, context, info,
                                       modelDefinition,
@@ -419,21 +531,21 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     });
 
                                   case 12:
-                                    return _context7.abrupt("return", _context7.sent);
+                                    return _context9.abrupt("return", _context9.sent);
 
                                   case 13:
-                                    return _context7.abrupt("return", model);
+                                    return _context9.abrupt("return", model);
 
                                   case 14:
                                   case "end":
-                                    return _context7.stop();
+                                    return _context9.stop();
                                 }
                               }
-                            }, _callee7, _this3);
+                            }, _callee9, _this3);
                           }));
 
-                          return function createFunc(_x21, _x22, _x23, _x24) {
-                            return _ref9.apply(this, arguments);
+                          return function createFunc(_x23, _x24, _x25, _x26) {
+                            return _ref11.apply(this, arguments);
                           };
                         }();
 
@@ -448,11 +560,11 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                         };
 
                         updateFunc = function () {
-                          var _ref10 = _asyncToGenerator(regeneratorRuntime.mark(function _callee8(model, args, context, info) {
+                          var _ref12 = _asyncToGenerator(regeneratorRuntime.mark(function _callee10(model, args, context, info) {
                             var input;
-                            return regeneratorRuntime.wrap(function _callee8$(_context8) {
+                            return regeneratorRuntime.wrap(function _callee10$(_context10) {
                               while (1) {
-                                switch (_context8.prev = _context8.next) {
+                                switch (_context10.prev = _context10.next) {
                                   case 0:
                                     input = args.input;
 
@@ -466,11 +578,11 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     }
 
                                     if (!modelDefinition.before) {
-                                      _context8.next = 6;
+                                      _context10.next = 6;
                                       break;
                                     }
 
-                                    _context8.next = 5;
+                                    _context10.next = 5;
                                     return modelDefinition.before({
                                       params: input, args, context, info,
                                       model, modelDefinition,
@@ -478,21 +590,21 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     });
 
                                   case 5:
-                                    input = _context8.sent;
+                                    input = _context10.sent;
 
                                   case 6:
-                                    _context8.next = 8;
+                                    _context10.next = 8;
                                     return model.update(input, { context, rootValue: Object.assign({}, info.rootValue, { args }) });
 
                                   case 8:
-                                    model = _context8.sent;
+                                    model = _context10.sent;
 
                                     if (!modelDefinition.after) {
-                                      _context8.next = 13;
+                                      _context10.next = 13;
                                       break;
                                     }
 
-                                    _context8.next = 12;
+                                    _context10.next = 12;
                                     return modelDefinition.after({
                                       result: model, args, context, info,
                                       modelDefinition,
@@ -500,36 +612,36 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     });
 
                                   case 12:
-                                    return _context8.abrupt("return", _context8.sent);
+                                    return _context10.abrupt("return", _context10.sent);
 
                                   case 13:
-                                    return _context8.abrupt("return", model);
+                                    return _context10.abrupt("return", model);
 
                                   case 14:
                                   case "end":
-                                    return _context8.stop();
+                                    return _context10.stop();
                                 }
                               }
-                            }, _callee8, _this3);
+                            }, _callee10, _this3);
                           }));
 
-                          return function updateFunc(_x25, _x26, _x27, _x28) {
-                            return _ref10.apply(this, arguments);
+                          return function updateFunc(_x27, _x28, _x29, _x30) {
+                            return _ref12.apply(this, arguments);
                           };
                         }();
 
                         deleteFunc = function () {
-                          var _ref11 = _asyncToGenerator(regeneratorRuntime.mark(function _callee9(model, args, context, info) {
-                            return regeneratorRuntime.wrap(function _callee9$(_context9) {
+                          var _ref13 = _asyncToGenerator(regeneratorRuntime.mark(function _callee11(model, args, context, info) {
+                            return regeneratorRuntime.wrap(function _callee11$(_context11) {
                               while (1) {
-                                switch (_context9.prev = _context9.next) {
+                                switch (_context11.prev = _context11.next) {
                                   case 0:
                                     if (!modelDefinition.before) {
-                                      _context9.next = 4;
+                                      _context11.next = 4;
                                       break;
                                     }
 
-                                    _context9.next = 3;
+                                    _context11.next = 3;
                                     return modelDefinition.before({
                                       params: model, args, context, info,
                                       model, modelDefinition,
@@ -537,19 +649,19 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     });
 
                                   case 3:
-                                    model = _context9.sent;
+                                    model = _context11.sent;
 
                                   case 4:
-                                    _context9.next = 6;
+                                    _context11.next = 6;
                                     return model.destroy({ context, rootValue: Object.assign({}, info.rootValue, { args }) });
 
                                   case 6:
                                     if (!modelDefinition.after) {
-                                      _context9.next = 10;
+                                      _context11.next = 10;
                                       break;
                                     }
 
-                                    _context9.next = 9;
+                                    _context11.next = 9;
                                     return modelDefinition.after({
                                       result: model, args, context, info,
                                       modelDefinition,
@@ -557,21 +669,21 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                                     });
 
                                   case 9:
-                                    return _context9.abrupt("return", _context9.sent);
+                                    return _context11.abrupt("return", _context11.sent);
 
                                   case 10:
-                                    return _context9.abrupt("return", model);
+                                    return _context11.abrupt("return", model);
 
                                   case 11:
                                   case "end":
-                                    return _context9.stop();
+                                    return _context11.stop();
                                 }
                               }
-                            }, _callee9, _this3);
+                            }, _callee11, _this3);
                           }));
 
-                          return function deleteFunc(_x29, _x30, _x31, _x32) {
-                            return _ref11.apply(this, arguments);
+                          return function deleteFunc(_x31, _x32, _x33, _x34) {
+                            return _ref13.apply(this, arguments);
                           };
                         }();
 
@@ -614,25 +726,25 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                         };
 
                         if (!options.permission) {
-                          _context11.next = 67;
+                          _context13.next = 67;
                           break;
                         }
 
                         if (!options.permission.mutationCreate) {
-                          _context11.next = 32;
+                          _context13.next = 32;
                           break;
                         }
 
-                        _context11.next = 28;
+                        _context13.next = 28;
                         return options.permission.mutationCreate(modelName, options.permission.options);
 
                       case 28:
-                        _result = _context11.sent;
+                        _result = _context13.sent;
 
                         if (_result) {
                           mutationFields.create = create;
                         }
-                        _context11.next = 33;
+                        _context13.next = 33;
                         break;
 
                       case 32:
@@ -640,20 +752,20 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                       case 33:
                         if (!options.permission.mutationUpdate) {
-                          _context11.next = 40;
+                          _context13.next = 40;
                           break;
                         }
 
-                        _context11.next = 36;
+                        _context13.next = 36;
                         return options.permission.mutationUpdate(modelName, options.permission.options);
 
                       case 36:
-                        _result2 = _context11.sent;
+                        _result2 = _context13.sent;
 
                         if (_result2) {
                           mutationFields.update = update;
                         }
-                        _context11.next = 41;
+                        _context13.next = 41;
                         break;
 
                       case 40:
@@ -661,20 +773,20 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                       case 41:
                         if (!options.permission.mutationDelete) {
-                          _context11.next = 48;
+                          _context13.next = 48;
                           break;
                         }
 
-                        _context11.next = 44;
+                        _context13.next = 44;
                         return options.permission.mutationDelete(modelName, options.permission.options);
 
                       case 44:
-                        _result3 = _context11.sent;
+                        _result3 = _context13.sent;
 
                         if (_result3) {
                           mutationFields.delete = del;
                         }
-                        _context11.next = 49;
+                        _context13.next = 49;
                         break;
 
                       case 48:
@@ -682,20 +794,20 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                       case 49:
                         if (!options.permission.mutationUpdateAll) {
-                          _context11.next = 56;
+                          _context13.next = 56;
                           break;
                         }
 
-                        _context11.next = 52;
+                        _context13.next = 52;
                         return options.permission.mutationUpdateAll(modelName, options.permission.options);
 
                       case 52:
-                        _result4 = _context11.sent;
+                        _result4 = _context13.sent;
 
                         if (_result4) {
                           mutationFields.updateAll = updateAll;
                         }
-                        _context11.next = 57;
+                        _context13.next = 57;
                         break;
 
                       case 56:
@@ -703,27 +815,27 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                       case 57:
                         if (!options.permission.mutationDeleteAll) {
-                          _context11.next = 64;
+                          _context13.next = 64;
                           break;
                         }
 
-                        _context11.next = 60;
+                        _context13.next = 60;
                         return options.permission.mutationDeleteAll(modelName, options.permission.options);
 
                       case 60:
-                        _result5 = _context11.sent;
+                        _result5 = _context13.sent;
 
                         if (_result5) {
                           mutationFields.deleteAll = deleteAll;
                         }
-                        _context11.next = 65;
+                        _context13.next = 65;
                         break;
 
                       case 64:
                         mutationFields.deleteAll = deleteAll;
 
                       case 65:
-                        _context11.next = 72;
+                        _context13.next = 72;
                         break;
 
                       case 67:
@@ -734,54 +846,54 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
                         mutationFields.deleteAll = deleteAll;
 
                       case 72:
-                        _ref12 = (getModelDefinition(models[modelName]).expose || {}).classMethods || {}, mutations = _ref12.mutations;
+                        _ref14 = (getModelDefinition(models[modelName]).expose || {}).classMethods || {}, mutations = _ref14.mutations;
 
                         if (!mutations) {
-                          _context11.next = 76;
+                          _context13.next = 76;
                           break;
                         }
 
-                        _context11.next = 76;
+                        _context13.next = 76;
                         return Promise.all(Object.keys(mutations).map(function () {
-                          var _ref13 = _asyncToGenerator(regeneratorRuntime.mark(function _callee10(methodName) {
+                          var _ref15 = _asyncToGenerator(regeneratorRuntime.mark(function _callee12(methodName) {
                             var _mutations$methodName, type, args, _result6, outputType;
 
-                            return regeneratorRuntime.wrap(function _callee10$(_context10) {
+                            return regeneratorRuntime.wrap(function _callee12$(_context12) {
                               while (1) {
-                                switch (_context10.prev = _context10.next) {
+                                switch (_context12.prev = _context12.next) {
                                   case 0:
                                     _mutations$methodName = mutations[methodName], type = _mutations$methodName.type, args = _mutations$methodName.args;
 
                                     if (!options.permission) {
-                                      _context10.next = 8;
+                                      _context12.next = 8;
                                       break;
                                     }
 
                                     if (!options.permission.mutationClassMethods) {
-                                      _context10.next = 8;
+                                      _context12.next = 8;
                                       break;
                                     }
 
-                                    _context10.next = 5;
+                                    _context12.next = 5;
                                     return options.permission.mutationClassMethods(modelName, methodName, options.permission.options);
 
                                   case 5:
-                                    _result6 = _context10.sent;
+                                    _result6 = _context12.sent;
 
                                     if (_result6) {
-                                      _context10.next = 8;
+                                      _context12.next = 8;
                                       break;
                                     }
 
-                                    return _context10.abrupt("return");
+                                    return _context12.abrupt("return");
 
                                   case 8:
                                     outputType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
-                                    _context10.t0 = outputType;
-                                    _context10.t1 = args;
+                                    _context12.t0 = outputType;
+                                    _context12.t1 = args;
                                     mutationFields[methodName] = {
-                                      type: _context10.t0,
-                                      args: _context10.t1,
+                                      type: _context12.t0,
+                                      args: _context12.t1,
 
                                       resolve(item, args, context, gql) {
                                         return models[modelName][methodName].apply(models[modelName], [args, context]);
@@ -790,29 +902,29 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                                   case 12:
                                   case "end":
-                                    return _context10.stop();
+                                    return _context12.stop();
                                 }
                               }
-                            }, _callee10, _this3);
+                            }, _callee12, _this3);
                           }));
 
-                          return function (_x33) {
-                            return _ref13.apply(this, arguments);
+                          return function (_x35) {
+                            return _ref15.apply(this, arguments);
                           };
                         }()));
 
                       case 76:
                         if (!(Object.keys(mutationFields).length > 0)) {
-                          _context11.next = 79;
+                          _context13.next = 79;
                           break;
                         }
 
-                        _context11.t0 = new _graphql.GraphQLObjectType({
+                        _context13.t0 = new _graphql.GraphQLObjectType({
                           name: `${modelName}Mutator`,
                           fields: mutationFields
                         });
                         mutationCollection[modelName] = {
-                          type: _context11.t0,
+                          type: _context13.t0,
 
                           resolve() {
                             return {}; // forces graphql to resolve the fields
@@ -821,110 +933,110 @@ var createMutationFunctions = exports.createMutationFunctions = function () {
 
                       case 79:
                       case "end":
-                        return _context11.stop();
+                        return _context13.stop();
                     }
                   }
-                }, _callee11, _this3);
+                }, _callee13, _this3);
               }));
 
-              return function (_x20) {
-                return _ref8.apply(this, arguments);
+              return function (_x22) {
+                return _ref10.apply(this, arguments);
               };
             }()));
 
           case 2:
-            return _context12.abrupt("return", mutationCollection);
+            return _context14.abrupt("return", mutationCollection);
 
           case 3:
           case "end":
-            return _context12.stop();
+            return _context14.stop();
         }
       }
-    }, _callee12, this);
+    }, _callee14, this);
   }));
 
-  return function createMutationFunctions(_x15, _x16, _x17, _x18, _x19) {
-    return _ref7.apply(this, arguments);
+  return function createMutationFunctions(_x17, _x18, _x19, _x20, _x21) {
+    return _ref9.apply(this, arguments);
   };
 }();
 
 var createQueryFunctions = exports.createQueryFunctions = function () {
-  var _ref14 = _asyncToGenerator(regeneratorRuntime.mark(function _callee15(models, keys, typeCollection, options) {
+  var _ref16 = _asyncToGenerator(regeneratorRuntime.mark(function _callee17(models, keys, typeCollection, options) {
     var _this4 = this;
 
     var queryCollection;
-    return regeneratorRuntime.wrap(function _callee15$(_context15) {
+    return regeneratorRuntime.wrap(function _callee17$(_context17) {
       while (1) {
-        switch (_context15.prev = _context15.next) {
+        switch (_context17.prev = _context17.next) {
           case 0:
             queryCollection = {};
-            _context15.next = 3;
+            _context17.next = 3;
             return Promise.all(keys.map(function () {
-              var _ref15 = _asyncToGenerator(regeneratorRuntime.mark(function _callee14(modelName) {
-                var fields, _ref16, query, queryFields;
+              var _ref17 = _asyncToGenerator(regeneratorRuntime.mark(function _callee16(modelName) {
+                var fields, _ref18, query, queryFields;
 
-                return regeneratorRuntime.wrap(function _callee14$(_context14) {
+                return regeneratorRuntime.wrap(function _callee16$(_context16) {
                   while (1) {
-                    switch (_context14.prev = _context14.next) {
+                    switch (_context16.prev = _context16.next) {
                       case 0:
                         if (typeCollection[modelName]) {
-                          _context14.next = 2;
+                          _context16.next = 2;
                           break;
                         }
 
-                        return _context14.abrupt("return");
+                        return _context16.abrupt("return");
 
                       case 2:
                         fields = typeCollection[modelName]._typeConfig.fields; //eslint-disable-line
 
-                        _ref16 = (getModelDefinition(models[modelName]).expose || {}).classMethods || {}, query = _ref16.query;
+                        _ref18 = (getModelDefinition(models[modelName]).expose || {}).classMethods || {}, query = _ref18.query;
                         queryFields = {};
 
                         if (!query) {
-                          _context14.next = 11;
+                          _context16.next = 11;
                           break;
                         }
 
-                        _context14.next = 8;
+                        _context16.next = 8;
                         return Promise.all(Object.keys(query).map(function () {
-                          var _ref17 = _asyncToGenerator(regeneratorRuntime.mark(function _callee13(methodName) {
+                          var _ref19 = _asyncToGenerator(regeneratorRuntime.mark(function _callee15(methodName) {
                             var result, _query$methodName, type, args, outputType;
 
-                            return regeneratorRuntime.wrap(function _callee13$(_context13) {
+                            return regeneratorRuntime.wrap(function _callee15$(_context15) {
                               while (1) {
-                                switch (_context13.prev = _context13.next) {
+                                switch (_context15.prev = _context15.next) {
                                   case 0:
                                     if (!options.permission) {
-                                      _context13.next = 7;
+                                      _context15.next = 7;
                                       break;
                                     }
 
                                     if (!options.permission.queryClassMethods) {
-                                      _context13.next = 7;
+                                      _context15.next = 7;
                                       break;
                                     }
 
-                                    _context13.next = 4;
+                                    _context15.next = 4;
                                     return options.permission.queryClassMethods(modelName, methodName, options.permission.options);
 
                                   case 4:
-                                    result = _context13.sent;
+                                    result = _context15.sent;
 
                                     if (result) {
-                                      _context13.next = 7;
+                                      _context15.next = 7;
                                       break;
                                     }
 
-                                    return _context13.abrupt("return");
+                                    return _context15.abrupt("return");
 
                                   case 7:
                                     _query$methodName = query[methodName], type = _query$methodName.type, args = _query$methodName.args;
                                     outputType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
-                                    _context13.t0 = outputType;
-                                    _context13.t1 = args;
+                                    _context15.t0 = outputType;
+                                    _context15.t1 = args;
                                     queryFields[methodName] = {
-                                      type: _context13.t0,
-                                      args: _context13.t1,
+                                      type: _context15.t0,
+                                      args: _context15.t1,
 
                                       resolve(item, args, context, gql) {
                                         return models[modelName][methodName].apply(models[modelName], [args, context]);
@@ -933,29 +1045,29 @@ var createQueryFunctions = exports.createQueryFunctions = function () {
 
                                   case 12:
                                   case "end":
-                                    return _context13.stop();
+                                    return _context15.stop();
                                 }
                               }
-                            }, _callee13, _this4);
+                            }, _callee15, _this4);
                           }));
 
-                          return function (_x39) {
-                            return _ref17.apply(this, arguments);
+                          return function (_x41) {
+                            return _ref19.apply(this, arguments);
                           };
                         }()));
 
                       case 8:
                         if (!(Object.keys(queryFields).length > 0)) {
-                          _context14.next = 11;
+                          _context16.next = 11;
                           break;
                         }
 
-                        _context14.t0 = new _graphql.GraphQLObjectType({
+                        _context16.t0 = new _graphql.GraphQLObjectType({
                           name: `${modelName}Query`,
                           fields: queryFields
                         });
                         queryCollection[modelName] = {
-                          type: _context14.t0,
+                          type: _context16.t0,
 
                           resolve() {
                             return {}; // forces graphql to resolve the fields
@@ -964,69 +1076,68 @@ var createQueryFunctions = exports.createQueryFunctions = function () {
 
                       case 11:
                       case "end":
-                        return _context14.stop();
+                        return _context16.stop();
                     }
                   }
-                }, _callee14, _this4);
+                }, _callee16, _this4);
               }));
 
-              return function (_x38) {
-                return _ref15.apply(this, arguments);
+              return function (_x40) {
+                return _ref17.apply(this, arguments);
               };
             }()));
 
           case 3:
-            return _context15.abrupt("return", queryCollection);
+            return _context17.abrupt("return", queryCollection);
 
           case 4:
           case "end":
-            return _context15.stop();
+            return _context17.stop();
         }
       }
-    }, _callee15, this);
+    }, _callee17, this);
   }));
 
-  return function createQueryFunctions(_x34, _x35, _x36, _x37) {
-    return _ref14.apply(this, arguments);
+  return function createQueryFunctions(_x36, _x37, _x38, _x39) {
+    return _ref16.apply(this, arguments);
   };
 }();
 
 var createSubscriptionFunctions = exports.createSubscriptionFunctions = function () {
-  var _ref18 = _asyncToGenerator(regeneratorRuntime.mark(function _callee17(pubsub, models, keys, typeCollection, options) {
+  var _ref20 = _asyncToGenerator(regeneratorRuntime.mark(function _callee19(pubsub, models, keys, typeCollection, options) {
     var _this5 = this;
 
     var subCollection;
-    return regeneratorRuntime.wrap(function _callee17$(_context17) {
+    return regeneratorRuntime.wrap(function _callee19$(_context19) {
       while (1) {
-        switch (_context17.prev = _context17.next) {
+        switch (_context19.prev = _context19.next) {
           case 0:
             subCollection = {};
-            _context17.next = 3;
+            _context19.next = 3;
             return Promise.all(keys.map(function () {
-              var _ref19 = _asyncToGenerator(regeneratorRuntime.mark(function _callee16(modelName) {
+              var _ref21 = _asyncToGenerator(regeneratorRuntime.mark(function _callee18(modelName) {
                 var model, modelDefinition, _modelDefinition$subs, subscriptions, $subscriptions;
 
-                return regeneratorRuntime.wrap(function _callee16$(_context16) {
+                return regeneratorRuntime.wrap(function _callee18$(_context18) {
                   while (1) {
-                    switch (_context16.prev = _context16.next) {
+                    switch (_context18.prev = _context18.next) {
                       case 0:
                         model = models[modelName];
                         modelDefinition = getModelDefinition(model);
                         _modelDefinition$subs = modelDefinition.subscriptions, subscriptions = _modelDefinition$subs === undefined ? {} : _modelDefinition$subs, $subscriptions = modelDefinition.$subscriptions; //TODO expose subscriptions from model definition
 
                         if (!$subscriptions) {
-                          _context16.next = 6;
+                          _context18.next = 6;
                           break;
                         }
 
-                        _context16.next = 6;
+                        _context18.next = 6;
                         return Promise.all(Object.keys($subscriptions.names).map(function (hookName) {
                           var subscriptionName = $subscriptions.names[hookName];
                           subCollection[subscriptionName] = {
                             type: typeCollection[modelName],
                             resolve(item, args, context, gql) {
                               var instance = item.instance,
-                                  options = item.options,
                                   hookName = item.hookName;
 
                               if (subscriptions[hookName]) {
@@ -1042,42 +1153,42 @@ var createSubscriptionFunctions = exports.createSubscriptionFunctions = function
 
                       case 6:
                       case "end":
-                        return _context16.stop();
+                        return _context18.stop();
                     }
                   }
-                }, _callee16, _this5);
+                }, _callee18, _this5);
               }));
 
-              return function (_x45) {
-                return _ref19.apply(this, arguments);
+              return function (_x47) {
+                return _ref21.apply(this, arguments);
               };
             }()));
 
           case 3:
-            return _context17.abrupt("return", subCollection);
+            return _context19.abrupt("return", subCollection);
 
           case 4:
           case "end":
-            return _context17.stop();
+            return _context19.stop();
         }
       }
-    }, _callee17, this);
+    }, _callee19, this);
   }));
 
-  return function createSubscriptionFunctions(_x40, _x41, _x42, _x43, _x44) {
-    return _ref18.apply(this, arguments);
+  return function createSubscriptionFunctions(_x42, _x43, _x44, _x45, _x46) {
+    return _ref20.apply(this, arguments);
   };
 }();
 
 var createSchema = exports.createSchema = function () {
-  var _ref20 = _asyncToGenerator(regeneratorRuntime.mark(function _callee18(sqlInstance) {
+  var _ref22 = _asyncToGenerator(regeneratorRuntime.mark(function _callee20(sqlInstance) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     var query, mutations, subscriptions, _options$extend, extend, validKeys, typeCollection, mutationCollection, classMethodQueries, modelQueries, queryRootFields, rootSchema, mutationRootFields, subscriptionRootFields, pubsub;
 
-    return regeneratorRuntime.wrap(function _callee18$(_context18) {
+    return regeneratorRuntime.wrap(function _callee20$(_context20) {
       while (1) {
-        switch (_context18.prev = _context18.next) {
+        switch (_context20.prev = _context20.next) {
           case 0:
             query = options.query, mutations = options.mutations, subscriptions = options.subscriptions, _options$extend = options.extend, extend = _options$extend === undefined ? {} : _options$extend;
             validKeys = Object.keys(sqlInstance.models).reduce(function (o, key) {
@@ -1086,37 +1197,37 @@ var createSchema = exports.createSchema = function () {
               }
               return o;
             }, []);
-            _context18.next = 4;
+            _context20.next = 4;
             return generateTypes(sqlInstance.models, validKeys, options);
 
           case 4:
-            typeCollection = _context18.sent;
-            _context18.next = 7;
+            typeCollection = _context20.sent;
+            _context20.next = 7;
             return createMutationFunctions(sqlInstance.models, validKeys, typeCollection, {}, options);
 
           case 7:
-            mutationCollection = _context18.sent;
-            _context18.next = 10;
+            mutationCollection = _context20.sent;
+            _context20.next = 10;
             return createQueryFunctions(sqlInstance.models, validKeys, typeCollection, options);
 
           case 10:
-            classMethodQueries = _context18.sent;
-            _context18.next = 13;
+            classMethodQueries = _context20.sent;
+            _context20.next = 13;
             return createQueryLists(sqlInstance.models, validKeys, typeCollection, options);
 
           case 13:
-            modelQueries = _context18.sent;
+            modelQueries = _context20.sent;
             queryRootFields = Object.assign({}, query);
             rootSchema = {};
 
             if (!(Object.keys(modelQueries).length > 0)) {
-              _context18.next = 19;
+              _context20.next = 19;
               break;
             }
 
-            _context18.t0 = new _graphql.GraphQLObjectType({ name: "QueryModels", fields: modelQueries });
+            _context20.t0 = new _graphql.GraphQLObjectType({ name: "QueryModels", fields: modelQueries });
             queryRootFields.models = {
-              type: _context18.t0,
+              type: _context20.t0,
 
               resolve() {
                 return {};
@@ -1125,13 +1236,13 @@ var createSchema = exports.createSchema = function () {
 
           case 19:
             if (!(Object.keys(classMethodQueries).length > 0)) {
-              _context18.next = 22;
+              _context20.next = 22;
               break;
             }
 
-            _context18.t1 = new _graphql.GraphQLObjectType({ name: "ClassMethods", fields: classMethodQueries });
+            _context20.t1 = new _graphql.GraphQLObjectType({ name: "ClassMethods", fields: classMethodQueries });
             queryRootFields.classMethods = {
-              type: _context18.t1,
+              type: _context20.t1,
 
               resolve() {
                 return {};
@@ -1148,13 +1259,13 @@ var createSchema = exports.createSchema = function () {
             mutationRootFields = Object.assign({}, mutations);
 
             if (!(Object.keys(mutationCollection).length > 0)) {
-              _context18.next = 27;
+              _context20.next = 27;
               break;
             }
 
-            _context18.t2 = new _graphql.GraphQLObjectType({ name: "MutationModels", fields: mutationCollection });
+            _context20.t2 = new _graphql.GraphQLObjectType({ name: "MutationModels", fields: mutationCollection });
             mutationRootFields.models = {
-              type: _context18.t2,
+              type: _context20.t2,
 
               resolve() {
                 return {};
@@ -1172,16 +1283,16 @@ var createSchema = exports.createSchema = function () {
             subscriptionRootFields = Object.assign({}, subscriptions);
 
             if (!(sqlInstance.$sqlgql || {}).subscriptions) {
-              _context18.next = 35;
+              _context20.next = 35;
               break;
             }
 
             pubsub = (sqlInstance.$sqlgql || {}).subscriptions.pubsub;
-            _context18.next = 33;
+            _context20.next = 33;
             return createSubscriptionFunctions(pubsub, sqlInstance.models, validKeys, typeCollection, options);
 
           case 33:
-            subscriptionRootFields = _context18.sent;
+            subscriptionRootFields = _context20.sent;
 
             if (Object.keys(subscriptionRootFields).length > 0) {
               rootSchema.subscription = new _graphql.GraphQLObjectType({
@@ -1191,18 +1302,18 @@ var createSchema = exports.createSchema = function () {
             }
 
           case 35:
-            return _context18.abrupt("return", new _graphql.GraphQLSchema(Object.assign(rootSchema, extend)));
+            return _context20.abrupt("return", new _graphql.GraphQLSchema(Object.assign(rootSchema, extend)));
 
           case 36:
           case "end":
-            return _context18.stop();
+            return _context20.stop();
         }
       }
-    }, _callee18, this);
+    }, _callee20, this);
   }));
 
-  return function createSchema(_x47) {
-    return _ref20.apply(this, arguments);
+  return function createSchema(_x49) {
+    return _ref22.apply(this, arguments);
   };
 }();
 

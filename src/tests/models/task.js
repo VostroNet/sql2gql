@@ -88,6 +88,23 @@ export default {
     name: "items",
   }],
   expose: {
+    instanceMethods: {
+      query: {
+        testInstanceMethod: {
+          type: "Task",
+          args: {
+            input: {
+              type: new GraphQLNonNull(new GraphQLInputObjectType({
+                name: "TestInstanceMethodInput",
+                fields: {
+                  amount: {type: new GraphQLNonNull(GraphQLInt)},
+                },
+              })),
+            },
+          },
+        },
+      }
+    },
     classMethods: {
       mutations: {
         reverseName: {
@@ -146,6 +163,14 @@ export default {
         };
       },
     },
+    instanceMethods: {
+      testInstanceMethod({input: {amount}}, req) {
+        return {
+          id: this.id,
+          name: `${this.name}${amount}`,
+        };
+      },
+    },
     hooks: {
       beforeFind(options) {
         return undefined;
@@ -163,6 +188,5 @@ export default {
     indexes: [
       // {unique: true, fields: ["name"]},
     ],
-    instanceMethods: {}, //TODO: figure out a way to expose this on graphql
   },
 };

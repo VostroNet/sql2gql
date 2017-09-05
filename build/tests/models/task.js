@@ -90,6 +90,23 @@ exports.default = {
     name: "items"
   }],
   expose: {
+    instanceMethods: {
+      query: {
+        testInstanceMethod: {
+          type: "Task",
+          args: {
+            input: {
+              type: new _graphql.GraphQLNonNull(new _graphql.GraphQLInputObjectType({
+                name: "TestInstanceMethodInput",
+                fields: {
+                  amount: { type: new _graphql.GraphQLNonNull(_graphql.GraphQLInt) }
+                }
+              }))
+            }
+          }
+        }
+      }
+    },
     classMethods: {
       mutations: {
         reverseName: {
@@ -154,6 +171,16 @@ exports.default = {
         };
       }
     },
+    instanceMethods: {
+      testInstanceMethod(_ref2, req) {
+        var amount = _ref2.input.amount;
+
+        return {
+          id: this.id,
+          name: `${this.name}${amount}`
+        };
+      }
+    },
     hooks: {
       beforeFind(options) {
         return undefined;
@@ -170,7 +197,7 @@ exports.default = {
     },
     indexes: [
       // {unique: true, fields: ["name"]},
-    ],
-    instanceMethods: {} }
+    ]
+  }
 };
 //# sourceMappingURL=task.js.map
