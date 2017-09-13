@@ -727,5 +727,9 @@ export async function createSchema(sqlInstance, options = {}) {
       });
     }
   }
-  return new GraphQLSchema(Object.assign(rootSchema, extend));
+  const schema = new GraphQLSchema(Object.assign(rootSchema, extend));
+  schema.$sql2gql = {
+    types: typeCollection,
+  };
+  return schema;
 }
