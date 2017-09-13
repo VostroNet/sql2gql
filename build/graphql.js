@@ -1184,7 +1184,7 @@ var createSchema = exports.createSchema = function () {
   var _ref22 = _asyncToGenerator(regeneratorRuntime.mark(function _callee20(sqlInstance) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
-    var query, mutations, subscriptions, _options$extend, extend, validKeys, typeCollection, mutationCollection, classMethodQueries, modelQueries, queryRootFields, rootSchema, mutationRootFields, subscriptionRootFields, pubsub;
+    var query, mutations, subscriptions, _options$extend, extend, validKeys, typeCollection, mutationCollection, classMethodQueries, modelQueries, queryRootFields, rootSchema, mutationRootFields, subscriptionRootFields, pubsub, schema;
 
     return regeneratorRuntime.wrap(function _callee20$(_context20) {
       while (1) {
@@ -1302,9 +1302,14 @@ var createSchema = exports.createSchema = function () {
             }
 
           case 35:
-            return _context20.abrupt("return", new _graphql.GraphQLSchema(Object.assign(rootSchema, extend)));
+            schema = new _graphql.GraphQLSchema(Object.assign(rootSchema, extend));
 
-          case 36:
+            schema.$sql2gql = {
+              types: typeCollection
+            };
+            return _context20.abrupt("return", schema);
+
+          case 38:
           case "end":
             return _context20.stop();
         }
