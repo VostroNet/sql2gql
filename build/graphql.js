@@ -1355,8 +1355,18 @@ function resetInterfaces(impl) {
 function createBaseType(modelName, models, options) {
   var model = models[modelName];
   var modelDefinition = getModelDefinition(model);
+  var exclude = Object.keys(modelDefinition.override || {}).concat(modelDefinition.ignoreFields || []);
+  if (options.permission) {
+    if (options.permission.field) {
+      exclude = exclude.concat(Object.keys(modelDefinition.define).filter(function (keyName) {
+        return options.permission.field(modelName, keyName);
+      }));
+      console.log("FIELDS", { modelName, exclude });
+    }
+  }
+
   var fields = (0, _graphqlSequelize.attributeFields)(model, {
-    exclude: Object.keys(modelDefinition.override || {}).concat(modelDefinition.ignoreFields || [])
+    exclude
   });
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach(function (fieldName) {

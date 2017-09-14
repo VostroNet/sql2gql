@@ -23,6 +23,22 @@ describe("permissions", () => {
     expect(queryFields.Task).toNotExist();
     return expect(queryFields.TaskItem).toExist();
   });
+  it("field", async() => {
+    const schema = await createSchema(instance, {
+      permission: {
+        field(modelName, fieldName) {
+          if (modelName === "Task" && fieldName === "name") {
+            return true;
+          }
+          return false;
+        },
+      },
+    });
+    const taskFields = schema.$sql2gql.types.Task.getFields();
+    expect(taskFields.mutationCheck).toExist();
+    return expect(taskFields.name).toNotExist();
+  });
+
   it("query listing", async() => {
     const schema = await createSchema(instance, {
       permission: {

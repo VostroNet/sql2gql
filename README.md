@@ -124,6 +124,7 @@ hooks to constrain visibility of fields and functions will only hide elements by
 | --- | --- | --- |
 | model | (modelName: String) => Boolean | False ensures the model itself is no where available across the entire schema |
 | relationship | (modelName: String,relationshipName: String, targetModelName: String) => Boolean | False ensures model field option "modelName {relationshipName}" is unavailable |
+| field | (modelName: String, fieldName: String) => Boolean | False ensures model field "query {model {modelName {fieldName}}}" is unavailable |
 | query | (modelName: String) => Boolean | False ensures query option "query {model {modelName}}" is unavailable |
 | queryClassMethods | (modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
 | queryInstanceMethods | (modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
