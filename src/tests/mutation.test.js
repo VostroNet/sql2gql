@@ -239,12 +239,12 @@ describe("mutations", () => {
         tableName: "tasks",
         hooks: {
           beforeFind(options) {
-            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue).toBeDefined();
             expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
             return undefined;
           },
           beforeCreate(instance, options) {
-            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue).toBeDefined();
             expect(options.rootValue.req).toEqual("exists", `beforeCreate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
             return undefined;
           },
@@ -292,12 +292,12 @@ describe("mutations", () => {
         tableName: "tasks",
         hooks: {
           beforeFind(options) {
-            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue).toBeDefined();
             expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
             return undefined;
           },
           beforeUpdate(instance, options) {
-            expect(options.rootValue).toExist("rootValue is missing");
+            expect(options.rootValue).toBeDefined();
             expect(options.rootValue.req).toEqual("exists", `beforeUpdate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
             return undefined;
           },
@@ -345,7 +345,7 @@ describe("mutations", () => {
         tableName: "tasks",
         hooks: {
           beforeFind(options) {
-            expect(options.rootValue).toExist("rootValue  is missing");
+            expect(options.rootValue).toBeDefined();
             expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
             return undefined;
           },
@@ -353,7 +353,7 @@ describe("mutations", () => {
             expect(false).toEqual(true, "beforeUpdate");
           },
           beforeDestroy(instance, options) {
-            expect(options.rootValue).toExist();
+            expect(options.rootValue).toBeDefined();
             expect(options.rootValue.req).toEqual("exists", `beforeDestroy: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
             return undefined;
           },

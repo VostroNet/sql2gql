@@ -1,105 +1,66 @@
 import expect from "expect";
 import {createSqlInstance, validateResult} from "./utils";
-// import {graphql, execute, subscribe} from "graphql";
+import {graphql, subscribe, parse} from "graphql";
 import {createSchema, connect} from "../index";
-
 import Sequelize from "sequelize";
-
-import {PubSub, SubscriptionManager} from "graphql-subscriptions";
-
-import {graphql} from "graphql";
+import {PubSub} from "graphql-subscriptions";
 
 describe("subscriptions", () => {
   it("afterCreate", async() => {
     const pubsub = new PubSub();
-    const instance = await createSqlInstance({subscriptions: {pubsub}});
-    const schema = await createSchema(instance);
-    const subManager = new SubscriptionManager({pubsub, schema});
-    const query = "subscription X { afterCreateTask {id} }";
-    await new Promise((resolve, reject) => {
-      subManager.subscribe({
-        query,
-        operationName: "X",
-        callback(args, result) {
-          try {
-            validateResult(result);
-            const {data: {afterCreateTask}} = result;
-            expect(afterCreateTask.id).toEqual(1);
-            return resolve();
-          } catch (err) {
-            return reject(err);
-          }
-        },
-      });
-      const {Task} = instance.models;
+    const sqlInstance = await createSqlInstance({subscriptions: {pubsub}});
+    const {Task} = sqlInstance.models;
+    const schema = await createSchema(sqlInstance);
+    const document = parse("subscription X { afterCreateTask {id} }");
+    const ai = await subscribe({schema, document});
+    const result = await Promise.all([
+      ai.next(),
       Task.create({
         name: "item1",
-      });
-    });
+      }),
+    ]);
+    const gqlResult = result[0].value.data;
+    expect(gqlResult.afterCreateTask.id).toEqual(1);
+
   });
   it("afterUpdate", async() => {
     const pubsub = new PubSub();
     const sqlInstance = await createSqlInstance({subscriptions: {pubsub}});
-    const schema = await createSchema(sqlInstance);
-    const subManager = new SubscriptionManager({pubsub, schema});
-    const query = "subscription X { afterUpdateTask {id, name} }";
     const {Task} = sqlInstance.models;
-
     const task = await Task.create({
       name: "item1",
     });
-
-    await new Promise((resolve, reject) => {
-      subManager.subscribe({
-        query,
-        operationName: "X",
-        callback(args, result) {
-          try {
-            validateResult(result);
-            const {data: {afterUpdateTask}} = result;
-            expect(afterUpdateTask.name).toEqual("UPDATED");
-            return resolve();
-          } catch (err) {
-            return reject(err);
-          }
-        },
-      });
+    const schema = await createSchema(sqlInstance);
+    const document = parse("subscription X { afterUpdateTask {id, name} }");
+    const ai = await subscribe({schema, document});
+    const result = await Promise.all([
+      ai.next(),
       task.update({
         name: "UPDATED",
-      });
-    });
+      }),
+    ]);
+    const gqlResult = result[0].value.data;
+    expect(gqlResult.afterUpdateTask.name).toEqual("UPDATED");
   });
   it("afterDestroy", async() => {
     const pubsub = new PubSub();
     const sqlInstance = await createSqlInstance({subscriptions: {pubsub}});
-    const schema = await createSchema(sqlInstance);
-    const subManager = new SubscriptionManager({pubsub, schema});
-    const query = "subscription X { afterDestroyTask {id} }";
     const {Task} = sqlInstance.models;
-
     const task = await Task.create({
       name: "item1",
     });
 
-    await new Promise((resolve, reject) => {
-      subManager.subscribe({
-        query,
-        operationName: "X",
-        callback(args, result) {
-          try {
-            validateResult(result);
-            const {data: {afterDestroyTask}} = result;
-            expect(afterDestroyTask.id).toEqual(1);
-            return resolve();
-          } catch (err) {
-            return reject(err);
-          }
-        },
-      });
-      task.destroy();
-    });
+    const schema = await createSchema(sqlInstance);
+    const document = parse("subscription X { afterDestroyTask {id} }");
+    const ai = await subscribe({schema, document});
+    const result = await Promise.all([
+      ai.next(),
+      task.destroy(),
+    ]);
+    const gqlResult = result[0].value.data;
+    expect(gqlResult.afterDestroyTask.id).toEqual(1);
   });
-  it("BUGFIX#12: create testing for recursive calls on after functions", async() => {
+  it("BUGFIX#12: testing for recursive calls on model events", async() => {
     let modelTimeout;
     let modelCount = 0;
     const taskModel = {
@@ -124,7 +85,7 @@ describe("subscriptions", () => {
             }, 100);
             return undefined;
           } catch (err) {
-            console.log("errr", err);
+            console.log("BUGFIX#12 - err", err);//eslint-disable-line
             return reject(err);
           }
         });
@@ -143,37 +104,27 @@ describe("subscriptions", () => {
     connect(models, instance, {subscriptions: {pubsub}});
     await instance.sync();
     const schema = await createSchema(instance);
-    const subManager = new SubscriptionManager({pubsub, schema});
-    const query = "subscription X { afterCreateTask {id} }";
-    await new Promise(async(resolve, reject) => {
-      subManager.subscribe({
-        query,
-        operationName: "X",
-        callback(args, result) {
-          try {
-            validateResult(result);
-            const {data: {afterCreateTask}} = result;
-            expect(afterCreateTask.id).toEqual(1);
-            // expect(subCount).toEqual(1);
-            return resolve();
-          } catch (err) {
-            return reject(err);
-          }
-        },
-      });
-      const mutation = `mutation {
-        models {
-          Task {
-            create(input: {name: "item1"}) {
-              id, 
-              name
-            }
+    const document = parse("subscription X { afterCreateTask {id} }");
+    const ai = await subscribe({schema, document});
+
+    const mutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "item1"}) {
+            id, 
+            name
           }
         }
-      }`;
-      const mutationResult = await graphql(schema, mutation);
-      validateResult(mutationResult);
-    });
-  });
+      }
+    }`;
 
+    const result = await Promise.all([
+      ai.next(),
+      await graphql(schema, mutation),
+    ]);
+    const gqlResult = result[0].value.data;
+    expect(gqlResult.afterCreateTask.id).toEqual(1);
+    const mutationResult = result[1];
+    validateResult(mutationResult);
+  });
 });

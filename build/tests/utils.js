@@ -33,21 +33,19 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 _sourceMapSupport2.default.install();
 
 
-var schemas = [_task2.default, _taskItem2.default];
+const schemas = [_task2.default, _taskItem2.default];
 function createSqlInstance(options) {
-  var instance = new _sequelize2.default("database", "username", "password", {
+  let instance = new _sequelize2.default("database", "username", "password", {
     dialect: "sqlite",
     logging: false
   });
   (0, _index.connect)(schemas, instance, Object.assign({}, options));
-  return instance.sync().then(function () {
-    return instance;
-  });
+  return instance.sync().then(() => instance);
 }
 
 function validateResult(result) {
   if ((result.errors || []).length > 0) {
-    console.log("Graphql Error", result.errors);
+    console.log("Graphql Error", result.errors); //eslint-disable-line
   }
   (0, _expect2.default)((result.data.errors || []).length).toEqual(0);
 }

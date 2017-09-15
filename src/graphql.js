@@ -35,15 +35,41 @@ export function resetInterfaces(impl) {
   });
 }
 
-export function createBaseType(modelName, models, options) {
+export function createBaseType(modelName, models, options = {}) {
   const model = models[modelName];
   const modelDefinition = getModelDefinition(model);
   let exclude = Object.keys(modelDefinition.override || {})
     .concat(modelDefinition.ignoreFields || []);
   if (options.permission) {
     if (options.permission.field) {
-      exclude = exclude.concat(Object.keys(modelDefinition.define).filter((keyName) => options.permission.field(modelName, keyName)));
-      console.log("FIELDS", {modelName, exclude});
+      let defaultVars = [];
+      const modelOpts = modelDefinition.options || {};
+      const timestamps = (modelOpts.timestamps !== undefined) ? modelOpts.timestamps : true;
+      const paranoid = (modelOpts.paranoid !== undefined) ? modelOpts.paranoid : false;
+      if (timestamps) {
+        if (typeof modelOpts.createdAt === "string") {
+          defaultVars = defaultVars.concat([modelOpts.createdAt]);
+        } else if (modelOpts.createdAt !== false) {
+          defaultVars = defaultVars.concat(["createdAt"]);
+        }
+        if (typeof modelOpts.updatedAt === "string") {
+          defaultVars = defaultVars.concat([modelOpts.updatedAt]);
+        } else if (modelOpts.updatedAt !== false) {
+          defaultVars = defaultVars.concat(["updatedAt"]);
+        }
+      }
+      if (paranoid) {
+        if (typeof modelOpts.deletedAt === "string") {
+          defaultVars = defaultVars.concat([modelOpts.updatedAt]);
+        } else if (modelOpts.deletedAt !== false) {
+          defaultVars = defaultVars.concat(["deletedAt"]);
+        }
+      }
+      const hasPrimaryKeyDefined = Object.keys(modelDefinition.define).filter((key) => modelDefinition.define[key].primaryKey).length > 0;
+      if (!hasPrimaryKeyDefined) {
+        defaultVars = defaultVars.concat(["id"]);
+      }
+      exclude = exclude.concat(Object.keys(modelDefinition.define).concat(defaultVars).filter((keyName) => !options.permission.field(modelName, keyName)));
     }
   }
 
@@ -52,6 +78,13 @@ export function createBaseType(modelName, models, options) {
   });
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach((fieldName) => {
+      if (options.permission) {
+        if (options.permission.field) {
+          if (!options.permission.field(modelName, fieldName)) {
+            return;
+          }
+        }
+      }
       const fieldDefinition = modelDefinition.define[fieldName];
       const overrideFieldDefinition = modelDefinition.override[fieldName];
       let type;
@@ -651,11 +684,18 @@ export async function createSubscriptionFunctions(pubsub, models, keys, typeColl
     const {subscriptions = {}, $subscriptions} = modelDefinition; //TODO expose subscriptions from model definition
     if ($subscriptions) {
       await Promise.all(Object.keys($subscriptions.names).map((hookName) => {
+        if (options.permission) {
+          if (options.permission.subscription) {
+            if (!options.permission.subscription(modelName, hookName)) {
+              return;
+            }
+          }
+        }
         const subscriptionName = $subscriptions.names[hookName];
         subCollection[subscriptionName] = {
           type: typeCollection[modelName],
           resolve(item, args, context, gql) {
-            const {instance, hookName} = item;
+            const {instance, hookName} = (item || {})[subscriptionName];
             if (subscriptions[hookName]) {
               return subscriptions[hookName](instance, args, context, gql);
             }
@@ -735,7 +775,12 @@ export async function createSchema(sqlInstance, options = {}) {
       });
     }
   }
-  const schema = new GraphQLSchema(Object.assign(rootSchema, extend));
+  const schemaParams = Object.assign(rootSchema, extend);
+
+  if (!schemaParams.query) {
+    throw new Error("GraphQLSchema requires query to be set. Are your permissions settings to aggressive?");
+  }
+  const schema = new GraphQLSchema(schemaParams);
   schema.$sql2gql = {
     types: typeCollection,
   };

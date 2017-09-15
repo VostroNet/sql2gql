@@ -123,8 +123,8 @@ hooks to constrain visibility of fields and functions will only hide elements by
 | Key | type |  Description |
 | --- | --- | --- |
 | model | (modelName: String) => Boolean | False ensures the model itself is no where available across the entire schema |
-| relationship | (modelName: String,relationshipName: String, targetModelName: String) => Boolean | False ensures model field option "modelName {relationshipName}" is unavailable |
 | field | (modelName: String, fieldName: String) => Boolean | False ensures model field "query {model {modelName {fieldName}}}" is unavailable |
+| relationship | (modelName: String,relationshipName: String, targetModelName: String) => Boolean | False ensures model field option "modelName {relationshipName}" is unavailable |
 | query | (modelName: String) => Boolean | False ensures query option "query {model {modelName}}" is unavailable |
 | queryClassMethods | (modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
 | queryInstanceMethods | (modelName: String, methodName: String) => Boolean | False ensures query option "query {classMethods {modelName {methodName}}}" is unavailable |
@@ -135,7 +135,7 @@ hooks to constrain visibility of fields and functions will only hide elements by
 | mutationUpdateAll | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{updateAll}}}" is unavailable |
 | mutationDeleteAll | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{deleteAll}}}" is unavailable |
 | mutationClassMethods | (modelName: String, methodName: String) => Boolean | False ensures mutation option "mutation {classMethods {modelName {methodName}}}" is unavailable |
-
+| subscription | (modelName, hookName) => Boolean | False ensures mutation option "subscription { \`{$hookName}${modelName}\`{ id } }" is unavailable |
 
 #### GraphqlSchema
 [graphql-sequlize helpers](https://github.com/mickhansen/graphql-sequelize#args-helpers)
@@ -369,8 +369,78 @@ const schemas = [TaskModel];
   const queryResult = await graphql(schema, "query { models { Task { id, name, options {hidden} } } }"); // retrieves information from database
   return expect(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
 })();
+```
+
+## Permission Helper
+The is a simple role base helper for hooking into the permission events for deny and allowing sections during schema generation based on roles provided.
+
+```javascript
+/* 
+  options = {
+    defaultDeny: true
+    defaults: {
+
+    }
+  }
+  defaultPerm = {
+    "fields": {
+      "Task": {
+        "options": "deny",
+      },
+    },
+    "classMethods": {
+      "User": {
+        "login": "allow",
+        "logout": "allow",
+      },
+    },
+  };
+
+  rules = {
+    "admin": {
+      "field": {
+        "User": "allow",
+      } 
+      "model": "allow",
+      "classMethods": {
+        "User": {
+          "login": "deny",
+        },
+      },
+    },
+    "user": {
+      "mutation": "deny",
+    },
+  };
+
+*/
+
+const ruleSet = {
+  "someone": "deny",
+  "anyone": {
+    "query": "allow",
+    "model": {
+      "Task": "allow",
+    },
+    "field": {
+      "Task": {
+        "name": "allow",
+      },
+    },
+  },
+};
+
+const anyoneSchema = await createSchema(instance, {
+  permission: permissionHelper("anyone", ruleSet)
+});
+
+const someoneSchema = await createSchema(instance, {
+  permission: permissionHelper("someone", ruleSet)
+});
 
 ```
+
+
 ## ChangeLog
 1.1.0
 - delete mutations now return object that it has deleted instead of boolean - **[Breaking change from 1.0.0]**
@@ -396,4 +466,27 @@ const schemas = [TaskModel];
 - updated override to allow scalar and enum types to be set as the field type directly 
 
 1.2.5
+
 - added Instance Methods to the query field definition if exposed.
+
+1.2.6
+
+- exposed generated types via $sql2gql.types on the schema returned from connect
+
+1.2.7
+
+- Added field permission option
+
+2.0.0
+
+- Added subscription permission option
+- added a simple role based permission helper
+- fixed field permissions return value to be correct
+- removed some let over debugging mechanics from 1.2.7
+- updated package dependencies
+- switch to the official graphql subscriptions mechanic in the test cases
+- updated all the tests to match the jest version of expect
+- implemented a basic role based permission helper.
+- added checks for over aggressive permission handling
+- added the default fields to the permission check
+- dropping node support for anything lesser then current LTS aka compile target is currently v6.11.3

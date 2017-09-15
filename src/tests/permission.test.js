@@ -1,6 +1,7 @@
 import expect from "expect";
 import {createSqlInstance} from "./utils";
 import {createSchema} from "../index";
+import {PubSub} from "graphql-subscriptions";
 
 let instance;
 
@@ -20,23 +21,23 @@ describe("permissions", () => {
       },
     });
     const queryFields = schema.getQueryType().getFields().models.type.getFields();
-    expect(queryFields.Task).toNotExist();
-    return expect(queryFields.TaskItem).toExist();
+    expect(queryFields.Task).not.toBeDefined();
+    return expect(queryFields.TaskItem).toBeDefined();
   });
   it("field", async() => {
     const schema = await createSchema(instance, {
       permission: {
         field(modelName, fieldName) {
           if (modelName === "Task" && fieldName === "name") {
-            return true;
+            return false;
           }
-          return false;
+          return true;
         },
       },
     });
     const taskFields = schema.$sql2gql.types.Task.getFields();
-    expect(taskFields.mutationCheck).toExist();
-    return expect(taskFields.name).toNotExist();
+    expect(taskFields.mutationCheck).toBeDefined();
+    return expect(taskFields.name).not.toBeDefined();
   });
 
   it("query listing", async() => {
@@ -51,8 +52,8 @@ describe("permissions", () => {
       },
     });
     const queryFields = schema.getQueryType().getFields().models.type.getFields();
-    expect(queryFields.Task).toNotExist();
-    return expect(queryFields.TaskItem).toExist();
+    expect(queryFields.Task).not.toBeDefined();
+    return expect(queryFields.TaskItem).toBeDefined();
   });
   it("query classMethods", async() => {
     const schema = await createSchema(instance, {
@@ -66,8 +67,8 @@ describe("permissions", () => {
       },
     });
     const queryFields = schema.getQueryType().getFields().classMethods.type.getFields().Task.type.getFields();
-    expect(queryFields.getHiddenData).toNotExist();
-    return expect(queryFields.getHiddenData2).toExist();
+    expect(queryFields.getHiddenData).not.toBeDefined();
+    return expect(queryFields.getHiddenData2).toBeDefined();
   });
   it("relationship", async() => {
     const schema = await createSchema(instance, {
@@ -81,7 +82,7 @@ describe("permissions", () => {
       },
     });
     const taskFields = schema.getQueryType().getFields().models.type.getFields().Task.type.ofType.getFields();
-    return expect(taskFields.items).toNotExist();
+    return expect(taskFields.items).not.toBeDefined();
   });
   it("mutation model", async() => {
     const schema = await createSchema(instance, {
@@ -96,8 +97,8 @@ describe("permissions", () => {
     });
     const queryFields = schema.getQueryType().getFields().models.type.getFields();
     const mutationFields = schema.getMutationType().getFields().models.type.getFields();
-    expect(queryFields.Task).toExist();
-    return expect(mutationFields.Task).toNotExist();
+    expect(queryFields.Task).toBeDefined();
+    return expect(mutationFields.Task).not.toBeDefined();
   });
   it("mutation model - create", async() => {
     const schema = await createSchema(instance, {
@@ -111,8 +112,8 @@ describe("permissions", () => {
       },
     });
     const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toExist();
-    return expect(func.create).toNotExist();
+    expect(func.delete).toBeDefined();
+    return expect(func.create).not.toBeDefined();
   });
   it("mutation model - update", async() => {
     const schema = await createSchema(instance, {
@@ -126,8 +127,8 @@ describe("permissions", () => {
       },
     });
     const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toExist();
-    return expect(func.update).toNotExist();
+    expect(func.delete).toBeDefined();
+    return expect(func.update).not.toBeDefined();
   });
   it("mutation model - delete", async() => {
     const schema = await createSchema(instance, {
@@ -141,8 +142,8 @@ describe("permissions", () => {
       },
     });
     const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.update).toExist();
-    return expect(func.delete).toNotExist();
+    expect(func.update).toBeDefined();
+    return expect(func.delete).not.toBeDefined();
   });
   it("mutation model - updateAll", async() => {
     const schema = await createSchema(instance, {
@@ -156,8 +157,8 @@ describe("permissions", () => {
       },
     });
     const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toExist();
-    return expect(func.updateAll).toNotExist();
+    expect(func.delete).toBeDefined();
+    return expect(func.updateAll).not.toBeDefined();
   });
   it("mutation model - deleteAll", async() => {
     const schema = await createSchema(instance, {
@@ -171,8 +172,8 @@ describe("permissions", () => {
       },
     });
     const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toExist();
-    return expect(func.deleteAll).toNotExist();
+    expect(func.delete).toBeDefined();
+    return expect(func.deleteAll).not.toBeDefined();
   });
   it("mutation model - classMethods", async() => {
     const schema = await createSchema(instance, {
@@ -186,7 +187,24 @@ describe("permissions", () => {
       },
     });
     const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toExist();
-    return expect(func.reverseName).toNotExist();
+    expect(func.delete).toBeDefined();
+    return expect(func.reverseName).not.toBeDefined();
+  });
+  it("subscription", async() => {
+    const pubsub = new PubSub();
+    const sqlInstance = await createSqlInstance({subscriptions: {pubsub}});
+    // const {Task} = sqlInstance.models;
+    const schema = await createSchema(sqlInstance, {
+      permission: {
+        subscription(modelName, hookName) {
+          if (modelName === "Task" && hookName === "afterCreate") {
+            return false;
+          }
+          return true;
+        },
+      },
+    });
+    expect(schema.getSubscriptionType().getFields().afterCreateTask).not.toBeDefined();
+    return expect(schema.getSubscriptionType().getFields().afterUpdateTask).toBeDefined();
   });
 });

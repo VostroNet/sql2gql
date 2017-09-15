@@ -145,6 +145,7 @@ export default {
   },
   options: {
     tableName: "tasks",
+    // paranoid: true,
     classMethods: {
       reverseName({input: {amount}}, req) {
         return {

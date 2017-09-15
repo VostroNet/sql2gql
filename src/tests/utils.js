@@ -20,7 +20,7 @@ export function createSqlInstance(options) {
 
 export function validateResult( result) {
   if ((result.errors || []).length > 0) {
-    console.log("Graphql Error", result.errors);
+    console.log("Graphql Error", result.errors); //eslint-disable-line
   }
   expect((result.data.errors || []).length).toEqual(0);
 }

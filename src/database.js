@@ -31,7 +31,10 @@ export function createSubscriptionHook(schema, hookName, subscriptionName, pubsu
         return undefined;
       }
     }
-    return pubsub.publish(subscriptionName, {instance, options, hookName});
+    let output = {};
+    output[subscriptionName] = {instance, options, hookName};
+    // console.log("OUT", output);
+    return pubsub.publish(subscriptionName, output);
   };
   f.isSubHook = true;// check for BUGFIX#12
   f.hookName = hookName;

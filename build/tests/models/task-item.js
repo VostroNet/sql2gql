@@ -36,12 +36,8 @@ exports.default = {
     tableName: "task-items",
     classMethods: {},
     hooks: {
-      beforeFind() {
-        var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-        var _ref = options.rootValue || {},
-            filterName = _ref.filterName;
-
+      beforeFind(options = {}) {
+        const { filterName } = options.rootValue || {};
         if (filterName) {
           options.where = {
             name: {
@@ -62,6 +58,7 @@ exports.default = {
       }
     },
     indexes: [{ unique: true, fields: ["name"] }],
-    instanceMethods: {} }
+    instanceMethods: {} //TODO: figure out a way to expose this on graphql
+  }
 };
 //# sourceMappingURL=task-item.js.map
