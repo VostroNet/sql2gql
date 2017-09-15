@@ -14,6 +14,14 @@ var _index = require("../../index");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
+
+function delay(ms = 1) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 exports.default = {
   name: "Task",
   define: {
@@ -124,6 +132,10 @@ exports.default = {
         }
       },
       query: {
+        reverseNameArray: {
+          type: "List<Task>",
+          args: undefined
+        },
         getHiddenData: {
           type: new _graphql.GraphQLObjectType({
             name: "TaskHiddenData",
@@ -155,16 +167,29 @@ exports.default = {
           name: `reverseName${amount}`
         };
       },
+      reverseNameArray(args, req) {
+        return [{
+          id: 1,
+          name: "reverseName4"
+        }, {
+          id: 2,
+          name: "reverseName3"
+        }];
+      },
       getHiddenData(args, req) {
-        return {
-          hidden: "Hi"
-        };
+        return _asyncToGenerator(function* () {
+          yield delay();
+          return {
+            hidden: "Hi"
+          };
+        })();
       },
       getHiddenData2(args, req) {
         return {
           hidden: "Hi2"
         };
       }
+
     },
     instanceMethods: {
       testInstanceMethod({ input: { amount } }, req) {

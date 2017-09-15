@@ -75,5 +75,24 @@ describe("permission helper", () => {
     (0, _expect2.default)(fields.id).not.toBeDefined();
     (0, _expect2.default)(queryFields.TaskItem).not.toBeDefined();
   }));
+
+  it("basic test - allow all on task - defaults deny", _asyncToGenerator(function* () {
+    const permission = (0, _index.permissionHelper)("anyone", {
+      "someone": "deny",
+      "anyone": {
+        "query": {
+          "Task": "allow"
+        },
+        "model": {
+          "Task": "allow"
+        },
+        "field": {
+          "Task": "allow"
+        }
+      }
+    });
+    (0, _expect2.default)(permission.query("Task")).toBeTruthy();
+    (0, _expect2.default)(permission.field("Task", "name")).toBeTruthy();
+  }));
 });
 //# sourceMappingURL=permission-helper.test.js.map

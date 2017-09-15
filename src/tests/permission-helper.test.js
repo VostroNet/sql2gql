@@ -67,4 +67,23 @@ describe("permission helper", () => {
     expect(fields.id).not.toBeDefined();
     expect(queryFields.TaskItem).not.toBeDefined();
   });
+
+  it("basic test - allow all on task - defaults deny", async() => {
+    const permission = permissionHelper("anyone", {
+      "someone": "deny",
+      "anyone": {
+        "query": {
+          "Task": "allow",
+        },
+        "model": {
+          "Task": "allow",
+        },
+        "field": {
+          "Task": "allow",
+        },
+      },
+    });
+    expect(permission.query("Task")).toBeTruthy();
+    expect(permission.field("Task", "name")).toBeTruthy();
+  });
 });

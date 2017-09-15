@@ -12,6 +12,12 @@ import {
 import {events} from "../../index";
 
 
+function delay(ms = 1) {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 export default {
   name: "Task",
   define: {
@@ -122,6 +128,10 @@ export default {
         },
       },
       query: {
+        reverseNameArray: {
+          type: "List<Task>",
+          args: undefined,
+        },
         getHiddenData: {
           type: new GraphQLObjectType({
             name: "TaskHiddenData",
@@ -153,7 +163,17 @@ export default {
           name: `reverseName${amount}`,
         };
       },
-      getHiddenData(args, req) {
+      reverseNameArray(args, req) {
+        return [{
+          id: 1,
+          name: "reverseName4",
+        }, {
+          id: 2,
+          name: "reverseName3",
+        }];
+      },
+      async getHiddenData(args, req) {
+        await delay();
         return {
           hidden: "Hi",
         };
@@ -163,6 +183,7 @@ export default {
           hidden: "Hi2",
         };
       },
+      
     },
     instanceMethods: {
       testInstanceMethod({input: {amount}}, req) {

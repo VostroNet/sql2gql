@@ -148,6 +148,12 @@ let generateTypes = exports.generateTypes = (() => {
         return _ref5.apply(this, arguments);
       };
     })()));
+
+    keys.forEach(function (modelName) {
+      if (typeCollection[modelName]) {
+        typeCollection[`List<${modelName}>`] = new _graphql.GraphQLList(typeCollection[modelName]);
+      }
+    });
     return typeCollection;
   });
 
@@ -481,6 +487,7 @@ let createQueryFunctions = exports.createQueryFunctions = (() => {
               }
               const { type, args } = query[methodName];
               let outputType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
+              // console.log("OUTPUT TYPE", outputType);
               queryFields[methodName] = {
                 type: outputType,
                 args,
@@ -687,34 +694,7 @@ function createBaseType(modelName, models, options = {}) {
   let exclude = Object.keys(modelDefinition.override || {}).concat(modelDefinition.ignoreFields || []);
   if (options.permission) {
     if (options.permission.field) {
-      let defaultVars = [];
-      const modelOpts = modelDefinition.options || {};
-      const timestamps = modelOpts.timestamps !== undefined ? modelOpts.timestamps : true;
-      const paranoid = modelOpts.paranoid !== undefined ? modelOpts.paranoid : false;
-      if (timestamps) {
-        if (typeof modelOpts.createdAt === "string") {
-          defaultVars = defaultVars.concat([modelOpts.createdAt]);
-        } else if (modelOpts.createdAt !== false) {
-          defaultVars = defaultVars.concat(["createdAt"]);
-        }
-        if (typeof modelOpts.updatedAt === "string") {
-          defaultVars = defaultVars.concat([modelOpts.updatedAt]);
-        } else if (modelOpts.updatedAt !== false) {
-          defaultVars = defaultVars.concat(["updatedAt"]);
-        }
-      }
-      if (paranoid) {
-        if (typeof modelOpts.deletedAt === "string") {
-          defaultVars = defaultVars.concat([modelOpts.updatedAt]);
-        } else if (modelOpts.deletedAt !== false) {
-          defaultVars = defaultVars.concat(["deletedAt"]);
-        }
-      }
-      const hasPrimaryKeyDefined = Object.keys(modelDefinition.define).filter(key => modelDefinition.define[key].primaryKey).length > 0;
-      if (!hasPrimaryKeyDefined) {
-        defaultVars = defaultVars.concat(["id"]);
-      }
-      exclude = exclude.concat(Object.keys(modelDefinition.define).concat(defaultVars).filter(keyName => !options.permission.field(modelName, keyName)));
+      exclude = exclude.concat(Object.keys(model.rawAttributes).filter(keyName => !options.permission.field(modelName, keyName)));
     }
   }
 

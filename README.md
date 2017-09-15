@@ -59,7 +59,7 @@ This object is a HashObject which the key must match the function name targeted.
 
 | Key | type |  Description |
 | --- | --- | --- |
-| type | String or [GraphQLObjectType](http://graphql.org/graphql-js/type/#graphqlobjecttype) | If this is a string it will use the models generated graphql type as the return value, other wise if it is [GraphQLObjectType](http://graphql.org/graphql-js/type/#graphqlobjecttype) it will use this instead  |
+| type | String or [GraphQLObjectType](http://graphql.org/graphql-js/type/#graphqlobjecttype) | If this is a string it will use the models generated graphql type (use "List\<ModelName\>" for lists) as the return value, other wise if it is [GraphQLObjectType](http://graphql.org/graphql-js/type/#graphqlobjecttype) it will use this instead  |
 | args | Key value hash object that require [GraphQLInputObjectType](http://graphql.org/graphql-js/type/#graphqlinputobjecttype)  |
 
 #### Model.Relationship
@@ -490,3 +490,11 @@ const someoneSchema = await createSchema(instance, {
 - added checks for over aggressive permission handling
 - added the default fields to the permission check
 - dropping node support for anything lesser then current LTS aka compile target is currently v6.11.3
+
+2.0.1
+
+- total overcomplicated implementation for field filtering in permissions - now fixed.
+- added a new permissions test
+
+2.0.2
+- added list types for all available models for instanceMethods, classMethods and schema.$sql2gql.types. format is "List<${modelName}>"

@@ -40,6 +40,23 @@ describe("queries", () => {
     validateResult(result);
     return expect(result.data.classMethods.Task.getHiddenData.hidden).toEqual("Hi");
   });
+  it("classMethod - list", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+
+    const query = `query {
+      classMethods {
+        Task {
+          reverseNameArray {
+            name
+          }
+        }
+      }
+    }`;
+    const result = await graphql(schema, query);
+    validateResult(result);
+    return expect(result.data.classMethods.Task.reverseNameArray[0].name).toEqual("reverseName4");
+  });
   it("override", async() => {
     const instance = await createSqlInstance();
     const schema = await createSchema(instance);

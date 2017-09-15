@@ -47,6 +47,23 @@ describe("queries", () => {
     (0, _utils.validateResult)(result);
     return (0, _expect2.default)(result.data.classMethods.Task.getHiddenData.hidden).toEqual("Hi");
   }));
+  it("classMethod - list", _asyncToGenerator(function* () {
+    const instance = yield (0, _utils.createSqlInstance)();
+    const schema = yield (0, _index.createSchema)(instance);
+
+    const query = `query {
+      classMethods {
+        Task {
+          reverseNameArray {
+            name
+          }
+        }
+      }
+    }`;
+    const result = yield (0, _graphql.graphql)(schema, query);
+    (0, _utils.validateResult)(result);
+    return (0, _expect2.default)(result.data.classMethods.Task.reverseNameArray[0].name).toEqual("reverseName4");
+  }));
   it("override", _asyncToGenerator(function* () {
     const instance = yield (0, _utils.createSqlInstance)();
     const schema = yield (0, _index.createSchema)(instance);
