@@ -95,6 +95,11 @@ let generateTypes = exports.generateTypes = (() => {
         return _ref3.apply(this, arguments);
       };
     })()));
+    keys.forEach(function (modelName) {
+      if (typeCollection[modelName]) {
+        typeCollection[`${modelName}[]`] = new _graphql.GraphQLList(typeCollection[modelName]);
+      }
+    });
     yield Promise.all(keys.map((() => {
       var _ref5 = _asyncToGenerator(function* (modelName) {
 
@@ -148,12 +153,6 @@ let generateTypes = exports.generateTypes = (() => {
         return _ref5.apply(this, arguments);
       };
     })()));
-
-    keys.forEach(function (modelName) {
-      if (typeCollection[modelName]) {
-        typeCollection[`List<${modelName}>`] = new _graphql.GraphQLList(typeCollection[modelName]);
-      }
-    });
     return typeCollection;
   });
 

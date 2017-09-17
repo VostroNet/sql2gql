@@ -101,7 +101,7 @@ exports.default = {
     instanceMethods: {
       query: {
         testInstanceMethod: {
-          type: "Task",
+          type: "Task[]",
           args: {
             input: {
               type: new _graphql.GraphQLNonNull(new _graphql.GraphQLInputObjectType({
@@ -133,7 +133,7 @@ exports.default = {
       },
       query: {
         reverseNameArray: {
-          type: "List<Task>",
+          type: "Task[]",
           args: undefined
         },
         getHiddenData: {
@@ -193,10 +193,10 @@ exports.default = {
     },
     instanceMethods: {
       testInstanceMethod({ input: { amount } }, req) {
-        return {
+        return [{
           id: this.id,
           name: `${this.name}${amount}`
-        };
+        }];
       }
     },
     hooks: {

@@ -498,3 +498,7 @@ const someoneSchema = await createSchema(instance, {
 
 2.0.2
 - added list types for all available models for instanceMethods, classMethods and schema.$sql2gql.types. format is "List<${modelName}>"
+
+2.1.0
+- BUGFIX #21 - Unable to use list types in for instanceMethods
+- **[Breaking Change]** switch formatting from List<Object> to Object[] to be more consistent with javascript syntax

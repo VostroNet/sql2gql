@@ -106,9 +106,9 @@ describe("queries", () => {
     const schema = yield (0, _index.createSchema)(instance);
     const result = yield (0, _graphql.graphql)(schema, "query { models { Task { id, name, testInstanceMethod(input: {amount: 1}) { name } } } }");
     (0, _utils.validateResult)(result);
-    (0, _expect2.default)(result.data.models.Task[0].testInstanceMethod.name).toEqual("item11");
-    (0, _expect2.default)(result.data.models.Task[1].testInstanceMethod.name).toEqual("item21");
-    (0, _expect2.default)(result.data.models.Task[2].testInstanceMethod.name).toEqual("item31");
+    (0, _expect2.default)(result.data.models.Task[0].testInstanceMethod[0].name).toEqual("item11");
+    (0, _expect2.default)(result.data.models.Task[1].testInstanceMethod[0].name).toEqual("item21");
+    (0, _expect2.default)(result.data.models.Task[2].testInstanceMethod[0].name).toEqual("item31");
     return (0, _expect2.default)(result.data.models.Task.length).toEqual(3);
   }));
 });
