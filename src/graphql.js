@@ -244,6 +244,11 @@ export async function generateTypes(models, keys, options = {}) {
       resetInterfaces(typeCollection[modelName]);
     }
   }));
+  keys.forEach((modelName) => {
+    if (typeCollection[modelName]) {
+      typeCollection[`${modelName}[]`] = new GraphQLList(typeCollection[modelName]);
+    }
+  });
   await Promise.all(keys.map(async(modelName) => {
 
     if (!typeCollection[modelName]) {
@@ -285,12 +290,6 @@ export async function generateTypes(models, keys, options = {}) {
       resetInterfaces(typeCollection[modelName]);
     }
   }));
-
-  keys.forEach((modelName) => {
-    if (typeCollection[modelName]) {
-      typeCollection[`List<${modelName}>`] = new GraphQLList(typeCollection[modelName]);
-    }
-  });
   return typeCollection;
 
 }

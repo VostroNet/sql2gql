@@ -97,7 +97,7 @@ export default {
     instanceMethods: {
       query: {
         testInstanceMethod: {
-          type: "Task",
+          type: "Task[]",
           args: {
             input: {
               type: new GraphQLNonNull(new GraphQLInputObjectType({
@@ -129,7 +129,7 @@ export default {
       },
       query: {
         reverseNameArray: {
-          type: "List<Task>",
+          type: "Task[]",
           args: undefined,
         },
         getHiddenData: {
@@ -187,10 +187,10 @@ export default {
     },
     instanceMethods: {
       testInstanceMethod({input: {amount}}, req) {
-        return {
+        return [{
           id: this.id,
           name: `${this.name}${amount}`,
-        };
+        }];
       },
     },
     hooks: {
