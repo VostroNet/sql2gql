@@ -440,7 +440,7 @@ export async function createMutationFunctions(models, keys, typeCollection, muta
       if (modelDefinition.override) {
         input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
           if (modelDefinition.override[fieldName].input) {
-            data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info);
+            data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info, model);
           }
           return data;
         }, input);
