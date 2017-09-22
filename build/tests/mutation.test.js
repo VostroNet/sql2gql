@@ -63,7 +63,48 @@ describe("mutations", () => {
     (0, _utils.validateResult)(queryResult);
     return (0, _expect2.default)(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
   }));
+  it("update - override", _asyncToGenerator(function* () {
+    const instance = yield (0, _utils.createSqlInstance)();
+    const schema = yield (0, _index.createSchema)(instance);
+    const createMutation = `mutation {
+      models {
+        Task {
+          create(input: {name: "item1", options: {hidden: "nowhere"}}) {
+            id, 
+            name
+            options {
+              hidden
+            }
+          }
+        }
+      }
+    }`;
+    const createMutationResult = yield (0, _graphql.graphql)(schema, createMutation);
+    (0, _utils.validateResult)(createMutationResult);
+    const id = createMutationResult.data.models.Task.create.id;
 
+    const updateMutation = `mutation {
+      models {
+        Task {
+          update(id: ${id}, input: {options: {hidden2: "nowhere2"}}) {
+            id, 
+            name
+            options {
+              hidden
+              hidden2
+            }
+          }
+        }
+      }
+    }`;
+    const updateMutationResult = yield (0, _graphql.graphql)(schema, updateMutation);
+    (0, _utils.validateResult)(updateMutationResult);
+
+    const queryResult = yield (0, _graphql.graphql)(schema, "query { models { Task { id, name, options {hidden, hidden2} } } }");
+    (0, _utils.validateResult)(queryResult);
+    (0, _expect2.default)(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
+    return (0, _expect2.default)(queryResult.data.models.Task[0].options.hidden2).toEqual("nowhere2");
+  }));
   it("update", _asyncToGenerator(function* () {
     const instance = yield (0, _utils.createSqlInstance)();
     const { Task } = instance.models;

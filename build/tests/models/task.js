@@ -72,13 +72,21 @@ exports.default = {
       type: {
         name: "TaskOptions",
         fields: {
-          hidden: { type: _graphql.GraphQLString }
+          hidden: { type: _graphql.GraphQLString },
+          hidden2: { type: _graphql.GraphQLString }
         }
       },
       output(result, args, context, info) {
         return JSON.parse(result.get("options"));
       },
-      input(field, args, context, info) {
+      input(field, args, context, info, model) {
+        if (model) {
+          const currOpts = model.get("options");
+          if (currOpts) {
+            const opts = JSON.parse(currOpts);
+            return JSON.stringify(Object.assign({}, opts, field));
+          }
+        }
         return JSON.stringify(field);
       }
     },
@@ -87,7 +95,7 @@ exports.default = {
       output(result, args, context, info) {
         return JSON.parse(result.get("options2"));
       },
-      input(field, args, context, info) {
+      input(field, args, context, info, model) {
         return JSON.stringify(field);
       }
     }

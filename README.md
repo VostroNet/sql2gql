@@ -502,3 +502,6 @@ const someoneSchema = await createSchema(instance, {
 2.1.0
 - BUGFIX #21 - Unable to use list types in for instanceMethods
 - **[Breaking Change]** switch formatting from List<Object> to Object[] to be more consistent with javascript syntax
+
+2.1.1
+- Added model to parameters of override.input on updates

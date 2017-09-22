@@ -269,7 +269,7 @@ let createMutationFunctions = exports.createMutationFunctions = (() => {
             if (modelDefinition.override) {
               input = Object.keys(modelDefinition.override).reduce(function (data, fieldName) {
                 if (modelDefinition.override[fieldName].input) {
-                  data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info);
+                  data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info, model);
                 }
                 return data;
               }, input);
