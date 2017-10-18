@@ -191,7 +191,6 @@ export default {
           hidden: "Hi2",
         };
       },
-      
     },
     instanceMethods: {
       testInstanceMethod({input: {amount}}, req) {

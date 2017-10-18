@@ -23,6 +23,10 @@ var _graphql = require("./graphql");
 
 var graphql = _interopRequireWildcard(_graphql);
 
+var _events = require("./graphql/events");
+
+var _events2 = _interopRequireDefault(_events);
+
 var _permissionHelper = require("./permission-helper");
 
 var _permissionHelper2 = _interopRequireDefault(_permissionHelper);
@@ -33,6 +37,6 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 const connect = exports.connect = database.connect;
 const createSchema = exports.createSchema = graphql.createSchema; //TODO: better way to lay this out?
-const events = exports.events = graphql.events;
+const events = exports.events = _events2.default;
 const permissionHelper = exports.permissionHelper = _permissionHelper2.default;
 //# sourceMappingURL=index.js.map

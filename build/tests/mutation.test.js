@@ -431,5 +431,38 @@ describe("mutations", () => {
     const deleteResult = yield (0, _graphql.graphql)(schema, deleteMutation, { req: "exists" });
     (0, _utils.validateResult)(deleteResult);
   }));
+  // it("create", async() => {
+  //   const instance = await createSqlInstance();
+  //   // const {Task} = instance.models;
+  //   // const item = await Task.create({
+  //   //   name: "item2",
+  //   // });
+  //   const schema = await createSchema(instance);
+
+
+  //   const mutation = `mutation {
+  //     models {
+  //       Task {
+  //         create(input: {name: "CREATED"}) {
+  //           id, 
+  //           name
+  //           relationships 
+
+  //           items(type: "create", ) {
+  //             create(input: {
+  //               name: "ITEM1"
+  //             }) {
+  //               id,
+  //               name
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }`;
+  //   const result = await graphql(schema, mutation);
+  //   validateResult(result);
+  //   return expect(result.data.models.Task.update.name).toEqual("UPDATED");
+  // });
 });
 //# sourceMappingURL=mutation.test.js.map

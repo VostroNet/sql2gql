@@ -39,6 +39,7 @@ function createSqlInstance(options) {
     dialect: "sqlite",
     logging: false
   });
+
   (0, _index.connect)(schemas, instance, Object.assign({}, options));
   return instance.sync().then(() => instance);
 }
