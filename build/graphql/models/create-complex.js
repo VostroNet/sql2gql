@@ -43,9 +43,7 @@ exports.default = (() => {
               let relationship = models[modelName].relationships[relName];
               let targetType = typeCollection[relationship.source];
               let mutationFunction = mutationFunctions[relationship.source];
-              // let targetOpts = options[relationship.source];
               if (!targetType) {
-                //target does not exist.. excluded from base types?
                 return;
               }
               if (options.permission) {
@@ -63,20 +61,84 @@ exports.default = (() => {
               switch (relationship.type) {
                 case "belongsToMany": //eslint-disable-line
                 case "hasMany":
+                  const manyArgs = (0, _graphqlSequelize.defaultListArgs)();
+                  if (options.version === 3 || options.compat === 3) {
+                    manyArgs = Object.assign({ returnActionResults: { type: _graphql.GraphQLBoolean } }, manyArgs, (mutationFunction || {}).fields);
+                  }
+
                   fields[relName] = {
                     type: new _graphql.GraphQLList(targetType),
-                    args: Object.assign({}, (0, _graphqlSequelize.defaultListArgs)(), (mutationFunction || {}).fields),
-                    resolve: function (source, args, context, info) {
-                      // console.log("sassssssss", {
-                      //   source,
-                      //   args,
-                      //   context,
-                      //   info,
-                      // });
-                      return (0, _graphqlSequelize.resolver)(relationship.rel, {
-                        before,
-                        after: afterList
-                      })(source, args, context, info);
+                    args: manyArgs,
+                    resolve(source, args, context, info) {
+                      return _asyncToGenerator(function* () {
+                        //TODO: throw error is request type is a query and a  mutation arg is provided
+                        if (args.create || args.update || args.delete) {
+                          const model = models[modelName];
+                          const assoc = model.associations[relName];
+                          const { funcs } = mutationFunction;
+                          let keys = {};
+                          keys[assoc.foreignKey] = source.get(assoc.sourceKey);
+                          if (args.create) {
+                            const createResult = args.create.reduce(function (promise, a) {
+                              return promise.then((() => {
+                                var _ref4 = _asyncToGenerator(function* (arr) {
+                                  return arr.concat((yield funcs.create(source, {
+                                    input: Object.assign(a, keys)
+                                  }, context, info)));
+                                });
+
+                                return function (_x7) {
+                                  return _ref4.apply(this, arguments);
+                                };
+                              })());
+                            }, Promise.resolve([]));
+                            if (args.returnActionResults) {
+                              return createResult;
+                            }
+                          }
+                          if (args.update) {
+                            const updateResult = args.update.reduce(function (promise, a) {
+                              return promise.then((() => {
+                                var _ref5 = _asyncToGenerator(function* (arr) {
+                                  return arr.concat((yield funcs.update(source, {
+                                    input: Object.assign(a, keys)
+                                  }, context, info)));
+                                });
+
+                                return function (_x8) {
+                                  return _ref5.apply(this, arguments);
+                                };
+                              })());
+                            }, Promise.resolve([]));
+                            if (args.returnActionResults) {
+                              return updateResult;
+                            }
+                          }
+
+                          if (args.delete) {
+                            const deleteResult = args.delete.reduce(function (promise, a) {
+                              return promise.then((() => {
+                                var _ref6 = _asyncToGenerator(function* (arr) {
+                                  return arr.concat((yield funcs.delete(source, {
+                                    input: Object.assign(a, keys)
+                                  }, context, info)));
+                                });
+
+                                return function (_x9) {
+                                  return _ref6.apply(this, arguments);
+                                };
+                              })());
+                            }, Promise.resolve([]));
+                            if (args.returnActionResults) {
+                              return deleteResult;
+                            }
+                          }
+                        }
+                        return (0, _graphqlSequelize.resolver)(relationship.rel, {
+                          before,
+                          after: afterList
+                        })(source, args, context, info);
+                      })();
                     }
                   };
                   break;
@@ -114,7 +176,7 @@ exports.default = (() => {
       }
     });
     yield Promise.all(keys.map((() => {
-      var _ref4 = _asyncToGenerator(function* (modelName) {
+      var _ref7 = _asyncToGenerator(function* (modelName) {
 
         if (!typeCollection[modelName]) {
           //target does not exist.. excluded from base types?
@@ -128,7 +190,7 @@ exports.default = (() => {
           // console.log("found instance methods", instanceMethods);
           let { fields } = typeCollection[modelName]._typeConfig; //eslint-disable-line
           yield Promise.all(Object.keys(instanceMethods).map((() => {
-            var _ref5 = _asyncToGenerator(function* (methodName) {
+            var _ref8 = _asyncToGenerator(function* (methodName) {
               const methodDefinition = instanceMethods[methodName];
               const { type, args } = methodDefinition;
               let targetType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
@@ -153,8 +215,8 @@ exports.default = (() => {
               };
             });
 
-            return function (_x8) {
-              return _ref5.apply(this, arguments);
+            return function (_x11) {
+              return _ref8.apply(this, arguments);
             };
           })()));
           typeCollection[modelName]._typeConfig.fields = fields; //eslint-disable-line
@@ -162,8 +224,8 @@ exports.default = (() => {
         }
       });
 
-      return function (_x7) {
-        return _ref4.apply(this, arguments);
+      return function (_x10) {
+        return _ref7.apply(this, arguments);
       };
     })()));
     return typeCollection;

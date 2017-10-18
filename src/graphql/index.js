@@ -4,6 +4,7 @@ import {
   GraphQLObjectType,
 } from "graphql";
 
+import deepmerge from "deepmerge";
 
 import getModelDefinition from "./utils/get-model-def";
 import createBasicModels from "./models/create-base";
@@ -20,7 +21,7 @@ import createQueryClassMethods from "./query/create-class-methods";
 import createSubscriptionFunctions from "./subscriptions";
 
 export async function createSchema(sqlInstance, options = {}) {
-  const {query, mutations, subscriptions, extend = {}} = options;
+  const {query, mutations = {}, subscriptions, extend = {}} = options;
   let validKeys = Object.keys(sqlInstance.models).reduce((o, key) => {
     if (getModelDefinition(sqlInstance.models[key])) {
       o.push(key);
@@ -32,10 +33,28 @@ export async function createSchema(sqlInstance, options = {}) {
   const mutationFunctions = await createMutationFunctions(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options);
   typeCollection = await createComplexModels(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
   let mutationCollection = {};
-  if (options.version === 3) {
-    mutationCollection = await createMutationV3(sqlInstance.models, validKeys, typeCollection, mutationCollection, mutationFunctions, options);
+  if (options.version === 3 && options.compat === 2) {
+    mutations.v2 = {
+      type: new GraphQLObjectType({
+        name: "v2Compat",
+        fields: await createMutationCollection(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options)
+      }),
+      resolve: () => {},
+    };
+    mutationCollection = await createMutationV3(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
+  } else if (options.version === 2 && options.compat === 3) {
+    mutations.v3 = {
+      type: new GraphQLObjectType({
+        name: "v3Compat",
+        fields: await createMutationV3(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options),
+      }),
+      resolve: () => {},
+    };
+    mutationCollection = await createMutationCollection(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options);
+  } else if (options.version === 3) {
+    mutationCollection = await createMutationV3(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
   } else {
-    mutationCollection = await createMutationCollection(sqlInstance.models, validKeys, typeCollection, {}, options);
+    mutationCollection = await createMutationCollection(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options);
   }
   let classMethodQueries = await createQueryClassMethods(sqlInstance.models, validKeys, typeCollection, options);
   let modelQueries = await createQueryLists(sqlInstance.models, validKeys, typeCollection, options);
@@ -102,18 +121,3 @@ export async function createSchema(sqlInstance, options = {}) {
   };
   return schema;
 }
-
-/*
-
-associations:Object {items: HasMany}
-items:HasMany {source: , target: , options: Object, …}
-accessors:Object {get: "getItems", set: "setItems", addMultiple: "addItems", …}
-as:"items"
-associationAccessor:"items"
-associationType:"HasMany"
-foreignKey:"TaskId"
-foreignKeyAttribute:Object {}
-foreignKeyField:"TaskId"
-identifierField:"TaskId"
-*/
-

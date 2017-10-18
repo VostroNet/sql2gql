@@ -7,7 +7,7 @@ exports.createSchema = undefined;
 
 let createSchema = exports.createSchema = (() => {
   var _ref = _asyncToGenerator(function* (sqlInstance, options = {}) {
-    const { query, mutations, subscriptions, extend = {} } = options;
+    const { query, mutations = {}, subscriptions, extend = {} } = options;
     let validKeys = Object.keys(sqlInstance.models).reduce(function (o, key) {
       if ((0, _getModelDef2.default)(sqlInstance.models[key])) {
         o.push(key);
@@ -19,10 +19,28 @@ let createSchema = exports.createSchema = (() => {
     const mutationFunctions = yield (0, _createFunctions2.default)(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options);
     typeCollection = yield (0, _createComplex2.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
     let mutationCollection = {};
-    if (options.version === 3) {
-      mutationCollection = yield (0, _v2.default)(sqlInstance.models, validKeys, typeCollection, mutationCollection, mutationFunctions, options);
+    if (options.version === 3 && options.compat === 2) {
+      mutations.v2 = {
+        type: new _graphql.GraphQLObjectType({
+          name: "v2Compat",
+          fields: yield (0, _mutation2.default)(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options)
+        }),
+        resolve: function () {}
+      };
+      mutationCollection = yield (0, _v2.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
+    } else if (options.version === 2 && options.compat === 3) {
+      mutations.v3 = {
+        type: new _graphql.GraphQLObjectType({
+          name: "v3Compat",
+          fields: yield (0, _v2.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options)
+        }),
+        resolve: function () {}
+      };
+      mutationCollection = yield (0, _mutation2.default)(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options);
+    } else if (options.version === 3) {
+      mutationCollection = yield (0, _v2.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
     } else {
-      mutationCollection = yield (0, _mutation2.default)(sqlInstance.models, validKeys, typeCollection, {}, options);
+      mutationCollection = yield (0, _mutation2.default)(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options);
     }
     let classMethodQueries = yield (0, _createClassMethods2.default)(sqlInstance.models, validKeys, typeCollection, options);
     let modelQueries = yield (0, _createLists2.default)(sqlInstance.models, validKeys, typeCollection, options);
@@ -95,22 +113,11 @@ let createSchema = exports.createSchema = (() => {
   };
 })();
 
-/*
-
-associations:Object {items: HasMany}
-items:HasMany {source: , target: , options: Object, …}
-accessors:Object {get: "getItems", set: "setItems", addMultiple: "addItems", …}
-as:"items"
-associationAccessor:"items"
-associationType:"HasMany"
-foreignKey:"TaskId"
-foreignKeyAttribute:Object {}
-foreignKeyField:"TaskId"
-identifierField:"TaskId"
-*/
-
-
 var _graphql = require("graphql");
+
+var _deepmerge = require("deepmerge");
+
+var _deepmerge2 = _interopRequireDefault(_deepmerge);
 
 var _getModelDef = require("./utils/get-model-def");
 

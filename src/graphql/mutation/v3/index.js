@@ -1,37 +1,28 @@
 
 import {
   GraphQLList,
-  GraphQLObjectType,
-  GraphQLInputObjectType,
 } from "graphql";
 
 import {
   resolver,
   defaultListArgs,
-  defaultArgs,
+  // defaultArgs,
 } from "graphql-sequelize";
 
 import createBeforeAfter from "../../models/create-before-after";
-import getModelDefinition from "../../utils/get-model-def";
-import events from "../../events";
-import createMutationInputs from "../create-input";
-import {onCreate, onUpdate, onDelete} from "../mutation-functions";
 
-
-
-export default async function createMutationV3(models, keys, typeCollection, mutationCollection, mutationFunctions, options) {
-  // const mutationInputTypes = await createMutationInputs(models, keys, typeCollection, options);
-
+export default async function createMutationV3(models, keys, typeCollection, mutationFunctions, options) {
+  let mutationCollection = {};
   await Promise.all(keys.map(async(modelName) => {
     if (!typeCollection[modelName]) {
       return;
     }
     const {fields, funcs} = mutationFunctions[modelName];
-    // const {fields, funcs} = createFunctions(modelName, models, mutationInputTypes, options);
     if (Object.keys(fields).length > 0) {
+      const {before, after} = createBeforeAfter(models[modelName], options);
       mutationCollection[modelName] = {
         type: new GraphQLList(typeCollection[modelName]),
-        args: fields,
+        args: Object.assign(fields, defaultListArgs()),
         async resolve(source, args, context, info) {
           let results = [];
           if (args.create) {
@@ -49,8 +40,14 @@ export default async function createMutationV3(models, keys, typeCollection, mut
               return arr.concat(await funcs.delete(source, {input: arg}, context, info));
             }, []));
           }
+          if (!(args.create || args.update || args.delete) || args.where) {
+            return resolver(models[modelName], {
+              before,
+              after,
+            })(source, args, context, info);
+          }
           return results; //TODO: add where query results here
-        }
+        },
       };
     }
   }));

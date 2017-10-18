@@ -9,7 +9,7 @@ const PORT = 3000;
 const app = express();
 (async() => {
   const instance = await createSqlInstance();
-  const schema = await createSchema(instance, {version: 3});
+  const schema = await createSchema(instance, {version: 3, compat: 2});
   app.use("/graphql", bodyParser.json(), graphqlExpress({ schema: schema }));
   app.get("/graphiql", graphiqlExpress({ endpointURL: "/graphql" }));
   app.listen(PORT);

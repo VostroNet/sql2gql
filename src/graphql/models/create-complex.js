@@ -1,7 +1,8 @@
 
 
 import {
-  GraphQLList
+  GraphQLList,
+  GraphQLBoolean,
 } from "graphql";
 
 import {
@@ -28,9 +29,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
         let relationship = models[modelName].relationships[relName];
         let targetType = typeCollection[relationship.source];
         let mutationFunction = mutationFunctions[relationship.source];
-        // let targetOpts = options[relationship.source];
         if (!targetType) {
-          //target does not exist.. excluded from base types?
           return;
         }
         if (options.permission) {
@@ -48,21 +47,65 @@ export default async function createComplexModels(models, keys, typeCollection, 
         switch (relationship.type) {
           case "belongsToMany": //eslint-disable-line
           case "hasMany":
+            const manyArgs = defaultListArgs();
+            if (options.version === 3 || options.compat === 3) {
+              manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
+            }
+
             fields[relName] = {
               type: new GraphQLList(targetType),
-              args: Object.assign({}, defaultListArgs(), (mutationFunction || {}).fields),
-              resolve: (source, args, context, info) => {
-                // console.log("sassssssss", {
-                //   source,
-                //   args,
-                //   context,
-                //   info,
-                // });
+              args: manyArgs,
+              async resolve(source, args, context, info) {
+                //TODO: throw error is request type is a query and a  mutation arg is provided
+                if (args.create || args.update || args.delete) {
+                  const model = models[modelName];
+                  const assoc = model.associations[relName];
+                  const {funcs} = mutationFunction;
+                  let keys = {};
+                  keys[assoc.foreignKey] = source.get(assoc.sourceKey);
+                  if (args.create) {
+                    const createResult = args.create.reduce((promise, a) => {
+                      return promise.then(async(arr) => {
+                        return arr.concat(await funcs.create(source, {
+                          input: Object.assign(a, keys),
+                        }, context, info));
+                      });
+                    }, Promise.resolve([]));
+                    if (args.returnActionResults) {
+                      return createResult;
+                    }
+                  }
+                  if (args.update) {
+                    const updateResult = args.update.reduce((promise, a) => {
+                      return promise.then(async(arr) => {
+                        return arr.concat(await funcs.update(source, {
+                          input: Object.assign(a, keys),
+                        }, context, info));
+                      });
+                    }, Promise.resolve([]));
+                    if (args.returnActionResults) {
+                      return updateResult;
+                    }
+                  }
+
+                  if (args.delete) {
+                    const deleteResult = args.delete.reduce((promise, a) => {
+                      return promise.then(async(arr) => {
+                        return arr.concat(await funcs.delete(source, {
+                          input: Object.assign(a, keys),
+                        }, context, info));
+                      });
+                    }, Promise.resolve([]));
+                    if (args.returnActionResults) {
+                      return deleteResult;
+                    }
+                  }
+                }
                 return resolver(relationship.rel, {
                   before,
                   after: afterList,
                 })(source, args, context, info);
-              }
+              },
             };
             break;
           case "hasOne": //eslint-disable-line

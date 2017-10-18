@@ -17,8 +17,8 @@ import createMutationInputs from "./create-input";
 
 import {onCreate, onUpdate, onDelete} from "./mutation-functions";
 
-export default async function createMutationFunctions(models, keys, typeCollection, mutationCollection, options) {
-  const mutationInputTypes = await createMutationInputs(models, keys, typeCollection, options);
+export default async function createMutationFunctions(models, keys, typeCollection, mutationCollection, mutationInputTypes, options) {
+  // const mutationInputTypes = await createMutationInputs(models, keys, typeCollection, options);
   await Promise.all(keys.map(async(modelName) => {
     if (!typeCollection[modelName]) {
       return;

@@ -31,8 +31,8 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
 
 exports.default = (() => {
-  var _ref = _asyncToGenerator(function* (models, keys, typeCollection, mutationCollection, options) {
-    const mutationInputTypes = yield (0, _createInput2.default)(models, keys, typeCollection, options);
+  var _ref = _asyncToGenerator(function* (models, keys, typeCollection, mutationCollection, mutationInputTypes, options) {
+    // const mutationInputTypes = await createMutationInputs(models, keys, typeCollection, options);
     yield Promise.all(keys.map((() => {
       var _ref2 = _asyncToGenerator(function* (modelName) {
         if (!typeCollection[modelName]) {
@@ -176,7 +176,7 @@ exports.default = (() => {
               // }
             });
 
-            return function (_x7) {
+            return function (_x8) {
               return _ref3.apply(this, arguments);
             };
           })()));
@@ -194,14 +194,14 @@ exports.default = (() => {
         }
       });
 
-      return function (_x6) {
+      return function (_x7) {
         return _ref2.apply(this, arguments);
       };
     })()));
     return mutationCollection;
   });
 
-  function createMutationFunctions(_x, _x2, _x3, _x4, _x5) {
+  function createMutationFunctions(_x, _x2, _x3, _x4, _x5, _x6) {
     return _ref.apply(this, arguments);
   }
 

@@ -22,7 +22,7 @@ const PORT = 3000;
 const app = (0, _express2.default)();
 _asyncToGenerator(function* () {
   const instance = yield (0, _utils.createSqlInstance)();
-  const schema = yield (0, _index.createSchema)(instance, { version: 3 });
+  const schema = yield (0, _index.createSchema)(instance, { version: 3, compat: 2 });
   app.use("/graphql", _bodyParser2.default.json(), (0, _apolloServerExpress.graphqlExpress)({ schema: schema }));
   app.get("/graphiql", (0, _apolloServerExpress.graphiqlExpress)({ endpointURL: "/graphql" }));
   app.listen(PORT);
