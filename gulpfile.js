@@ -27,7 +27,7 @@ gulp.task("compile:publish", ["lint"], () => {
         "stage-0",
         ["env", {
           "targets": {
-            "node": "6.11.3",
+            "node": "8.9.0",
           },
           "useBuiltIns": true,
         }],

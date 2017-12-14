@@ -5,16 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.permissionHelper = exports.events = exports.createSchema = exports.connect = undefined;
 
-require("core-js/modules/es7.object.values");
-
-require("core-js/modules/es7.object.entries");
-
-require("core-js/modules/es7.object.get-own-property-descriptors");
-
-require("core-js/modules/es7.string.pad-start");
-
-require("core-js/modules/es7.string.pad-end");
-
 var _database = require("./database");
 
 var database = _interopRequireWildcard(_database);

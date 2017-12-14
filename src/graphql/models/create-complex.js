@@ -47,7 +47,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
         switch (relationship.type) {
           case "belongsToMany": //eslint-disable-line
           case "hasMany":
-            const manyArgs = defaultListArgs();
+            let manyArgs = defaultListArgs();
             if (options.version === 3 || options.compat === 3) {
               manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
             }

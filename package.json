@@ -1,8 +1,8 @@
 {
   "name": "sql2gql",
-  "version": "3.0.0-alpha",
+  "version": "3.0.0-alpha3",
   "description": "Two way Sequelize to GraphQL bridge, extending out graphql-sequelize",
-  "main": "build/tests/express.js",
+  "main": "build/index.js",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/_mocha --no-timeouts ./build/tests/**/*.test.js",
     "prepublishOnly": "yarn && gulp compile:publish"
@@ -14,18 +14,32 @@
     "url": "https://github.com/VostroNet/sql2gql/issues"
   },
   "files": [
+    "build/graphql/models/create-base.js",
+    "build/graphql/models/create-before-after.js",
+    "build/graphql/models/create-complex.js",
+    "build/graphql/mutation/v3/create-functions.js",
+    "build/graphql/mutation/v3/index.js",
+    "build/graphql/mutation/create-input.js",
+    "build/graphql/mutation/index.js",
+    "build/graphql/mutation/mutation-functions.js",
+    "build/graphql/query/create-class-methods.js",
+    "build/graphql/query/create-lists.js",
+    "build/graphql/utils/get-model-def.js",
+    "build/graphql/utils/reset-interfaces.js",
+    "build/graphql/events.js",
+    "build/graphql/index.js",
+    "build/graphql/subscriptions.js",
+    "build/utils/logger.js",
     "build/database.js",
-    "build/graphql.js",
     "build/index.js",
-    "build/permission-helper.js",
-    "build/utils/logger.js"
+    "build/permission-helper.js"
   ],
   "devEngines": {
-    "node": "6.x || 7.x || 8.x",
-    "npm": "2.x || 3.x || 4.x || 5.x"
+    "node": "8.x || 9.x",
+    "npm": "3.x || 4.x || 5.x"
   },
   "devDependencies": {
-    "apollo-server-express": "^1.1.7",
+    "apollo-server-express": "^1.2.0",
     "babel-core": "^6.26.0",
     "babel-eslint": "^8.0.1",
     "babel-polyfill": "^6.26.0",
@@ -36,27 +50,26 @@
     "body-parser": "^1.18.2",
     "deep-freeze": "0.0.1",
     "del": "^3.0.0",
-    "eslint": "^4.9.0",
+    "eslint": "^4.10.0",
     "expect": "^21.2.1",
     "express": "^4.16.2",
-    "graphql": "^0.11.7",
     "graphql-relay": "^0.5.3",
-    "graphql-sequelize": "^5.4.3",
+    "graphql-sequelize": "^5.5.0",
     "graphql-subscriptions": "^0.5.4",
     "gulp": "^3.9.1",
     "gulp-babel": "^7.0.0",
     "gulp-eslint": "^4.0.0",
     "gulp-mocha": "^4.3.1",
     "gulp-sourcemaps": "^2.6.1",
-    "sequelize": "^4.15.0",
+    "sequelize": "^4.20.3",
     "source-map-support": "^0.5.0",
     "sqlite": "^2.8.0"
   },
   "peerDependencies": {
     "graphql": "^0.11.7",
     "graphql-relay": "^0.5.3",
-    "graphql-sequelize": "^5.4.3",
-    "sequelize": "^4.15.0"
+    "graphql-sequelize": "^5.5.0",
+    "sequelize": "^4.20.3"
   },
   "dependencies": {
     "deepmerge": "^2.0.0"

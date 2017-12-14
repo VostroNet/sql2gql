@@ -61,7 +61,7 @@ exports.default = (() => {
               switch (relationship.type) {
                 case "belongsToMany": //eslint-disable-line
                 case "hasMany":
-                  const manyArgs = (0, _graphqlSequelize.defaultListArgs)();
+                  let manyArgs = (0, _graphqlSequelize.defaultListArgs)();
                   if (options.version === 3 || options.compat === 3) {
                     manyArgs = Object.assign({ returnActionResults: { type: _graphql.GraphQLBoolean } }, manyArgs, (mutationFunction || {}).fields);
                   }
