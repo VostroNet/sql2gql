@@ -1,4 +1,4 @@
-import "babel-polyfill";
+// import "babel-polyfill";
 import * as database from "./database";
 import * as graphql from "./graphql";
 import pEvents from "./graphql/events";

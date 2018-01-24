@@ -1,11 +1,8 @@
-
-
 // import expect from "expect";
 // import {createSqlInstance, validateResult} from "./utils";
 // import {graphql} from "graphql";
 // import {createSchema, connect} from "../index";
 // import Sequelize from "sequelize";
-
 // describe("mutations v3", () => {
 //   it("create", async() => {
 //     const instance = await createSqlInstance();
@@ -30,5 +27,4 @@
 //     return expect(queryResult.data.models.Task.length).toEqual(1);
 //   });
 // });
-"use strict";
 //# sourceMappingURL=mutation-v3.test.js.map

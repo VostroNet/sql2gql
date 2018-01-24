@@ -37,7 +37,7 @@ export function onUpdate(targetModel) {
 
   const modelDefinition = getModelDefinition(targetModel);
   return async(model, args, context, info) => {
-    console.log("onUpdate - args", args, model);
+    // console.log("onUpdate - args", args, model);
     let input = args.input;
     if (modelDefinition.override) {
       input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {

@@ -8,10 +8,6 @@ import getModelDefinition from "../utils/get-model-def";
 export default async function createQueryFunctions(models, keys, typeCollection, options) {
   let queryCollection = {};
   await Promise.all(keys.map(async(modelName) => {
-    if (!typeCollection[modelName]) {
-      return;
-    }
-    let {fields} = typeCollection[modelName]._typeConfig; //eslint-disable-line
     const {query} = ((getModelDefinition(models[modelName]).expose || {}).classMethods || {});
     let queryFields = {};
     if (query) {
@@ -26,7 +22,9 @@ export default async function createQueryFunctions(models, keys, typeCollection,
         }
         const {type, args} = query[methodName];
         let outputType = (type instanceof String || typeof type === "string") ? typeCollection[type] : type;
-        // console.log("OUTPUT TYPE", outputType);
+        if (!outputType) {
+          return;
+        }
         queryFields[methodName] = {
           type: outputType,
           args,
@@ -34,7 +32,6 @@ export default async function createQueryFunctions(models, keys, typeCollection,
             return models[modelName][methodName].apply(models[modelName], [args, context]);
           },
         };
-        // console.log("test", queryFields[methodName]);
       }));
       if (Object.keys(queryFields).length > 0) {
         queryCollection[modelName] = {

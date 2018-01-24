@@ -14,7 +14,7 @@ import createBeforeAfter from "../../models/create-before-after";
 export default async function createMutationV3(models, keys, typeCollection, mutationFunctions, options) {
   let mutationCollection = {};
   await Promise.all(keys.map(async(modelName) => {
-    if (!typeCollection[modelName]) {
+    if (!typeCollection[modelName] || !mutationFunctions[modelName]) {
       return;
     }
     const {fields, funcs} = mutationFunctions[modelName];

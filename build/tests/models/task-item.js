@@ -3,18 +3,17 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.default = void 0;
 
-var _sequelize = require("sequelize");
-
-var _sequelize2 = _interopRequireDefault(_sequelize);
+var _sequelize = _interopRequireDefault(require("sequelize"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.default = {
+var _default = {
   name: "TaskItem",
   define: {
     name: {
-      type: _sequelize2.default.STRING,
+      type: _sequelize.default.STRING,
       allowNull: false,
       validate: {
         isAlphanumeric: {
@@ -37,7 +36,10 @@ exports.default = {
     classMethods: {},
     hooks: {
       beforeFind(options = {}) {
-        const { filterName } = options.rootValue || {};
+        const {
+          filterName
+        } = options.rootValue || {};
+
         if (filterName) {
           options.where = {
             name: {
@@ -45,20 +47,30 @@ exports.default = {
             }
           };
         }
+
         return options;
       },
+
       beforeCreate(instance, options, cb) {
         return undefined;
       },
+
       beforeUpdate(instance, options, cb) {
         return undefined;
       },
+
       beforeDestroy(instance, options, cb) {
         return undefined;
       }
+
     },
-    indexes: [{ unique: true, fields: ["name"] }],
+    indexes: [{
+      unique: true,
+      fields: ["name"]
+    }],
     instanceMethods: {} //TODO: figure out a way to expose this on graphql
+
   }
 };
+exports.default = _default;
 //# sourceMappingURL=task-item.js.map

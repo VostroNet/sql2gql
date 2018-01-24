@@ -505,3 +505,8 @@ const someoneSchema = await createSchema(instance, {
 
 2.1.1
 - Added model to parameters of override.input on updates
+
+3.0.0-alpha
+
+- Rebuilt mutation crud to allow for related objects to be created at the same time
+- Allowed query class methods to be allowed without models that they are created upon

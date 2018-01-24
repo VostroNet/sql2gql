@@ -55,6 +55,24 @@ describe("permissions", () => {
     expect(queryFields.Task).not.toBeDefined();
     return expect(queryFields.TaskItem).toBeDefined();
   });
+  it("query classMethods only", async() => {
+    const schema = await createSchema(instance, {
+      permission: {
+        query(modelName) {
+          return false;
+        },
+        queryClassMethods(modelName, methodName) {
+          if (modelName === "Task" && methodName === "getHiddenData") {
+            return false;
+          }
+          return true;
+        },
+      },
+    });
+    const queryFields = schema.getQueryType().getFields().classMethods.type.getFields().Task.type.getFields();
+    expect(queryFields.getHiddenData).not.toBeDefined();
+    return expect(queryFields.getHiddenData2).toBeDefined();
+  });
   it("query classMethods", async() => {
     const schema = await createSchema(instance, {
       permission: {

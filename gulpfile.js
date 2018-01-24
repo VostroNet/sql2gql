@@ -1,5 +1,4 @@
 "use strict"; //eslint-disable-line
-require("babel-core/register");
 const gulp = require("gulp");
 const eslint = require("gulp-eslint");
 const del = require("del");
@@ -23,16 +22,15 @@ gulp.task("compile:publish", ["lint"], () => {
   return gulp.src(["src/**/*"])
     .pipe(sourcemaps.init())
     .pipe(babel({
-      "presets": [
-        "stage-0",
-        ["env", {
+      "presets": [[
+        "@babel/preset-env", {
           "targets": {
-            "node": "8.9.0",
+            "node": "8.9.4", //8.9.4 LTS as of 17/01/2018
           },
-          "useBuiltIns": true,
-        }],
-      ]})
-    )
+          "useBuiltIns": "usage",
+        },
+      ]],
+    }))
     .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
     .pipe(gulp.dest("build/"));
 });
@@ -40,13 +38,12 @@ gulp.task("compile", ["lint"], () => {
   return gulp.src(["src/**/*"])
     .pipe(sourcemaps.init())
     .pipe(babel({
-      "presets": [
-        "stage-0",
-        ["env", {
+      "presets": [[
+        "@babel/preset-env", {
           "targets": {
-            "node": "6.11.3",
+            "node": "current",
           },
-          "useBuiltIns": true,
+          "useBuiltIns": "usage",
         }],
       ]})
     )

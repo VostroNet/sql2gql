@@ -30,7 +30,7 @@ async function createModelType(modelName, models, prefix = "", options = {}) {
     if (options.permission.model) {
       const result = await options.permission.model(modelName);
       if (!result) {
-        console.log("exluding", modelName);
+        // console.log("exluding", modelName);
         return undefined;
       }
     }

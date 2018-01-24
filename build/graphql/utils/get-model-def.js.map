@@ -1,1 +1,1 @@
-{"version":3,"sources":["graphql/utils/get-model-def.js"],"names":["getModelDefinition","model","$sqlgql"],"mappings":";;;;;kBAAwBA,kB;AAAT,SAASA,kBAAT,CAA4BC,KAA5B,EAAmC;AAChD,SAAOA,MAAMC,OAAb;AACD","file":"get-model-def.js","sourceRoot":"../../../src/"}
+{"version":3,"sources":["graphql/utils/get-model-def.js"],"names":["getModelDefinition","model","$sqlgql"],"mappings":";;;;;;;AAAe,SAASA,kBAAT,CAA4BC,KAA5B,EAAmC;AAChD,SAAOA,MAAMC,OAAb;AACD","file":"get-model-def.js","sourceRoot":"../../../src/"}
