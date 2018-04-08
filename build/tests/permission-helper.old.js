@@ -85,4 +85,4 @@ describe("permission helper", () => {
     (0, _expect.default)(permission.field("Task", "name")).toBeTruthy();
   });
 });
-//# sourceMappingURL=permission-helper.test.js.map
+//# sourceMappingURL=permission-helper.old.js.map

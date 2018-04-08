@@ -87,7 +87,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
         name: `${modelName}CommandUpdateInput`,
         fields: Object.assign((0, _graphqlSequelize.defaultListArgs)(models[modelName]), {
           input: {
-            type: optional
+            type: new _graphql.GraphQLNonNull(optional)
           }
         })
       }))

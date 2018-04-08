@@ -3,6 +3,7 @@
 import {
   GraphQLList,
   GraphQLInputObjectType,
+  GraphQLNonNull,
 } from "graphql";
 
 import {
@@ -66,7 +67,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
     fields.update = {
       type: new GraphQLList(new GraphQLInputObjectType({
         name: `${modelName}CommandUpdateInput`,
-        fields: Object.assign(defaultListArgs(models[modelName]), {input: {type: optional}}),
+        fields: Object.assign(defaultListArgs(models[modelName]), {input: {type: new GraphQLNonNull(optional)}}),
       })),
     };
     funcs.update = resolver(models[modelName], {

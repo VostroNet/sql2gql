@@ -1,4 +1,7 @@
 import Sequelize from "sequelize";
+if (global.Promise) {
+  Sequelize.Promise = global.Promise;
+}
 import logger from "./utils/logger";
 const log = logger("sql2gql::database:");
 

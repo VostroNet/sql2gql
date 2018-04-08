@@ -22,7 +22,7 @@ export default async function createMutationV3(models, keys, typeCollection, mut
       const {before, after} = createBeforeAfter(models[modelName], options);
       mutationCollection[modelName] = {
         type: new GraphQLList(typeCollection[modelName]),
-        args: Object.assign(fields, defaultListArgs()),
+        args: fields,
         async resolve(source, args, context, info) {
           let results = [];
           if (args.create) {
@@ -37,7 +37,7 @@ export default async function createMutationV3(models, keys, typeCollection, mut
           }
           if (args.delete) {
             results = results.concat(await args.delete.reduce(async(arr, arg) => {
-              return arr.concat(await funcs.delete(source, {input: arg}, context, info));
+              return arr.concat(await funcs.delete(source, arg, context, info));
             }, []));
           }
           if (!(args.create || args.update || args.delete) || args.where) {

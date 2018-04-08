@@ -32,7 +32,7 @@ async function createMutationV3(models, keys, typeCollection, mutationFunctions,
       } = (0, _createBeforeAfter.default)(models[modelName], options);
       mutationCollection[modelName] = {
         type: new _graphql.GraphQLList(typeCollection[modelName]),
-        args: Object.assign(fields, (0, _graphqlSequelize.defaultListArgs)()),
+        args: fields,
 
         async resolve(source, args, context, info) {
           let results = [];
@@ -53,9 +53,7 @@ async function createMutationV3(models, keys, typeCollection, mutationFunctions,
 
           if (args.delete) {
             results = results.concat((await args.delete.reduce(async (arr, arg) => {
-              return arr.concat((await funcs.delete(source, {
-                input: arg
-              }, context, info)));
+              return arr.concat((await funcs.delete(source, arg, context, info)));
             }, [])));
           }
 

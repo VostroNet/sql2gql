@@ -56,12 +56,11 @@ export default function createBeforeAfter(model, options, hooks = {}) {
   if (hooks.before) {
     targetBeforeFuncs = targetBeforeFuncs.concat(hooks.before);
   }
- 
   const targetBefore = (findOptions, args, context, info) => {
     findOptions.context = context;
     findOptions.rootValue = info.rootValue;
-    if (args.where) {
-      args.where = replaceIdDeep(args.where, primaryKeys);
+    if (findOptions.where) {
+      findOptions.where = replaceIdDeep(findOptions.where, primaryKeys);
     }
     if (targetBeforeFuncs.length === 0) {
       return findOptions;

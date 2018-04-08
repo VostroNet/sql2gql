@@ -39,6 +39,9 @@ export function onUpdate(targetModel) {
   return async(model, args, context, info) => {
     // console.log("onUpdate - args", args, model);
     let input = args.input;
+    if (!input) {
+      throw new Error("Unable to update field as no input was provided");
+    }
     if (modelDefinition.override) {
       input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
         if (modelDefinition.override[fieldName].input) {
