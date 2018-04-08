@@ -85,7 +85,9 @@ export async function createSchema(sqlInstance, options = {}) {
   }
 
   const relayTypes = Object.keys(sqlInstance.models).reduce((types, name) => {
-    types[name] = typeCollection[name];
+    if (typeCollection[name]) {
+      types[name] = typeCollection[name];
+    }
     return types;
   }, {});
 

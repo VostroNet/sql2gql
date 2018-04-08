@@ -203,7 +203,6 @@ describe("mutations", () => {
     }`;
     const result = await graphql(schema, mutation);
     validateResult(result);
-    console.log("result", result.data.models.Task);
     expect(result.data.models.Task.length).toEqual(2);
     const queryResults = await graphql(schema, "query { models { Task { id, name } } }");
     // console.log("queryResults", queryResults.data.models.Task);

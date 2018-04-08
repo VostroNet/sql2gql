@@ -7,8 +7,6 @@ exports.default = createModelTypes;
 
 var _graphql = require("graphql");
 
-var _graphqlRelay = require("graphql-relay");
-
 var _graphqlSequelize = require("graphql-sequelize");
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
@@ -17,8 +15,6 @@ var _createBeforeAfter = _interopRequireDefault(require("./create-before-after")
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import {relay} from "graphql-sequelize";
-// const {sequelizeConnection} = relay;
 async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
   const result = await keys.reduce((promise, modelName) => {
     return promise.then(async o => {
@@ -53,7 +49,8 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
   let fields = (0, _graphqlSequelize.attributeFields)(model, {
     exclude,
-    globalId: true
+    globalId: true //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
+
   });
 
   if (modelDefinition.override) {

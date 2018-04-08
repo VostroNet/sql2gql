@@ -8,7 +8,11 @@ import {
 import {
   resolver,
   defaultListArgs,
+  JSONType,
+  relay,
 } from "graphql-sequelize";
+
+const {sequelizeConnection} =  relay;
 
 // import createBaseModel from "./create-base";
 import createBeforeAfter from "./create-before-after";
@@ -47,66 +51,103 @@ export default async function createComplexModels(models, keys, typeCollection, 
         switch (relationship.type) {
           case "belongsToMany": //eslint-disable-line
           case "hasMany":
-            let manyArgs = defaultListArgs();
-            if (options.version === 3 || options.compat === 3) {
-              manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
-            }
+            // let manyArgs = defaultListArgs();
+            // if (options.version === 3 || options.compat === 3) {
+            //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
+            // }
 
-            fields[relName] = {
-              type: new GraphQLList(targetType),
-              args: manyArgs,
-              async resolve(source, args, context, info) {
-                //TODO: throw error is request type is a query and a  mutation arg is provided
-                if (args.create || args.update || args.delete) {
-                  const model = models[modelName];
-                  const assoc = model.associations[relName];
-                  const {funcs} = mutationFunction;
-                  let keys = {};
-                  keys[assoc.foreignKey] = source.get(assoc.sourceKey);
-                  if (args.create) {
-                    const createResult = args.create.reduce((promise, a) => {
-                      return promise.then(async(arr) => {
-                        return arr.concat(await funcs.create(source, {
-                          input: Object.assign(a, keys),
-                        }, context, info));
-                      });
-                    }, Promise.resolve([]));
-                    if (args.returnActionResults) {
-                      return createResult;
-                    }
-                  }
-                  if (args.update) {
-                    const updateResult = args.update.reduce((promise, a) => {
-                      return promise.then(async(arr) => {
-                        return arr.concat(await funcs.update(source, {
-                          input: Object.assign(a, keys),
-                        }, context, info));
-                      });
-                    }, Promise.resolve([]));
-                    if (args.returnActionResults) {
-                      return updateResult;
-                    }
-                  }
-
-                  if (args.delete) {
-                    const deleteResult = args.delete.reduce((promise, a) => {
-                      return promise.then(async(arr) => {
-                        return arr.concat(await funcs.delete(source, {
-                          input: Object.assign(a, keys),
-                        }, context, info));
-                      });
-                    }, Promise.resolve([]));
-                    if (args.returnActionResults) {
-                      return deleteResult;
-                    }
-                  }
+            const c = sequelizeConnection({
+              name: relName,
+              nodeType: targetType,
+              target: relationship.rel,
+              // orderBy: def.orderBy,
+              // edgeFields: def.edgeFields,
+              // connectionFields: def.connectionFields,
+              where: (key, value, currentWhere) => {
+                // for custom args other than connectionArgs return a sequelize where parameter
+                if (key === "where") {
+                  return value;
                 }
-                return resolver(relationship.rel, {
-                  before,
-                  after: afterList,
-                })(source, args, context, info);
+                return {[key]: value};
               },
+              before(findOptions, args, context, info) {
+                const {source} = info;
+                const model = models[modelName];
+                const assoc = model.associations[relName];
+                findOptions.where = {
+                  $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}]
+                };
+                return before(findOptions, args, context, info);
+              }, after,
+            });
+            fields[relName] = {
+              type: c.connectionType,
+              args: {
+                ...c.connectionArgs,
+                where: {
+                  type: JSONType.default,
+                }
+              },
+              resolve: c.resolve,
             };
+
+            // fields[relName] = {
+            //   type: new GraphQLList(targetType),
+            //   args: manyArgs,
+            //   async resolve(source, args, context, info) {
+            //TODO: throw error is request type is a query and a  mutation arg is provided
+            // if (args.create || args.update || args.delete) {
+            //   const model = models[modelName];
+            //   const assoc = model.associations[relName];
+            //   const {funcs} = mutationFunction;
+            //   let keys = {};
+            //   keys[assoc.foreignKey] = source.get(assoc.sourceKey);
+            //   if (args.create) {
+            //     const createResult = args.create.reduce((promise, a) => {
+            //       return promise.then(async(arr) => {
+            //         return arr.concat(await funcs.create(source, {
+            //           input: Object.assign(a, keys),
+            //         }, context, info));
+            //       });
+            //     }, Promise.resolve([]));
+            //     if (args.returnActionResults) {
+            //       return createResult;
+            //     }
+            //   }
+            //   if (args.update) {
+            //     const updateResult = args.update.reduce((promise, a) => {
+            //       return promise.then(async(arr) => {
+            //         return arr.concat(await funcs.update(source, {
+            //           input: Object.assign(a, keys),
+            //         }, context, info));
+            //       });
+            //     }, Promise.resolve([]));
+            //     if (args.returnActionResults) {
+            //       return updateResult;
+            //     }
+            //   }
+
+            //   if (args.delete) {
+            //     const deleteResult = args.delete.reduce((promise, a) => {
+            //       return promise.then(async(arr) => {
+            //         return arr.concat(await funcs.delete(source, {
+            //           input: Object.assign(a, keys),
+            //         }, context, info));
+            //       });
+            //     }, Promise.resolve([]));
+            //     if (args.returnActionResults) {
+            //       return deleteResult;
+            //     }
+            //   }
+            // }
+
+
+            //   return resolver(relationship.rel, {
+            //     before,
+            //     after: afterList,
+            //   })(source, args, context, info);
+            // },
+            // };
             break;
           case "hasOne": //eslint-disable-line
           case "belongsTo":

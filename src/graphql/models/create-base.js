@@ -5,9 +5,7 @@ import {
   GraphQLEnumType,
   GraphQLNonNull,
 } from "graphql";
-import {
-  globalIdField,
-} from "graphql-relay";
+
 
 import {
   resolver,
@@ -17,8 +15,6 @@ import {
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
 
-// import {relay} from "graphql-sequelize";
-// const {sequelizeConnection} = relay;
 
 export default async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
   const result = await keys.reduce((promise, modelName) => {
@@ -52,7 +48,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
   let fields = attributeFields(model, {
     exclude,
-    globalId: true,
+    globalId: true, //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
   });
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach((fieldName) => {

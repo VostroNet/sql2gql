@@ -30,6 +30,7 @@ gulp.task("compile:publish", ["lint"], () => {
           "useBuiltIns": "usage",
         },
       ]],
+      "plugins": ["@babel/plugin-proposal-object-rest-spread"]
     }))
     .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
     .pipe(gulp.dest("build/"));
@@ -45,8 +46,8 @@ gulp.task("compile", ["lint"], () => {
           },
           "useBuiltIns": "usage",
         }],
-      ]})
-    )
+      ], plugins: ["@babel/plugin-proposal-object-rest-spread"]
+    }))
     .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
     .pipe(gulp.dest("build/"));
 });

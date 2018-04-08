@@ -1,15 +1,21 @@
 
 
 import {
-  GraphQLList,
+  GraphQLList, GraphQLInt
 } from "graphql";
 
 import {
   resolver,
   defaultListArgs,
+  JSONType,
+  relay
 } from "graphql-sequelize";
 
+import getModelDefinition from "../utils/get-model-def";
+
 import createBeforeAfter from "../models/create-before-after";
+
+const {sequelizeConnection} =  relay;
 
 export default async function createModelLists(models, modelNames, typeCollection, options, fields = {}) {
   await Promise.all(modelNames.map(async(modelName) => {
@@ -24,13 +30,42 @@ export default async function createModelLists(models, modelNames, typeCollectio
       }
       // let targetOpts = options[modelName];
       const {before, after} = createBeforeAfter(models[modelName], options);
+      const def = getModelDefinition(models[modelName]);
+      const c = sequelizeConnection({
+        name: `${modelName}`,
+        nodeType: typeCollection[modelName],
+        target: models[modelName],
+        orderBy: def.orderBy,
+        edgeFields: def.edgeFields,
+        connectionFields: def.connectionFields,
+        where: (key, value, currentWhere) => {
+          // for custom args other than connectionArgs return a sequelize where parameter
+          if (key === "where") {
+            return value;
+          }
+          return {[key]: value};
+        },
+        before, after,
+      });
+
+
+      // fields[modelName] = {
+      //   type: new GraphQLList(typeCollection[modelName]),
+      //   args: defaultListArgs(),
+      //   resolve: resolver(models[modelName], {
+      //     before,
+      //     after,
+      //   }),
+      // };
       fields[modelName] = {
-        type: new GraphQLList(typeCollection[modelName]),
-        args: defaultListArgs(),
-        resolve: resolver(models[modelName], {
-          before,
-          after,
-        }),
+        type: c.connectionType,
+        args: {
+          ...c.connectionArgs,
+          where: {
+            type: JSONType.default,
+          }
+        },
+        resolve: c.resolve,
       };
     }
   }));

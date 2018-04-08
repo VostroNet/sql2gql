@@ -97,8 +97,7 @@ function createBeforeAfter(model, options, hooks = {}) {
 
     const results = targetBeforeFuncs.reduce((prev, curr) => {
       return curr(prev, args, context, info);
-    }, findOptions); // console.log("results", results);
-
+    }, findOptions);
     return results;
   };
 
