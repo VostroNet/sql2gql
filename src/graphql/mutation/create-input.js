@@ -5,9 +5,11 @@ import {
   GraphQLInputObjectType,
   GraphQLScalarType,
   GraphQLEnumType,
+  GraphQLList,
 } from "graphql";
 
 import getModelDefinition from "../utils/get-model-def";
+import jsonType from "graphql-sequelize/lib/types/jsonType";
 
 function createMutationInput(modelName, model, gqlFields, prefix, allOptional = false) {
   const modelDefinition = getModelDefinition(model);
@@ -61,14 +63,14 @@ function createMutationInput(modelName, model, gqlFields, prefix, allOptional = 
     }
   });
 
-  return new GraphQLInputObjectType({
+  return {
     name: `${modelName}${prefix}Input`,
     fields,
-  });
+  };
 }
-
-export default async function createMutationInputTypes(models, keys, typeCollection, options) {
-  return keys.reduce((o, modelName) => {
+//new GraphQLInputObjectType(
+export default async function createMutationInputs(models, keys, typeCollection, options) {
+  let inputs = keys.reduce((o, modelName) => {
     if (!typeCollection[modelName]) {
       return o;
     }
@@ -78,5 +80,82 @@ export default async function createMutationInputTypes(models, keys, typeCollect
       optional: createMutationInput(modelName, models[modelName], fields, "Optional", true),
     };
     return o;
+  }, {});
+  let complete = true;
+  let loop = 0;
+  do {
+    complete = true;
+    loop++;
+    if (loop > 50) {
+      //TODO: ??
+      // go forward not going to be able to resolve any more 50 attempts should be enough
+      break;//throw new Error("something went wrong, unable to finalise schema, maybe a permission setting?");
+    }
+    Object.keys(inputs).forEach((modelName) => { //eslint-disable-line
+      const model = models[modelName];
+      let sourceType = inputs[modelName];
+      if (model.relationships) {
+        Object.keys(model.relationships).forEach(async(relName) => {
+          let relationship = model.relationships[relName];
+          let targetType;
+          if (modelName === relationship.source) {
+            targetType = sourceType;
+          } else {
+            targetType = inputs[relationship.source];
+          }
+          if (targetType) {
+            const input = new GraphQLInputObjectType({
+              name: `${sourceType.required.name}${relName}`,
+              fields: {
+                create: {
+                  type: new GraphQLInputObjectType({
+                    name: `${sourceType.required.name}${relName}Create`,
+                    fields: targetType.required.fields,
+                  }),
+                },
+                update: {
+                  type: new GraphQLInputObjectType({
+                    name: `${sourceType.optional.name}${relName}Update`,
+                    fields: {
+                      where: {
+                        type: jsonType,
+                      },
+                      input: {
+                        type: new GraphQLInputObjectType({
+                          name: `${sourceType.optional.name}${relName}UpdateInput`,
+                          fields: targetType.optional.fields,
+                        }),
+                      },
+                    },
+                  }),
+                },
+              },
+            });
+            switch (relationship.type) {
+              case "belongsToMany": //eslint-disable-line
+              case "hasMany":
+                inputs[modelName].required.fields[relName] = {type: new GraphQLList(input)};
+                inputs[modelName].optional.fields[relName] = {type: new GraphQLList(input)};
+                break;
+              default:
+                inputs[modelName].required.fields[relName] = {type: input};
+                inputs[modelName].optional.fields[relName] = {type: input};
+                break;
+            }
+          } else {
+            complete = false;
+          }
+        });
+      }
+    });
+  } while (!complete);
+  return Object.keys(inputs).reduce((o, k) => {
+    return {
+      ...o,
+      [k]: {
+        required: new GraphQLInputObjectType(inputs[k].required),
+        optional: new GraphQLInputObjectType(inputs[k].optional),
+      }
+    };
   }, {});
 }

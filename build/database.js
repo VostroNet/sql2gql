@@ -13,6 +13,10 @@ var _logger = _interopRequireDefault(require("./utils/logger"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+if (global.Promise) {
+  _sequelize.default.Promise = global.Promise;
+}
+
 const log = (0, _logger.default)("sql2gql::database:");
 
 function connect(schemas, sqlInstance, options) {

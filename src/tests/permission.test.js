@@ -20,6 +20,7 @@ describe("permissions", () => {
         },
       },
     });
+    // debugger; //eslint-disable-line
     const queryFields = schema.getQueryType().getFields().models.type.getFields();
     expect(queryFields.Task).not.toBeDefined();
     return expect(queryFields.TaskItem).toBeDefined();
@@ -99,7 +100,7 @@ describe("permissions", () => {
         },
       },
     });
-    const taskFields = schema.getQueryType().getFields().models.type.getFields().Task.type.ofType.getFields();
+    const taskFields = schema.getQueryType().getFields().models.type.getFields().Task.type.getFields().edges.type.ofType.getFields().node.type.getFields();
     return expect(taskFields.items).not.toBeDefined();
   });
   it("mutation model", async() => {
@@ -129,9 +130,10 @@ describe("permissions", () => {
         },
       },
     });
-    const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toBeDefined();
-    return expect(func.create).not.toBeDefined();
+    const {args} = schema.getMutationType().getFields().models.type.getFields().Task;
+    expect(args.filter((a) => a.name === "delete").length).toEqual(1);
+    expect(args.filter((a) => a.name === "update").length).toEqual(1);
+    return expect(args.filter((a) => a.name === "create").length).toEqual(0);
   });
   it("mutation model - update", async() => {
     const schema = await createSchema(instance, {
@@ -144,9 +146,10 @@ describe("permissions", () => {
         },
       },
     });
-    const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toBeDefined();
-    return expect(func.update).not.toBeDefined();
+    const {args} = schema.getMutationType().getFields().models.type.getFields().Task;
+    expect(args.filter((a) => a.name === "delete").length).toEqual(1);
+    expect(args.filter((a) => a.name === "update").length).toEqual(0);
+    return expect(args.filter((a) => a.name === "create").length).toEqual(1);
   });
   it("mutation model - delete", async() => {
     const schema = await createSchema(instance, {
@@ -159,41 +162,13 @@ describe("permissions", () => {
         },
       },
     });
-    const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.update).toBeDefined();
-    return expect(func.delete).not.toBeDefined();
-  });
-  it("mutation model - updateAll", async() => {
-    const schema = await createSchema(instance, {
-      permission: {
-        mutationUpdateAll(modelName) {
-          if (modelName === "Task") {
-            return false;
-          }
-          return true;
-        },
-      },
-    });
-    const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toBeDefined();
-    return expect(func.updateAll).not.toBeDefined();
-  });
-  it("mutation model - deleteAll", async() => {
-    const schema = await createSchema(instance, {
-      permission: {
-        mutationDeleteAll(modelName) {
-          if (modelName === "Task") {
-            return false;
-          }
-          return true;
-        },
-      },
-    });
-    const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toBeDefined();
-    return expect(func.deleteAll).not.toBeDefined();
+    const {args} = schema.getMutationType().getFields().models.type.getFields().Task;
+    expect(args.filter((a) => a.name === "delete").length).toEqual(0);
+    expect(args.filter((a) => a.name === "update").length).toEqual(1);
+    return expect(args.filter((a) => a.name === "create").length).toEqual(1);
   });
   it("mutation model - classMethods", async() => {
+    // return expect(false).toEqual(true);
     const schema = await createSchema(instance, {
       permission: {
         mutationClassMethods(modelName, methodName) {
@@ -204,8 +179,8 @@ describe("permissions", () => {
         },
       },
     });
-    const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    expect(func.delete).toBeDefined();
+    const func = schema.getMutationType().getFields().classMethods.type.getFields().Task.type.getFields();
+    expect(func.reverseName2).toBeDefined();
     return expect(func.reverseName).not.toBeDefined();
   });
   it("subscription", async() => {

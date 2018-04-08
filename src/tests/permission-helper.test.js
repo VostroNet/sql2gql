@@ -64,7 +64,7 @@ describe("permission helper", () => {
     // console.log("queryFields.Task", schema.$sql2gql.types.Task.getFields());
     const fields = schema.$sql2gql.types.Task.getFields();
     expect(fields.name).toBeDefined();
-    expect(fields.id).not.toBeDefined();
+    expect(fields.options).not.toBeDefined();
     expect(queryFields.TaskItem).not.toBeDefined();
   });
 

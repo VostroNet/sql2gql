@@ -100,6 +100,9 @@ export default {
     type: "hasMany",
     model: "TaskItem",
     name: "items",
+    options: {
+      foreignKey: "taskId",
+    }
   }],
   expose: {
     instanceMethods: {
@@ -127,6 +130,19 @@ export default {
             input: {
               type: new GraphQLNonNull(new GraphQLInputObjectType({
                 name: "TaskReverseNameInput",
+                fields: {
+                  amount: {type: new GraphQLNonNull(GraphQLInt)},
+                },
+              })),
+            },
+          },
+        },
+        reverseName2: {
+          type: "Task",
+          args: {
+            input: {
+              type: new GraphQLNonNull(new GraphQLInputObjectType({
+                name: "TaskReverseName2Input",
                 fields: {
                   amount: {type: new GraphQLNonNull(GraphQLInt)},
                 },

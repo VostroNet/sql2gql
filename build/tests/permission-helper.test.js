@@ -63,7 +63,7 @@ describe("permission helper", () => {
 
     const fields = schema.$sql2gql.types.Task.getFields();
     (0, _expect.default)(fields.name).toBeDefined();
-    (0, _expect.default)(fields.id).not.toBeDefined();
+    (0, _expect.default)(fields.options).not.toBeDefined();
     (0, _expect.default)(queryFields.TaskItem).not.toBeDefined();
   });
   it("basic test - allow all on task - defaults deny", async () => {

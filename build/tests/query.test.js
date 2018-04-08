@@ -24,9 +24,9 @@ describe("queries", () => {
       name: "item3"
     })]);
     const schema = await (0, _index.createSchema)(instance);
-    const result = await (0, _graphql.graphql)(schema, "query { models { Task { id, name } } }");
+    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name } } } } }");
     (0, _utils.validateResult)(result);
-    return (0, _expect.default)(result.data.models.Task.length).toEqual(3);
+    return (0, _expect.default)(result.data.models.Task.edges.length).toEqual(3);
   });
   it("classMethod", async () => {
     const instance = await (0, _utils.createSqlInstance)();
@@ -72,10 +72,10 @@ describe("queries", () => {
         "hidden": "invisibot"
       })
     });
-    const result = await (0, _graphql.graphql)(schema, "query { models { Task { id, name, options {hidden} } } }");
+    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name, options {hidden} } } } } }");
     (0, _utils.validateResult)(result); // console.log("result", result.data.models.Task[0]);
 
-    return (0, _expect.default)(result.data.models.Task[0].options.hidden).toEqual("invisibot");
+    return (0, _expect.default)(result.data.models.Task.edges[0].node.options.hidden).toEqual("invisibot");
   });
   it("filter hooks", async () => {
     const instance = await (0, _utils.createSqlInstance)();
@@ -91,11 +91,29 @@ describe("queries", () => {
       taskId: model.get("id")
     });
     const schema = await (0, _index.createSchema)(instance);
-    const result = await (0, _graphql.graphql)(schema, "query { models { Task { id, name, items {id} } } }", {
+    const result = await (0, _graphql.graphql)(schema, `query {
+      models { 
+        Task { 
+          edges { 
+            node { 
+              id, 
+              name, 
+              items { 
+                edges { 
+                  node { 
+                    id 
+                  } 
+                } 
+              } 
+            } 
+          } 
+        } 
+      }
+    }`, {
       filterName: "filterMe"
     });
     (0, _utils.validateResult)(result);
-    return (0, _expect.default)(result.data.models.Task[0].items.length).toEqual(0);
+    return (0, _expect.default)(result.data.models.Task.edges[0].node.items.edges.length).toEqual(0);
   });
   it("instance method", async () => {
     const instance = await (0, _utils.createSqlInstance)();
@@ -110,12 +128,27 @@ describe("queries", () => {
       name: "item3"
     })]);
     const schema = await (0, _index.createSchema)(instance);
-    const result = await (0, _graphql.graphql)(schema, "query { models { Task { id, name, testInstanceMethod(input: {amount: 1}) { name } } } }");
+    const result = await (0, _graphql.graphql)(schema, `{
+      models {
+        Task {
+          edges {
+            node {
+              id
+              name
+              testInstanceMethod(input: {amount: 1}) {
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+    `);
     (0, _utils.validateResult)(result);
-    (0, _expect.default)(result.data.models.Task[0].testInstanceMethod[0].name).toEqual("item11");
-    (0, _expect.default)(result.data.models.Task[1].testInstanceMethod[0].name).toEqual("item21");
-    (0, _expect.default)(result.data.models.Task[2].testInstanceMethod[0].name).toEqual("item31");
-    return (0, _expect.default)(result.data.models.Task.length).toEqual(3);
+    (0, _expect.default)(result.data.models.Task.edges[0].node.testInstanceMethod[0].name).toEqual("item11");
+    (0, _expect.default)(result.data.models.Task.edges[1].node.testInstanceMethod[0].name).toEqual("item21");
+    (0, _expect.default)(result.data.models.Task.edges[2].node.testInstanceMethod[0].name).toEqual("item31");
+    return (0, _expect.default)(result.data.models.Task.edges.length).toEqual(3);
   });
 });
 //# sourceMappingURL=query.test.js.map

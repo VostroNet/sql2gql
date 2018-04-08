@@ -6,6 +6,7 @@ import {
   GraphQLNonNull,
 } from "graphql";
 
+
 import {
   resolver,
   attributeFields,
@@ -15,17 +16,17 @@ import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
 
 
-export default async function createModelTypes(models, keys, prefix = "", options) {
+export default async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
   const result = await keys.reduce((promise, modelName) => {
     return promise.then(async(o) => {
-      o[modelName] = await createModelType(modelName, models, prefix, options);
+      o[modelName] = await createModelType(modelName, models, prefix, options, nodeInterface);
       return o;
     });
   }, Promise.resolve({}));
   return result;
 }
 
-async function createModelType(modelName, models, prefix = "", options = {}) {
+async function createModelType(modelName, models, prefix = "", options = {}, nodeInterface) {
   if (options.permission) {
     if (options.permission.model) {
       const result = await options.permission.model(modelName);
@@ -47,6 +48,7 @@ async function createModelType(modelName, models, prefix = "", options = {}) {
 
   let fields = attributeFields(model, {
     exclude,
+    globalId: true, //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
   });
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach((fieldName) => {
@@ -86,7 +88,8 @@ async function createModelType(modelName, models, prefix = "", options = {}) {
   return new GraphQLObjectType({
     name: `${prefix}${modelName}`,
     description: "",
-    fields: fields,
+    fields,
     resolve: resolve,
+    interfaces: [nodeInterface],
   });
 }

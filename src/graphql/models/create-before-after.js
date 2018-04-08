@@ -1,6 +1,7 @@
 
 import getModelDefinition from "../utils/get-model-def";
 import events from "../events";
+import replaceIdDeep from "../utils/replace-id-deep";
 
 
 export default function createBeforeAfter(model, options, hooks = {}) {
@@ -9,6 +10,13 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     targetAfterFuncs = targetAfterFuncs.concat(hooks.after);
   }
   const modelDefinition = getModelDefinition(model);
+  const primaryKeys = Object.keys(model.fieldRawAttributesMap).filter((k) => {
+    return model.fieldRawAttributesMap[k].primaryKey;
+  });
+  // targetBeforeFuncs.push(function(params, args, context, info) {
+
+  // });
+
   if (options.before) {
     targetBeforeFuncs.push(function(params, args, context, info) {
       return options.before({
@@ -49,9 +57,11 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     targetBeforeFuncs = targetBeforeFuncs.concat(hooks.before);
   }
   const targetBefore = (findOptions, args, context, info) => {
-    // console.log("weee", {context, rootValue: info.rootValue})
     findOptions.context = context;
     findOptions.rootValue = info.rootValue;
+    if (findOptions.where) {
+      findOptions.where = replaceIdDeep(findOptions.where, primaryKeys);
+    }
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
     }

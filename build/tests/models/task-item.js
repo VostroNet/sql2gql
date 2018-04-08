@@ -26,11 +26,14 @@ var _default = {
       }
     }
   },
-  // relationships: [{
-  //   type: "belongsTo",
-  //   model: "Task",
-  //   name: "task",
-  // }],
+  relationships: [{
+    type: "belongsTo",
+    model: "Task",
+    name: "task",
+    options: {
+      foreignKey: "taskId"
+    }
+  }],
   options: {
     tableName: "task-items",
     classMethods: {},

@@ -4,23 +4,34 @@ import {
   GraphQLObjectType,
 } from "graphql";
 
-import deepmerge from "deepmerge";
+
+import {
+  relay,
+} from "graphql-sequelize";
+
+const {sequelizeNodeInterface} = relay;
+
+// import deepmerge from "deepmerge";
+// import Sequelize from "sequelize";
+// import cls from "continuation-local-storage";
+// const namespace = cls.createNamespace("sql2gql");
+// Sequelize.useCLS(namespace);
 
 import getModelDefinition from "./utils/get-model-def";
 import createBasicModels from "./models/create-base";
 import createComplexModels from "./models/create-complex";
 
-import createMutationCollection from "./mutation";
-
-import createMutationV3 from "./mutation/v3";
-import createMutationFunctions from "./mutation/v3/create-functions";
+import createMutation from "./mutation/";
+import createMutationFunctions from "./mutation/create-functions";
 import createMutationInputs from "./mutation/create-input";
+import createMutationClassMethods from "./mutation/create-class-methods";
 
 import createQueryLists from "./query/create-lists";
 import createQueryClassMethods from "./query/create-class-methods";
 import createSubscriptionFunctions from "./subscriptions";
 
 export async function createSchema(sqlInstance, options = {}) {
+  const {nodeInterface, nodeField, nodeTypeMapper} = sequelizeNodeInterface(sqlInstance);
   const {query, mutations = {}, subscriptions, extend = {}} = options;
   let validKeys = Object.keys(sqlInstance.models).reduce((o, key) => {
     if (getModelDefinition(sqlInstance.models[key])) {
@@ -28,38 +39,16 @@ export async function createSchema(sqlInstance, options = {}) {
     }
     return o;
   }, []);
-  let typeCollection = await createBasicModels(sqlInstance.models, validKeys, "", options);
+  let typeCollection = await createBasicModels(sqlInstance.models, validKeys, "", options, nodeInterface);
   const mutationInputTypes = await createMutationInputs(sqlInstance.models, validKeys, typeCollection, options);
-  const mutationFunctions = await createMutationFunctions(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options);
+  const mutationFunctions = await createMutationFunctions(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options, () => mutationFunctions);
   typeCollection = await createComplexModels(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
-  let mutationCollection = {};
-  if (options.version === 3 && options.compat === 2) {
-    mutations.v2 = {
-      type: new GraphQLObjectType({
-        name: "v2Compat",
-        fields: await createMutationCollection(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options)
-      }),
-      resolve: () => {},
-    };
-    mutationCollection = await createMutationV3(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
-  } else if (options.version === 2 && options.compat === 3) {
-    mutations.v3 = {
-      type: new GraphQLObjectType({
-        name: "v3Compat",
-        fields: await createMutationV3(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options),
-      }),
-      resolve: () => {},
-    };
-    mutationCollection = await createMutationCollection(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options);
-  } else if (options.version === 3) {
-    mutationCollection = await createMutationV3(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
-  } else {
-    mutationCollection = await createMutationCollection(sqlInstance.models, validKeys, typeCollection, {}, mutationInputTypes, options);
-  }
-  let classMethodQueries = await createQueryClassMethods(sqlInstance.models, validKeys, typeCollection, options);
-  let modelQueries = await createQueryLists(sqlInstance.models, validKeys, typeCollection, options);
-  let queryRootFields = Object.assign({}, query);
+  let mutationCollection = await createMutation(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
+  let queryRootFields = Object.assign({
+    node: nodeField,
+  }, query);
   let rootSchema = {};
+  let modelQueries = await createQueryLists(sqlInstance.models, validKeys, typeCollection, options);
   if (Object.keys(modelQueries).length > 0) {
     queryRootFields.models = {
       type: new GraphQLObjectType({name: "QueryModels", fields: modelQueries}),
@@ -68,9 +57,10 @@ export async function createSchema(sqlInstance, options = {}) {
       },
     };
   }
+  let classMethodQueries = await createQueryClassMethods(sqlInstance.models, validKeys, typeCollection, options);
   if (Object.keys(classMethodQueries).length > 0) {
     queryRootFields.classMethods = {
-      type: new GraphQLObjectType({name: "ClassMethods", fields: classMethodQueries}),
+      type: new GraphQLObjectType({name: "QueryClassMethods", fields: classMethodQueries}),
       resolve() {
         return {};
       },
@@ -91,12 +81,30 @@ export async function createSchema(sqlInstance, options = {}) {
       },
     };
   }
+  let classMethodMutations = await createMutationClassMethods(sqlInstance.models, validKeys, typeCollection, options);
+  if (Object.keys(classMethodMutations).length > 0) {
+    mutationRootFields.classMethods = {
+      type: new GraphQLObjectType({name: "MutationClassMethods", fields: classMethodMutations}),
+      resolve() {
+        return {};
+      },
+    };
+  }
   if (Object.keys(mutationRootFields).length > 0) {
     rootSchema.mutation = new GraphQLObjectType({
       name: "Mutation",
       fields: mutationRootFields,
     });
   }
+
+  const relayTypes = Object.keys(sqlInstance.models).reduce((types, name) => {
+    if (typeCollection[name]) {
+      types[name] = typeCollection[name];
+    }
+    return types;
+  }, {});
+
+  nodeTypeMapper.mapTypes(relayTypes);
 
   let subscriptionRootFields = Object.assign({}, subscriptions);
 

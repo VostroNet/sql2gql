@@ -117,7 +117,10 @@ var _default = {
   relationships: [{
     type: "hasMany",
     model: "TaskItem",
-    name: "items"
+    name: "items",
+    options: {
+      foreignKey: "taskId"
+    }
   }],
   expose: {
     instanceMethods: {
@@ -147,6 +150,21 @@ var _default = {
             input: {
               type: new _graphql.GraphQLNonNull(new _graphql.GraphQLInputObjectType({
                 name: "TaskReverseNameInput",
+                fields: {
+                  amount: {
+                    type: new _graphql.GraphQLNonNull(_graphql.GraphQLInt)
+                  }
+                }
+              }))
+            }
+          }
+        },
+        reverseName2: {
+          type: "Task",
+          args: {
+            input: {
+              type: new _graphql.GraphQLNonNull(new _graphql.GraphQLInputObjectType({
+                name: "TaskReverseName2Input",
                 fields: {
                   amount: {
                     type: new _graphql.GraphQLNonNull(_graphql.GraphQLInt)

@@ -15,17 +15,17 @@ var _createBeforeAfter = _interopRequireDefault(require("./create-before-after")
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-async function createModelTypes(models, keys, prefix = "", options) {
+async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
   const result = await keys.reduce((promise, modelName) => {
     return promise.then(async o => {
-      o[modelName] = await createModelType(modelName, models, prefix, options);
+      o[modelName] = await createModelType(modelName, models, prefix, options, nodeInterface);
       return o;
     });
   }, Promise.resolve({}));
   return result;
 }
 
-async function createModelType(modelName, models, prefix = "", options = {}) {
+async function createModelType(modelName, models, prefix = "", options = {}, nodeInterface) {
   if (options.permission) {
     if (options.permission.model) {
       const result = await options.permission.model(modelName);
@@ -48,7 +48,9 @@ async function createModelType(modelName, models, prefix = "", options = {}) {
   }
 
   let fields = (0, _graphqlSequelize.attributeFields)(model, {
-    exclude
+    exclude,
+    globalId: true //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
+
   });
 
   if (modelDefinition.override) {
@@ -100,8 +102,9 @@ async function createModelType(modelName, models, prefix = "", options = {}) {
   return new _graphql.GraphQLObjectType({
     name: `${prefix}${modelName}`,
     description: "",
-    fields: fields,
-    resolve: resolve
+    fields,
+    resolve: resolve,
+    interfaces: [nodeInterface]
   });
 }
 //# sourceMappingURL=create-base.js.map
