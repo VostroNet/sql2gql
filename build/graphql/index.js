@@ -32,6 +32,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const {
   sequelizeNodeInterface
 } = _graphqlSequelize.relay; // import deepmerge from "deepmerge";
+// import Sequelize from "sequelize";
+// import cls from "continuation-local-storage";
+// const namespace = cls.createNamespace("sql2gql");
+// Sequelize.useCLS(namespace);
 
 async function createSchema(sqlInstance, options = {}) {
   const {
@@ -54,7 +58,7 @@ async function createSchema(sqlInstance, options = {}) {
   }, []);
   let typeCollection = await (0, _createBase.default)(sqlInstance.models, validKeys, "", options, nodeInterface);
   const mutationInputTypes = await (0, _createInput.default)(sqlInstance.models, validKeys, typeCollection, options);
-  const mutationFunctions = await (0, _createFunctions.default)(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options);
+  const mutationFunctions = await (0, _createFunctions.default)(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options, () => mutationFunctions);
   typeCollection = await (0, _createComplex.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
   let mutationCollection = await (0, _mutation.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
   let queryRootFields = Object.assign({

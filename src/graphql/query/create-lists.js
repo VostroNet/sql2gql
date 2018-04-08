@@ -8,7 +8,7 @@ import {
   resolver,
   defaultListArgs,
   JSONType,
-  relay
+  relay,
 } from "graphql-sequelize";
 
 import getModelDefinition from "../utils/get-model-def";

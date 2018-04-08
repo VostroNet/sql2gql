@@ -2,7 +2,7 @@
 import {fromGlobalId} from "graphql-relay";
 
 export default function replaceIdDeep(obj, keyMap) {
-  console.log("obj", obj);
+  // console.log("obj", obj);
   // return obj;
   return Object.keys(obj).reduce((m, key) => {
     if (keyMap.indexOf(key) > -1) {

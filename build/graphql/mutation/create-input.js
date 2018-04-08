@@ -3,13 +3,19 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = createMutationInputTypes;
+exports.default = createMutationInputs;
 
 var _graphql = require("graphql");
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
+var _jsonType = _interopRequireDefault(require("graphql-sequelize/lib/types/jsonType"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function createMutationInput(modelName, model, gqlFields, prefix, allOptional = false) {
   const modelDefinition = (0, _getModelDef.default)(model);
@@ -74,14 +80,15 @@ function createMutationInput(modelName, model, gqlFields, prefix, allOptional = 
       }
     }
   });
-  return new _graphql.GraphQLInputObjectType({
+  return {
     name: `${modelName}${prefix}Input`,
     fields
-  });
-}
+  };
+} //new GraphQLInputObjectType(
 
-async function createMutationInputTypes(models, keys, typeCollection, options) {
-  return keys.reduce((o, modelName) => {
+
+async function createMutationInputs(models, keys, typeCollection, options) {
+  let inputs = keys.reduce((o, modelName) => {
     if (!typeCollection[modelName]) {
       return o;
     }
@@ -95,6 +102,99 @@ async function createMutationInputTypes(models, keys, typeCollection, options) {
       optional: createMutationInput(modelName, models[modelName], fields, "Optional", true)
     };
     return o;
+  }, {});
+  let complete = true;
+  let loop = 0;
+
+  do {
+    complete = true;
+    loop++;
+
+    if (loop > 50) {
+      throw new Error("something went wrong, unable to finalise schema, maybe a permission setting?");
+    }
+
+    Object.keys(inputs).forEach(modelName => {
+      //eslint-disable-line
+      const model = models[modelName];
+      let sourceType = inputs[modelName];
+
+      if (model.relationships) {
+        Object.keys(model.relationships).forEach(async relName => {
+          let relationship = model.relationships[relName];
+          let targetType;
+
+          if (modelName === relationship.source) {
+            targetType = sourceType;
+          } else {
+            targetType = inputs[relationship.source];
+          }
+
+          if (targetType) {
+            const input = new _graphql.GraphQLInputObjectType({
+              name: `${sourceType.required.name}${relName}`,
+              fields: {
+                create: {
+                  type: new _graphql.GraphQLInputObjectType({
+                    name: `${sourceType.required.name}${relName}Create`,
+                    fields: targetType.required.fields
+                  })
+                },
+                update: {
+                  type: new _graphql.GraphQLInputObjectType({
+                    name: `${sourceType.optional.name}${relName}Update`,
+                    fields: {
+                      where: {
+                        type: _jsonType.default
+                      },
+                      input: {
+                        type: new _graphql.GraphQLInputObjectType({
+                          name: `${sourceType.optional.name}${relName}UpdateInput`,
+                          fields: targetType.optional.fields
+                        })
+                      }
+                    }
+                  })
+                }
+              }
+            });
+
+            switch (relationship.type) {
+              case "belongsToMany": //eslint-disable-line
+
+              case "hasMany":
+                inputs[modelName].required.fields[relName] = {
+                  type: new _graphql.GraphQLList(input)
+                };
+                inputs[modelName].optional.fields[relName] = {
+                  type: new _graphql.GraphQLList(input)
+                };
+                break;
+
+              default:
+                inputs[modelName].required.fields[relName] = {
+                  type: input
+                };
+                inputs[modelName].optional.fields[relName] = {
+                  type: input
+                };
+                break;
+            }
+          } else {
+            complete = false;
+          }
+        });
+      }
+    });
+  } while (!complete);
+
+  return Object.keys(inputs).reduce((o, k) => {
+    return _objectSpread({}, o, {
+      [k]: {
+        required: new _graphql.GraphQLInputObjectType(inputs[k].required),
+        optional: new _graphql.GraphQLInputObjectType(inputs[k].optional)
+      }
+    });
   }, {});
 }
 //# sourceMappingURL=create-input.js.map

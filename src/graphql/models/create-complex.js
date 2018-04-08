@@ -32,7 +32,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
       await Promise.all(Object.keys(models[modelName].relationships).map(async(relName) => {
         let relationship = models[modelName].relationships[relName];
         let targetType = typeCollection[relationship.source];
-        let mutationFunction = mutationFunctions[relationship.source];
+        // let mutationFunction = mutationFunctions[relationship.source];
         if (!targetType) {
           return;
         }

@@ -39,8 +39,7 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
 
       await Promise.all(Object.keys(models[modelName].relationships).map(async relName => {
         let relationship = models[modelName].relationships[relName];
-        let targetType = typeCollection[relationship.source];
-        let mutationFunction = mutationFunctions[relationship.source];
+        let targetType = typeCollection[relationship.source]; // let mutationFunction = mutationFunctions[relationship.source];
 
         if (!targetType) {
           return;

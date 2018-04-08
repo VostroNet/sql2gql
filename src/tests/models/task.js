@@ -100,6 +100,9 @@ export default {
     type: "hasMany",
     model: "TaskItem",
     name: "items",
+    options: {
+      foreignKey: "taskId",
+    }
   }],
   expose: {
     instanceMethods: {

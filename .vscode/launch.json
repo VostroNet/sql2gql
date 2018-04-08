@@ -57,15 +57,6 @@
     "name": "Launch Express Debug",
     "type": "node",
     "request": "launch",
-    "runtimeExecutable": "node",
-    "runtimeArgs": [
-      "--debug=6868",
-      "--nolazy",
-      "--inspect"
-    ],
-    "restart": false,
-    "port": 6868,
-    "stopOnEntry": false,
     "args": ["${workspaceRoot}/build/tests/express.js"],
     "cwd": "${workspaceRoot}",
     "env": {
@@ -74,7 +65,6 @@
     },
     "console": "integratedTerminal",
     "sourceMaps": true,
-    "outFiles": ["${workspaceRoot}/build/**/*.js"],
-    "protocol": "inspector"
+    "outFiles": ["${workspaceRoot}/build/**/*.js"]
   }]
 }

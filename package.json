@@ -71,6 +71,7 @@
     "sequelize": "^4.37.6"
   },
   "dependencies": {
+    "continuation-local-storage": "^3.2.1",
     "deepmerge": "^2.1.0"
   }
 }

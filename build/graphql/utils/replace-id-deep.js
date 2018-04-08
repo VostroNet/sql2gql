@@ -8,8 +8,8 @@ exports.default = replaceIdDeep;
 var _graphqlRelay = require("graphql-relay");
 
 function replaceIdDeep(obj, keyMap) {
-  console.log("obj", obj); // return obj;
-
+  // console.log("obj", obj);
+  // return obj;
   return Object.keys(obj).reduce((m, key) => {
     if (keyMap.indexOf(key) > -1) {
       m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;

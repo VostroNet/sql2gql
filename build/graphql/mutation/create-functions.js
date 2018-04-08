@@ -3,6 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.onCreate = onCreate;
+exports.onUpdate = onUpdate;
+exports.onDelete = onDelete;
 exports.default = createFunctions;
 
 var _graphql = require("graphql");
@@ -11,9 +14,153 @@ var _graphqlSequelize = require("graphql-sequelize");
 
 var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 
-var _mutationFunctions = require("./mutation-functions");
+var _events = _interopRequireDefault(require("../events"));
+
+var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function onCreate(targetModel) {
+  const modelDefinition = (0, _getModelDef.default)(targetModel);
+  return async (source, args, context, info) => {
+    let input = args.input;
+
+    if (modelDefinition.override) {
+      input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
+        if (modelDefinition.override[fieldName].input) {
+          data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info);
+        }
+
+        return data;
+      }, input);
+    }
+
+    if (modelDefinition.before) {
+      input = await modelDefinition.before({
+        params: input,
+        args,
+        context,
+        info,
+        modelDefinition,
+        type: _events.default.MUTATION_CREATE
+      });
+    }
+
+    let model = await targetModel.create(input, {
+      context,
+      rootValue: Object.assign({}, info.rootValue, {
+        args
+      }),
+      transaction: context.transaction
+    });
+
+    if (modelDefinition.after) {
+      return modelDefinition.after({
+        result: model,
+        args,
+        context,
+        info,
+        modelDefinition,
+        type: _events.default.MUTATION_CREATE
+      });
+    }
+
+    return model;
+  };
+}
+
+function onUpdate(targetModel) {
+  const modelDefinition = (0, _getModelDef.default)(targetModel);
+  return async (model, args, context, info) => {
+    // console.log("onUpdate - args", args, model);
+    let input = args.input;
+
+    if (!input) {
+      throw new Error("Unable to update field as no input was provided");
+    }
+
+    if (modelDefinition.override) {
+      input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
+        if (modelDefinition.override[fieldName].input) {
+          data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info, model);
+        }
+
+        return data;
+      }, input);
+    }
+
+    if (modelDefinition.before) {
+      input = await modelDefinition.before({
+        params: input,
+        args,
+        context,
+        info,
+        model,
+        modelDefinition,
+        type: _events.default.MUTATION_UPDATE
+      });
+    }
+
+    model = await model.update(input, {
+      context,
+      rootValue: Object.assign({}, info.rootValue, {
+        args
+      }),
+      transaction: context.transaction
+    });
+
+    if (modelDefinition.after) {
+      return modelDefinition.after({
+        result: model,
+        args,
+        context,
+        info,
+        modelDefinition,
+        type: _events.default.MUTATION_UPDATE
+      });
+    }
+
+    return model;
+  };
+}
+
+function onDelete(targetModel) {
+  const modelDefinition = (0, _getModelDef.default)(targetModel);
+  return async (model, args, context, info) => {
+    if (modelDefinition.before) {
+      model = await modelDefinition.before({
+        params: model,
+        args,
+        context,
+        info,
+        model,
+        modelDefinition,
+        type: _events.default.MUTATION_DELETE
+      });
+    }
+
+    await model.destroy({
+      context,
+      rootValue: Object.assign({}, info.rootValue, {
+        args
+      }),
+      transaction: context.transaction
+    });
+
+    if (modelDefinition.after) {
+      return modelDefinition.after({
+        result: model,
+        args,
+        context,
+        info,
+        modelDefinition,
+        type: _events.default.MUTATION_DELETE
+      });
+    }
+
+    return model;
+  };
+}
 
 async function createFunctions(models, keys, typeCollection, mutationInputTypes, options) {
   const result = await keys.reduce((promise, modelName) => {
@@ -29,6 +176,60 @@ async function createFunctions(models, keys, typeCollection, mutationInputTypes,
   return result;
 }
 
+async function createProcessRelationships(model, models) {
+  return async (source, args, context, info) => {
+    const {
+      input
+    } = args;
+
+    if (model.relationships) {
+      await Promise.all(Object.keys(model.relationships).map(async relName => {
+        if (input[relName]) {
+          const output = [];
+          const relationship = model.relationships[relName];
+          const assoc = model.associations[relName];
+          const {
+            mutationFunctions
+          } = (0, _getModelDef.default)(models[relationship.source]);
+
+          switch (relationship.type) {
+            case "belongsToMany": //eslint-disable-line
+
+            case "hasMany":
+              await Promise.all(input[relName].map(async item => {
+                await Promise.all(Object.keys(item).map(async command => {
+                  switch (command) {
+                    case "create":
+                      const createArgs = {
+                        input: Object.assign({}, item.create, {
+                          [assoc.foreignKey]: source.get(assoc.sourceKey)
+                        })
+                      };
+                      output.push((await mutationFunctions.create(source, createArgs, context, info)));
+                      break;
+
+                    case "update":
+                      const updateArgs = {
+                        where: {
+                          and: [{
+                            [assoc.foreignKey]: source.get(assoc.sourceKey)
+                          }, item.update.where]
+                        },
+                        input: item.update.input
+                      };
+                      output.push((await mutationFunctions.update(source, updateArgs, context, info)));
+                      break;
+                  }
+                }));
+              }));
+              break;
+          }
+        }
+      }));
+    }
+  };
+}
+
 async function createFunctionForModel(modelName, models, mutationInputTypes, options) {
   if (options.permission) {
     if (options.permission.mutation) {
@@ -40,17 +241,17 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
     }
   }
 
+  const model = models[modelName];
+  const modelDefinition = (0, _getModelDef.default)(model);
   const {
     optional,
     required
   } = mutationInputTypes[modelName];
   let fields = {},
       funcs = {};
-  const updateFunc = (0, _mutationFunctions.onUpdate)(models[modelName]);
-  const deleteFunc = (0, _mutationFunctions.onDelete)(models[modelName]);
   const {
     before
-  } = (0, _createBeforeAfter.default)(models[modelName], options, {});
+  } = (0, _createBeforeAfter.default)(model, options, {});
   let updateResult = true,
       deleteResult = true,
       createResult = true;
@@ -69,18 +270,26 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
     }
   }
 
+  const processRelationships = await createProcessRelationships(models[modelName], models);
+
   if (createResult) {
     fields.create = {
       type: new _graphql.GraphQLList(required)
     };
-    funcs.create = (0, _mutationFunctions.onCreate)(models[modelName]);
+    const createFunc = onCreate(models[modelName]);
+
+    funcs.create = async (o, args, context, info) => {
+      const source = await createFunc(model, args, context, info);
+      await processRelationships(source, args, context, info);
+      return source;
+    };
   }
 
   if (updateResult) {
     const {
       afterList: afterUpdateList
     } = (0, _createBeforeAfter.default)(models[modelName], options, {
-      after: [updateFunc]
+      after: [onUpdate(models[modelName]), processRelationships]
     });
     fields.update = {
       type: new _graphql.GraphQLList(new _graphql.GraphQLInputObjectType({
@@ -102,7 +311,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
     const {
       afterList: afterDeleteList
     } = (0, _createBeforeAfter.default)(models[modelName], options, {
-      after: [deleteFunc]
+      after: [onDelete(models[modelName])]
     });
     fields.delete = {
       type: new _graphql.GraphQLList(new _graphql.GraphQLInputObjectType({
@@ -117,6 +326,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
   }
 
   if (createResult || updateResult || deleteResult) {
+    modelDefinition.mutationFunctions = funcs;
     return {
       funcs,
       fields

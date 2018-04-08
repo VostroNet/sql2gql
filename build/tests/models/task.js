@@ -117,7 +117,10 @@ var _default = {
   relationships: [{
     type: "hasMany",
     model: "TaskItem",
-    name: "items"
+    name: "items",
+    options: {
+      foreignKey: "taskId"
+    }
   }],
   expose: {
     instanceMethods: {
