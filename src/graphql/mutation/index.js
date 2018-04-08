@@ -46,7 +46,7 @@ export default async function createMutationV3(models, keys, typeCollection, mut
               after,
             })(source, args, context, info);
           }
-          return results; //TODO: add where query results here
+          return results;
         },
       };
     }

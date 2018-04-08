@@ -17,8 +17,8 @@ export default function graphqlExpress(options) {
   }
   return async(req, res, next) => {
     const t = await options.sequelize.transaction();
+    let rollback = false;
     try {
-      let rollback = false;
       const gqlResponse = await runHttpQuery([req, res], {
         method: req.method,
         options: Object.assign({}, options, {
@@ -30,11 +30,7 @@ export default function graphqlExpress(options) {
         }),
         query: req.method === "POST" ? req.body : req.query,
       });
-      if (!rollback) {
-        await t.commit();
-      } else {
-        await t.rollback();
-      }
+
       res.setHeader("Content-Type", "application/json");
       res.setHeader("Content-Length", Buffer.byteLength(gqlResponse, "utf8"));
       res.write(gqlResponse);
@@ -49,6 +45,12 @@ export default function graphqlExpress(options) {
       }
       res.statusCode = error.statusCode;
       res.write(error.message);
+    }
+    // console.log("writing end");
+    if (!rollback) {
+      await t.commit();
+    } else {
+      await t.rollback();
     }
     return res.end();
   };

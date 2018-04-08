@@ -35,7 +35,7 @@ export function onCreate(targetModel) {
         type: events.MUTATION_CREATE,
       });
     }
-    let model = await targetModel.create(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: context.transaction});
+    let model = await targetModel.create(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
     if (modelDefinition.after) {
       return modelDefinition.after({
         result: model, args, context, info,
@@ -71,7 +71,7 @@ export function onUpdate(targetModel) {
         type: events.MUTATION_UPDATE,
       });
     }
-    model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: context.transaction});
+    model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
     if (modelDefinition.after) {
       return modelDefinition.after({
         result: model, args, context, info,
@@ -156,6 +156,7 @@ async function createProcessRelationships(model, models) {
         }
       }));
     }
+    return source;
   };
 }
 

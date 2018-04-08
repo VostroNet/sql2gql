@@ -118,7 +118,7 @@ describe("permissions", () => {
 
       }
     });
-    const taskFields = schema.getQueryType().getFields().models.type.getFields().Task.type.ofType.getFields();
+    const taskFields = schema.getQueryType().getFields().models.type.getFields().Task.type.getFields().edges.type.ofType.getFields().node.type.getFields();
     return (0, _expect.default)(taskFields.items).not.toBeDefined();
   });
   it("mutation model", async () => {
@@ -200,19 +200,22 @@ describe("permissions", () => {
     return (0, _expect.default)(args.filter(a => a.name === "create").length).toEqual(1);
   });
   it("mutation model - classMethods", async () => {
-    return (0, _expect.default)(false).toEqual(true); // const schema = await createSchema(instance, {
-    //   permission: {
-    //     mutationClassMethods(modelName, methodName) {
-    //       if (modelName === "Task" && methodName === "reverseName") {
-    //         return false;
-    //       }
-    //       return true;
-    //     },
-    //   },
-    // });
-    // const func = schema.getMutationType().getFields().models.type.getFields().Task.type.getFields();
-    // expect(func.delete).toBeDefined();
-    // return expect(func.reverseName).not.toBeDefined();
+    // return expect(false).toEqual(true);
+    const schema = await (0, _index.createSchema)(instance, {
+      permission: {
+        mutationClassMethods(modelName, methodName) {
+          if (modelName === "Task" && methodName === "reverseName") {
+            return false;
+          }
+
+          return true;
+        }
+
+      }
+    });
+    const func = schema.getMutationType().getFields().classMethods.type.getFields().Task.type.getFields();
+    (0, _expect.default)(func.reverseName2).toBeDefined();
+    return (0, _expect.default)(func.reverseName).not.toBeDefined();
   });
   it("subscription", async () => {
     const pubsub = new _graphqlSubscriptions.PubSub();

@@ -20,11 +20,10 @@ describe("mutations", () => {
     }`;
     const mutationResult = await graphql(schema, mutation);
     validateResult(mutationResult);
-    const query = "query { models { Task { id, name } } }";
+    const query = "query { models { Task { edges { node { id, name } } } } }";
     const queryResult = await graphql(schema, query);
     validateResult(queryResult);
-    validateResult(queryResult);
-    return expect(queryResult.data.models.Task.length).toEqual(1);
+    return expect(queryResult.data.models.Task.edges.length).toEqual(1);
   });
   it("create - override", async() => {
     const instance = await createSqlInstance();
@@ -44,9 +43,9 @@ describe("mutations", () => {
     validateResult(mutationResult);
     expect(mutationResult.data.models.Task[0].options.hidden).toEqual("nowhere");
 
-    const queryResult = await graphql(schema, "query { models { Task { id, name, options {hidden} } } }");
+    const queryResult = await graphql(schema, "query { models { Task { edges { node { id, name, options {hidden} } } } } }");
     validateResult(queryResult);
-    return expect(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
+    return expect(queryResult.data.models.Task.edges[0].node.options.hidden).toEqual("nowhere");
   });
   it("update - override", async() => {
     const instance = await createSqlInstance();
@@ -81,10 +80,10 @@ describe("mutations", () => {
     const updateMutationResult = await graphql(schema, updateMutation);
     validateResult(updateMutationResult);
 
-    const queryResult = await graphql(schema, "query { models { Task { id, name, options {hidden, hidden2} } } }");
+    const queryResult = await graphql(schema, "query { models { Task { edges { node { id, name, options {hidden, hidden2} } } } } }");
     validateResult(queryResult);
-    expect(queryResult.data.models.Task[0].options.hidden).toEqual("nowhere");
-    return expect(queryResult.data.models.Task[0].options.hidden2).toEqual("nowhere2");
+    expect(queryResult.data.models.Task.edges[0].node.options.hidden).toEqual("nowhere");
+    return expect(queryResult.data.models.Task.edges[0].node.options.hidden2).toEqual("nowhere2");
   });
   it("update", async() => {
     const instance = await createSqlInstance();
@@ -127,14 +126,18 @@ describe("mutations", () => {
     const query = `query {
       models {
         Task(where: {id: "${itemId}"}) {
-          id,
-          name
+          edges {
+            node {
+              id,
+              name
+            }
+          }
         }
       }
     }`;
     const queryResult = await graphql(schema, query);
     validateResult(queryResult);
-    return expect(queryResult.data.models.Task.length).toEqual(0);
+    return expect(queryResult.data.models.Task.edges.length).toEqual(0);
   });
   it("update - multiple", async() => {
     const instance = await createSqlInstance();
@@ -168,12 +171,35 @@ describe("mutations", () => {
     const item3Id = toGlobalId("Task", items[2].id);
     const mutationResult = await graphql(schema, mutation);
     validateResult(mutationResult);
-    const item2Result = await graphql(schema, `query { models { Task(where: {id: "${item2Id}"}) { id, name } } }`);
+    const item2Result = await graphql(schema, `{
+      models {
+        Task(where: {id: "${item2Id}"}) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }`);
     validateResult(item2Result);
-    const item3Result = await graphql(schema, `query { models { Task(where: {id: "${item3Id}"}) { id, name } } }`);
+    const item3Result = await graphql(schema, `{
+      models {
+        Task(where: {id: "${item3Id}"}) {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+    `);
     validateResult(item3Result);
-    expect(item2Result.data.models.Task[0].name).toEqual("UPDATED");
-    expect(item3Result.data.models.Task[0].name).toEqual("UPDATED");
+    expect(item2Result.data.models.Task.edges[0].node.name).toEqual("UPDATED");
+    expect(item3Result.data.models.Task.edges[0].node.name).toEqual("UPDATED");
   });
   it("delete - multiple", async() => {
     const instance = await createSqlInstance();
@@ -204,31 +230,42 @@ describe("mutations", () => {
     const result = await graphql(schema, mutation);
     validateResult(result);
     expect(result.data.models.Task.length).toEqual(2);
-    const queryResults = await graphql(schema, "query { models { Task { id, name } } }");
+    const queryResults = await graphql(schema, `{
+      models {
+        Task {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }`);
     // console.log("queryResults", queryResults.data.models.Task);
-    expect(queryResults.data.models.Task.length).toEqual(1);
+    expect(queryResults.data.models.Task.edges.length).toEqual(1);
   });
   it("classMethod", async() => {
-    return expect(false).toEqual(true);
-    // const instance = await createSqlInstance();
-    // const {Task} = instance.models;
-    // await Task.create({
-    //   name: "item2",
-    // });
-    // const schema = await createSchema(instance);
+    // return expect(false).toEqual(true);
+    const instance = await createSqlInstance();
+    const {Task} = instance.models;
+    await Task.create({
+      name: "item2",
+    });
+    const schema = await createSchema(instance);
 
-    // const mutation = `mutation {
-    //   models {
-    //     Task {
-    //       reverseName(input: {amount: 2}) {
-    //         name
-    //       }
-    //     }
-    //   }
-    // }`;
-    // const result = await graphql(schema, mutation);
-    // validateResult(result);
-    // return expect(result.data.models.Task.reverseName.name).toEqual("reverseName2");
+    const mutation = `mutation {
+      classMethods {
+        Task {
+          reverseName(input: {amount: 2}) {
+            name
+          }
+        }
+      }
+    }`;
+    const result = await graphql(schema, mutation);
+    validateResult(result);
+    return expect(result.data.classMethods.Task.reverseName.name).toEqual("reverseName2");
   });
   it("create - before hook", async() => {
     const instance = await createSqlInstance();

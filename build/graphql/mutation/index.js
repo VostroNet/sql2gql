@@ -64,7 +64,7 @@ async function createMutationV3(models, keys, typeCollection, mutationFunctions,
             })(source, args, context, info);
           }
 
-          return results; //TODO: add where query results here
+          return results;
         }
 
       };

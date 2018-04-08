@@ -137,6 +137,19 @@ export default {
             },
           },
         },
+        reverseName2: {
+          type: "Task",
+          args: {
+            input: {
+              type: new GraphQLNonNull(new GraphQLInputObjectType({
+                name: "TaskReverseName2Input",
+                fields: {
+                  amount: {type: new GraphQLNonNull(GraphQLInt)},
+                },
+              })),
+            },
+          },
+        },
       },
       query: {
         reverseNameArray: {

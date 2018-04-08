@@ -51,7 +51,7 @@ function onCreate(targetModel) {
       rootValue: Object.assign({}, info.rootValue, {
         args
       }),
-      transaction: context.transaction
+      transaction: (context || {}).transaction
     });
 
     if (modelDefinition.after) {
@@ -106,7 +106,7 @@ function onUpdate(targetModel) {
       rootValue: Object.assign({}, info.rootValue, {
         args
       }),
-      transaction: context.transaction
+      transaction: (context || {}).transaction
     });
 
     if (modelDefinition.after) {
@@ -227,6 +227,8 @@ async function createProcessRelationships(model, models) {
         }
       }));
     }
+
+    return source;
   };
 }
 

@@ -24,6 +24,7 @@ import createComplexModels from "./models/create-complex";
 import createMutation from "./mutation/";
 import createMutationFunctions from "./mutation/create-functions";
 import createMutationInputs from "./mutation/create-input";
+import createMutationClassMethods from "./mutation/create-class-methods";
 
 import createQueryLists from "./query/create-lists";
 import createQueryClassMethods from "./query/create-class-methods";
@@ -59,7 +60,7 @@ export async function createSchema(sqlInstance, options = {}) {
   let classMethodQueries = await createQueryClassMethods(sqlInstance.models, validKeys, typeCollection, options);
   if (Object.keys(classMethodQueries).length > 0) {
     queryRootFields.classMethods = {
-      type: new GraphQLObjectType({name: "ClassMethods", fields: classMethodQueries}),
+      type: new GraphQLObjectType({name: "QueryClassMethods", fields: classMethodQueries}),
       resolve() {
         return {};
       },
@@ -75,6 +76,15 @@ export async function createSchema(sqlInstance, options = {}) {
   if (Object.keys(mutationCollection).length > 0) {
     mutationRootFields.models = {
       type: new GraphQLObjectType({name: "MutationModels", fields: mutationCollection}),
+      resolve() {
+        return {};
+      },
+    };
+  }
+  let classMethodMutations = await createMutationClassMethods(sqlInstance.models, validKeys, typeCollection, options);
+  if (Object.keys(classMethodMutations).length > 0) {
+    mutationRootFields.classMethods = {
+      type: new GraphQLObjectType({name: "MutationClassMethods", fields: classMethodMutations}),
       resolve() {
         return {};
       },

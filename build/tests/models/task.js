@@ -158,6 +158,21 @@ var _default = {
               }))
             }
           }
+        },
+        reverseName2: {
+          type: "Task",
+          args: {
+            input: {
+              type: new _graphql.GraphQLNonNull(new _graphql.GraphQLInputObjectType({
+                name: "TaskReverseName2Input",
+                fields: {
+                  amount: {
+                    type: new _graphql.GraphQLNonNull(_graphql.GraphQLInt)
+                  }
+                }
+              }))
+            }
+          }
         }
       },
       query: {

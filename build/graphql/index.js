@@ -21,9 +21,11 @@ var _createFunctions = _interopRequireDefault(require("./mutation/create-functio
 
 var _createInput = _interopRequireDefault(require("./mutation/create-input"));
 
+var _createClassMethods = _interopRequireDefault(require("./mutation/create-class-methods"));
+
 var _createLists = _interopRequireDefault(require("./query/create-lists"));
 
-var _createClassMethods = _interopRequireDefault(require("./query/create-class-methods"));
+var _createClassMethods2 = _interopRequireDefault(require("./query/create-class-methods"));
 
 var _subscriptions = _interopRequireDefault(require("./subscriptions"));
 
@@ -81,12 +83,12 @@ async function createSchema(sqlInstance, options = {}) {
     };
   }
 
-  let classMethodQueries = await (0, _createClassMethods.default)(sqlInstance.models, validKeys, typeCollection, options);
+  let classMethodQueries = await (0, _createClassMethods2.default)(sqlInstance.models, validKeys, typeCollection, options);
 
   if (Object.keys(classMethodQueries).length > 0) {
     queryRootFields.classMethods = {
       type: new _graphql.GraphQLObjectType({
-        name: "ClassMethods",
+        name: "QueryClassMethods",
         fields: classMethodQueries
       }),
 
@@ -111,6 +113,22 @@ async function createSchema(sqlInstance, options = {}) {
       type: new _graphql.GraphQLObjectType({
         name: "MutationModels",
         fields: mutationCollection
+      }),
+
+      resolve() {
+        return {};
+      }
+
+    };
+  }
+
+  let classMethodMutations = await (0, _createClassMethods.default)(sqlInstance.models, validKeys, typeCollection, options);
+
+  if (Object.keys(classMethodMutations).length > 0) {
+    mutationRootFields.classMethods = {
+      type: new _graphql.GraphQLObjectType({
+        name: "MutationClassMethods",
+        fields: classMethodMutations
       }),
 
       resolve() {

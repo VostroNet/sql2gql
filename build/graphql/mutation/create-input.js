@@ -111,7 +111,9 @@ async function createMutationInputs(models, keys, typeCollection, options) {
     loop++;
 
     if (loop > 50) {
-      throw new Error("something went wrong, unable to finalise schema, maybe a permission setting?");
+      //TODO: ??
+      // go forward not going to be able to resolve any more 50 attempts should be enough
+      break; //throw new Error("something went wrong, unable to finalise schema, maybe a permission setting?");
     }
 
     Object.keys(inputs).forEach(modelName => {
