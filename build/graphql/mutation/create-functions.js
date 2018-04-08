@@ -9,9 +9,9 @@ var _graphql = require("graphql");
 
 var _graphqlSequelize = require("graphql-sequelize");
 
-var _createBeforeAfter = _interopRequireDefault(require("../../models/create-before-after"));
+var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 
-var _mutationFunctions = require("../mutation-functions");
+var _mutationFunctions = require("./mutation-functions");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -93,7 +93,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       }))
     };
     funcs.update = (0, _graphqlSequelize.resolver)(models[modelName], {
-      before: before,
+      before,
       after: afterUpdateList
     });
   }
@@ -111,7 +111,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       }))
     };
     funcs.delete = (0, _graphqlSequelize.resolver)(models[modelName], {
-      before: before,
+      before,
       after: afterDeleteList
     });
   }

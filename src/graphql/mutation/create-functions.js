@@ -10,8 +10,9 @@ import {
   defaultListArgs,
 } from "graphql-sequelize";
 
-import createBeforeAfter from "../../models/create-before-after";
-import {onCreate, onUpdate, onDelete} from "../mutation-functions";
+
+import createBeforeAfter from "../models/create-before-after";
+import {onCreate, onUpdate, onDelete} from "./mutation-functions";
 
 export default async function createFunctions(models, keys, typeCollection, mutationInputTypes, options) {
   const result = await keys.reduce((promise, modelName) => {
@@ -69,7 +70,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       })),
     };
     funcs.update = resolver(models[modelName], {
-      before: before,
+      before,
       after: afterUpdateList,
     });
   }
@@ -83,7 +84,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       })),
     };
     funcs.delete = resolver(models[modelName], {
-      before: before,
+      before,
       after: afterDeleteList,
     });
   }

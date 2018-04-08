@@ -12,6 +12,8 @@ var _sequelize = _interopRequireDefault(require("sequelize"));
 
 var _graphqlSubscriptions = require("graphql-subscriptions");
 
+var _graphqlRelay = require("graphql-relay");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 describe("subscriptions", () => {
@@ -35,7 +37,7 @@ describe("subscriptions", () => {
       name: "item1"
     })]);
     const gqlResult = result[0].value.data;
-    (0, _expect.default)(gqlResult.afterCreateTask.id).toEqual(1);
+    (0, _expect.default)((0, _graphqlRelay.fromGlobalId)(gqlResult.afterCreateTask.id).id).toEqual("1");
   });
   it("afterUpdate", async () => {
     const pubsub = new _graphqlSubscriptions.PubSub();
@@ -83,83 +85,86 @@ describe("subscriptions", () => {
     });
     const result = await Promise.all([ai.next(), task.destroy()]);
     const gqlResult = result[0].value.data;
-    (0, _expect.default)(gqlResult.afterDestroyTask.id).toEqual(1);
+    (0, _expect.default)((0, _graphqlRelay.fromGlobalId)(gqlResult.afterDestroyTask.id).id).toEqual("1");
   });
   it("BUGFIX#12: testing for recursive calls on model events", async () => {
-    let modelTimeout;
-    let modelCount = 0;
-    const taskModel = {
-      name: "Task",
-      define: {
-        name: {
-          type: _sequelize.default.STRING,
-          allowNull: false
-        }
-      },
+    try {
+      let modelTimeout;
+      let modelCount = 0;
+      const taskModel = {
+        name: "Task",
+        define: {
+          name: {
+            type: _sequelize.default.STRING,
+            allowNull: false
+          }
+        },
 
-      before({
-        params
-      }) {
-        // return params;
-        return new Promise((resolve, reject) => {
-          try {
-            modelCount++;
-            (0, _expect.default)(modelCount).toEqual(1);
+        before({
+          params
+        }) {
+          // return params;
+          return new Promise((resolve, reject) => {
+            try {
+              modelCount++;
+              (0, _expect.default)(modelCount).toEqual(1);
 
-            if (modelTimeout) {
-              clearTimeout(modelTimeout);
+              if (modelTimeout) {
+                clearTimeout(modelTimeout);
+              }
+
+              modelTimeout = setTimeout(() => {
+                return resolve(params);
+              }, 100);
+              return undefined;
+            } catch (err) {
+              console.log("BUGFIX#12 - err", err); //eslint-disable-line
+
+              return reject(err);
             }
+          });
+        },
 
-            modelTimeout = setTimeout(() => {
-              return resolve(params);
-            }, 100);
-            return undefined;
-          } catch (err) {
-            console.log("BUGFIX#12 - err", err); //eslint-disable-line
-
-            return reject(err);
-          }
-        });
-      },
-
-      options: {
-        tableName: "tasks",
-        hooks: {}
-      }
-    };
-    const pubsub = new _graphqlSubscriptions.PubSub();
-    let instance = new _sequelize.default("database", "username", "password", {
-      dialect: "sqlite",
-      logging: false
-    });
-    const models = [taskModel];
-    (0, _index.connect)(models, instance, {
-      subscriptions: {
-        pubsub
-      }
-    });
-    await instance.sync();
-    const schema = await (0, _index.createSchema)(instance);
-    const document = (0, _graphql.parse)("subscription X { afterCreateTask {id} }");
-    const ai = await (0, _graphql.subscribe)({
-      schema,
-      document
-    });
-    const mutation = `mutation {
-      models {
-        Task {
-          create(input: {name: "item1"}) {
-            id, 
-            name
+        options: {
+          tableName: "tasks",
+          hooks: {}
+        }
+      };
+      const pubsub = new _graphqlSubscriptions.PubSub();
+      let instance = new _sequelize.default("database", "username", "password", {
+        dialect: "sqlite",
+        logging: false
+      });
+      const models = [taskModel];
+      (0, _index.connect)(models, instance, {
+        subscriptions: {
+          pubsub
+        }
+      });
+      await instance.sync();
+      const schema = await (0, _index.createSchema)(instance);
+      const document = (0, _graphql.parse)("subscription X { afterCreateTask {id} }");
+      const ai = await (0, _graphql.subscribe)({
+        schema,
+        document
+      });
+      const mutation = `mutation {
+        models {
+          Task(create: {
+            name: "test"
+          }) {
+            id
           }
         }
-      }
-    }`;
-    const result = await Promise.all([ai.next(), await (0, _graphql.graphql)(schema, mutation)]);
-    const gqlResult = result[0].value.data;
-    (0, _expect.default)(gqlResult.afterCreateTask.id).toEqual(1);
-    const mutationResult = result[1];
-    (0, _utils.validateResult)(mutationResult);
+      }`;
+      const mutationResult = await (0, _graphql.graphql)(schema, mutation);
+      (0, _utils.validateResult)(mutationResult);
+      const result = await ai.next();
+      const gqlResult = result.value.data;
+      (0, _expect.default)((0, _graphqlRelay.fromGlobalId)(gqlResult.afterCreateTask.id).id).toEqual("1");
+    } catch (er) {
+      console.log("BUGFIX#12 - err", er);
+    }
   });
 });
 //# sourceMappingURL=subscriptions.test.js.map

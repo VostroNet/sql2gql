@@ -9,6 +9,8 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _events = _interopRequireDefault(require("../events"));
 
+var _replaceIdDeep = _interopRequireDefault(require("../utils/replace-id-deep"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function createBeforeAfter(model, options, hooks = {}) {
@@ -20,6 +22,10 @@ function createBeforeAfter(model, options, hooks = {}) {
   }
 
   const modelDefinition = (0, _getModelDef.default)(model);
+  const primaryKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
+    return model.fieldRawAttributesMap[k].primaryKey;
+  }); // targetBeforeFuncs.push(function(params, args, context, info) {
+  // });
 
   if (options.before) {
     targetBeforeFuncs.push(function (params, args, context, info) {
@@ -78,9 +84,12 @@ function createBeforeAfter(model, options, hooks = {}) {
   }
 
   const targetBefore = (findOptions, args, context, info) => {
-    // console.log("weee", {context, rootValue: info.rootValue})
     findOptions.context = context;
     findOptions.rootValue = info.rootValue;
+
+    if (args.where) {
+      args.where = (0, _replaceIdDeep.default)(args.where, primaryKeys);
+    }
 
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
@@ -88,7 +97,8 @@ function createBeforeAfter(model, options, hooks = {}) {
 
     const results = targetBeforeFuncs.reduce((prev, curr) => {
       return curr(prev, args, context, info);
-    }, findOptions);
+    }, findOptions); // console.log("results", results);
+
     return results;
   };
 

@@ -264,4 +264,4 @@ describe("permissions", () => {
     return (0, _expect.default)(schema.getSubscriptionType().getFields().afterUpdateTask).toBeDefined();
   });
 });
-//# sourceMappingURL=permission.test.js.map
+//# sourceMappingURL=permission.old.js.map

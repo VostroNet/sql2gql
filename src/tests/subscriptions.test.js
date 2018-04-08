@@ -4,6 +4,7 @@ import {graphql, subscribe, parse} from "graphql";
 import {createSchema, connect} from "../index";
 import Sequelize from "sequelize";
 import {PubSub} from "graphql-subscriptions";
+import {fromGlobalId} from "graphql-relay";
 
 describe("subscriptions", () => {
   it("afterCreate", async() => {
@@ -20,7 +21,7 @@ describe("subscriptions", () => {
       }),
     ]);
     const gqlResult = result[0].value.data;
-    expect(gqlResult.afterCreateTask.id).toEqual(1);
+    expect(fromGlobalId(gqlResult.afterCreateTask.id).id).toEqual("1");
 
   });
   it("afterUpdate", async() => {
@@ -58,73 +59,74 @@ describe("subscriptions", () => {
       task.destroy(),
     ]);
     const gqlResult = result[0].value.data;
-    expect(gqlResult.afterDestroyTask.id).toEqual(1);
+    expect(fromGlobalId(gqlResult.afterDestroyTask.id).id).toEqual("1");
   });
   it("BUGFIX#12: testing for recursive calls on model events", async() => {
-    let modelTimeout;
-    let modelCount = 0;
-    const taskModel = {
-      name: "Task",
-      define: {
-        name: {
-          type: Sequelize.STRING,
-          allowNull: false,
+    try {
+      let modelTimeout;
+      let modelCount = 0;
+      const taskModel = {
+        name: "Task",
+        define: {
+          name: {
+            type: Sequelize.STRING,
+            allowNull: false,
+          },
         },
-      },
-      before({params}) {
-        // return params;
-        return new Promise((resolve, reject) => {
-          try {
-            modelCount++;
-            expect(modelCount).toEqual(1);
-            if (modelTimeout) {
-              clearTimeout(modelTimeout);
+        before({params}) {
+          // return params;
+          return new Promise((resolve, reject) => {
+            try {
+              modelCount++;
+              expect(modelCount).toEqual(1);
+              if (modelTimeout) {
+                clearTimeout(modelTimeout);
+              }
+              modelTimeout = setTimeout(() => {
+                return resolve(params);
+              }, 100);
+              return undefined;
+            } catch (err) {
+              console.log("BUGFIX#12 - err", err);//eslint-disable-line
+              return reject(err);
             }
-            modelTimeout = setTimeout(() => {
-              return resolve(params);
-            }, 100);
-            return undefined;
-          } catch (err) {
-            console.log("BUGFIX#12 - err", err);//eslint-disable-line
-            return reject(err);
-          }
-        });
-      },
-      options: {
-        tableName: "tasks",
-        hooks: {},
-      },
-    };
-    const pubsub = new PubSub();
-    let instance = new Sequelize("database", "username", "password", {
-      dialect: "sqlite",
-      logging: false,
-    });
-    const models = [taskModel];
-    connect(models, instance, {subscriptions: {pubsub}});
-    await instance.sync();
-    const schema = await createSchema(instance);
-    const document = parse("subscription X { afterCreateTask {id} }");
-    const ai = await subscribe({schema, document});
+          });
+        },
+        options: {
+          tableName: "tasks",
+          hooks: {},
+        },
+      };
 
-    const mutation = `mutation {
-      models {
-        Task {
-          create(input: {name: "item1"}) {
-            id, 
-            name
+      const pubsub = new PubSub();
+      let instance = new Sequelize("database", "username", "password", {
+        dialect: "sqlite",
+        logging: false,
+      });
+      const models = [taskModel];
+      connect(models, instance, {subscriptions: {pubsub}});
+      await instance.sync();
+      const schema = await createSchema(instance);
+      const document = parse("subscription X { afterCreateTask {id} }");
+      const ai = await subscribe({schema, document});
+
+      const mutation = `mutation {
+        models {
+          Task(create: {
+            name: "test"
+          }) {
+            id
           }
         }
-      }
-    }`;
+      }`;
+      const mutationResult = await graphql(schema, mutation);
+      validateResult(mutationResult);
+      const result = await ai.next();
+      const gqlResult = result.value.data;
+      expect(fromGlobalId(gqlResult.afterCreateTask.id).id).toEqual("1");
 
-    const result = await Promise.all([
-      ai.next(),
-      await graphql(schema, mutation),
-    ]);
-    const gqlResult = result[0].value.data;
-    expect(gqlResult.afterCreateTask.id).toEqual(1);
-    const mutationResult = result[1];
-    validateResult(mutationResult);
+    } catch (er) {
+      console.log("BUGFIX#12 - err", er);
+    }
   });
 });
