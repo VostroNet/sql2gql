@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.graphqlServer = exports.permissionHelper = exports.events = exports.createSchema = exports.connect = void 0;
+exports.permissionHelper = exports.events = exports.createSchema = exports.connect = void 0;
 
 var database = _interopRequireWildcard(require("./database"));
 
@@ -12,8 +12,6 @@ var graphql = _interopRequireWildcard(require("./graphql"));
 var _events = _interopRequireDefault(require("./graphql/events"));
 
 var _permissionHelper = _interopRequireDefault(require("./permission-helper"));
-
-var _express = _interopRequireDefault(require("./express"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -29,6 +27,4 @@ const events = _events.default;
 exports.events = events;
 const permissionHelper = _permissionHelper.default;
 exports.permissionHelper = permissionHelper;
-const graphqlServer = _express.default;
-exports.graphqlServer = graphqlServer;
 //# sourceMappingURL=index.js.map

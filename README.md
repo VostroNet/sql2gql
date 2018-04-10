@@ -132,8 +132,6 @@ hooks to constrain visibility of fields and functions will only hide elements by
 | mutationUpdate | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{update}}}" is unavailable |
 | mutationCreate | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{create}}}" is unavailable |
 | mutationDelete | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{delete}}}" is unavailable |
-| mutationUpdateAll | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{updateAll}}}" is unavailable |
-| mutationDeleteAll | (modelName) => Boolean | False ensures mutation option "mutation {models {modelName{deleteAll}}}" is unavailable |
 | mutationClassMethods | (modelName: String, methodName: String) => Boolean | False ensures mutation option "mutation {classMethods {modelName {methodName}}}" is unavailable |
 | subscription | (modelName, hookName) => Boolean | False ensures mutation option "subscription { \`{$hookName}${modelName}\`{ id } }" is unavailable |
 

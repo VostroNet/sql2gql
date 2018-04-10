@@ -1,13 +1,13 @@
 {
   "name": "sql2gql",
-  "version": "3.0.0-alpha4",
+  "version": "3.0.0-alpha5",
   "description": "Two way Sequelize to GraphQL bridge, extending out graphql-sequelize",
   "main": "build/index.js",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/_mocha --no-timeouts ./build/tests/**/*.test.js",
     "prepublishOnly": "yarn && gulp compile:publish"
   },
-  "author": "Matthew Mckenzie",
+  "author": "VostroNet",
   "license": "GPL-3.0",
   "homepage": "https://github.com/VostroNet/sql2gql",
   "bugs": {
@@ -17,15 +17,15 @@
     "build/graphql/models/create-base.js",
     "build/graphql/models/create-before-after.js",
     "build/graphql/models/create-complex.js",
-    "build/graphql/mutation/v3/create-functions.js",
-    "build/graphql/mutation/v3/index.js",
+    "build/graphql/mutation/create-class-methods.js",
+    "build/graphql/mutation/create-functions.js",
     "build/graphql/mutation/create-input.js",
     "build/graphql/mutation/index.js",
-    "build/graphql/mutation/mutation-functions.js",
     "build/graphql/query/create-class-methods.js",
     "build/graphql/query/create-lists.js",
     "build/graphql/utils/get-model-def.js",
     "build/graphql/utils/reset-interfaces.js",
+    "build/graphql/utils/replace-id-deep.js",
     "build/graphql/events.js",
     "build/graphql/index.js",
     "build/graphql/subscriptions.js",
@@ -71,7 +71,6 @@
     "sequelize": "^4.37.6"
   },
   "dependencies": {
-    "continuation-local-storage": "^3.2.1",
     "deepmerge": "^2.1.0"
   }
 }

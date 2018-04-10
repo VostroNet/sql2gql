@@ -84,6 +84,7 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
         names: {},
         hooks: {},
       });
+      //TODO: //chain events rather then overwrite
       schemaOptions = Object.assign(schemaOptions, {
         hooks: Object.assign(schemaOptions.hooks || {}, schema.$subscriptions.hooks),
       });
@@ -137,6 +138,11 @@ function createRelationship(sqlInstance, targetModel, sourceModel, name, type, o
     model.relationships = {};
   }
   try {
+    if (options.through) {
+      if (options.through.model) {
+        options.through.model = sqlInstance.models[options.through.model];
+      }
+    }
     model.relationships[name] = {
       type: type,
       source: sourceModel,
