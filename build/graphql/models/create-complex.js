@@ -74,7 +74,7 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
             //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
             // }
             const c = sequelizeConnection({
-              name: relName,
+              name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
               // orderBy: def.orderBy,

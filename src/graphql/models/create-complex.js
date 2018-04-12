@@ -57,7 +57,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
             // }
 
             const c = sequelizeConnection({
-              name: relName,
+              name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
               // orderBy: def.orderBy,
