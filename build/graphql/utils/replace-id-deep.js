@@ -7,12 +7,24 @@ exports.default = replaceIdDeep;
 
 var _graphqlRelay = require("graphql-relay");
 
+function createProxy(o, k) {
+  return function (a) {
+    let proxy = {};
+    proxy[k] = (0, _graphqlRelay.fromGlobalId)(a[k]).id;
+    return o(proxy);
+  };
+}
+
 function replaceIdDeep(obj, keyMap) {
   // console.log("obj", obj);
   // return obj;
   return Object.keys(obj).reduce((m, key) => {
     if (keyMap.indexOf(key) > -1) {
-      m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
+      if (typeof obj[key] === "function") {
+        m[key] = createProxy(obj[key], key);
+      } else {
+        m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
+      }
     } else {
       if (Array.isArray(obj[key])) {
         m[key] = obj[key].map(val => {

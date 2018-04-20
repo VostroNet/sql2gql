@@ -1,12 +1,25 @@
 
 import {fromGlobalId} from "graphql-relay";
 
+
+function createProxy(o, k) {
+  return function(a) {
+    let proxy = {};
+    proxy[k] = fromGlobalId(a[k]).id;
+    return o(proxy);
+  };
+}
+
 export default function replaceIdDeep(obj, keyMap) {
   // console.log("obj", obj);
   // return obj;
   return Object.keys(obj).reduce((m, key) => {
     if (keyMap.indexOf(key) > -1) {
-      m[key] = fromGlobalId(obj[key]).id;
+      if (typeof obj[key] === "function") {
+        m[key] = createProxy(obj[key], key);
+      } else {
+        m[key] = fromGlobalId(obj[key]).id;
+      }
     } else {
       if (Array.isArray(obj[key])) {
         m[key] = obj[key].map((val) => {
