@@ -60,6 +60,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         }
       }
       const fieldDefinition = modelDefinition.define[fieldName];
+      if (!fieldDefinition) {
+        throw new Error(`Unable to find the field definition for ${modelName}->${fieldName}. Please check your model definition for invalid configuration.`);
+      }
       const overrideFieldDefinition = modelDefinition.override[fieldName];
       let type;
       if (!(overrideFieldDefinition.type instanceof GraphQLObjectType) &&
