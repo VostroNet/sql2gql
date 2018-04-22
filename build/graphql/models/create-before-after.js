@@ -24,6 +24,9 @@ function createBeforeAfter(model, options, hooks = {}) {
   const modelDefinition = (0, _getModelDef.default)(model);
   const primaryKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
     return model.fieldRawAttributesMap[k].primaryKey;
+  });
+  const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
+    return !!model.fieldRawAttributesMap[k].references;
   }); // targetBeforeFuncs.push(function(params, args, context, info) {
   // });
 
@@ -88,7 +91,7 @@ function createBeforeAfter(model, options, hooks = {}) {
     findOptions.rootValue = info.rootValue;
 
     if (findOptions.where) {
-      findOptions.where = (0, _replaceIdDeep.default)(findOptions.where, primaryKeys);
+      findOptions.where = (0, _replaceIdDeep.default)(findOptions.where, primaryKeys.concat(foreignKeys));
     }
 
     if (targetBeforeFuncs.length === 0) {

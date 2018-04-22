@@ -34,6 +34,8 @@ function replaceIdDeep(obj, keyMap) {
         });
       } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
         m[key] = replaceIdDeep(obj[key], keyMap);
+      } else {
+        m[key] = obj[key];
       }
     }
 

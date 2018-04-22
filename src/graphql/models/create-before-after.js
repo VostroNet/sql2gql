@@ -13,6 +13,9 @@ export default function createBeforeAfter(model, options, hooks = {}) {
   const primaryKeys = Object.keys(model.fieldRawAttributesMap).filter((k) => {
     return model.fieldRawAttributesMap[k].primaryKey;
   });
+  const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
+    return !(!model.fieldRawAttributesMap[k].references);
+  });
   // targetBeforeFuncs.push(function(params, args, context, info) {
 
   // });
@@ -60,7 +63,7 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     findOptions.context = context;
     findOptions.rootValue = info.rootValue;
     if (findOptions.where) {
-      findOptions.where = replaceIdDeep(findOptions.where, primaryKeys);
+      findOptions.where = replaceIdDeep(findOptions.where, primaryKeys.concat(foreignKeys));
     }
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
