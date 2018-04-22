@@ -66,7 +66,54 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
         }
 
         switch (relationship.type) {
-          case "belongsToMany": //eslint-disable-line
+          case "belongsToMany":
+            //eslint-disable-line
+            const bc = sequelizeConnection({
+              name: `${modelName}${relName}`,
+              nodeType: targetType,
+              target: relationship.rel,
+              // orderBy: def.orderBy,
+              // edgeFields: def.edgeFields,
+              // connectionFields: def.connectionFields,
+              where: (key, value, currentWhere) => {
+                // for custom args other than connectionArgs return a sequelize where parameter
+                if (key === "where") {
+                  return value;
+                }
+
+                return {
+                  [key]: value
+                };
+              },
+
+              before(findOptions, args, context, info) {
+                // const {source} = info;
+                const model = models[modelName];
+                const assoc = model.associations[relName];
+
+                if (!findOptions.include) {
+                  findOptions.include = [];
+                }
+
+                findOptions.include.push({
+                  model: assoc.source,
+                  as: assoc.paired.as
+                });
+                return before(findOptions, args, context, info);
+              },
+
+              after
+            });
+            fields[relName] = {
+              type: bc.connectionType,
+              args: _objectSpread({}, bc.connectionArgs, {
+                where: {
+                  type: _graphqlSequelize.JSONType.default
+                }
+              }),
+              resolve: bc.resolve
+            };
+            break;
 
           case "hasMany":
             // let manyArgs = defaultListArgs();
@@ -115,61 +162,7 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
                 }
               }),
               resolve: c.resolve
-            }; // fields[relName] = {
-            //   type: new GraphQLList(targetType),
-            //   args: manyArgs,
-            //   async resolve(source, args, context, info) {
-            //TODO: throw error is request type is a query and a  mutation arg is provided
-            // if (args.create || args.update || args.delete) {
-            //   const model = models[modelName];
-            //   const assoc = model.associations[relName];
-            //   const {funcs} = mutationFunction;
-            //   let keys = {};
-            //   keys[assoc.foreignKey] = source.get(assoc.sourceKey);
-            //   if (args.create) {
-            //     const createResult = args.create.reduce((promise, a) => {
-            //       return promise.then(async(arr) => {
-            //         return arr.concat(await funcs.create(source, {
-            //           input: Object.assign(a, keys),
-            //         }, context, info));
-            //       });
-            //     }, Promise.resolve([]));
-            //     if (args.returnActionResults) {
-            //       return createResult;
-            //     }
-            //   }
-            //   if (args.update) {
-            //     const updateResult = args.update.reduce((promise, a) => {
-            //       return promise.then(async(arr) => {
-            //         return arr.concat(await funcs.update(source, {
-            //           input: Object.assign(a, keys),
-            //         }, context, info));
-            //       });
-            //     }, Promise.resolve([]));
-            //     if (args.returnActionResults) {
-            //       return updateResult;
-            //     }
-            //   }
-            //   if (args.delete) {
-            //     const deleteResult = args.delete.reduce((promise, a) => {
-            //       return promise.then(async(arr) => {
-            //         return arr.concat(await funcs.delete(source, {
-            //           input: Object.assign(a, keys),
-            //         }, context, info));
-            //       });
-            //     }, Promise.resolve([]));
-            //     if (args.returnActionResults) {
-            //       return deleteResult;
-            //     }
-            //   }
-            // }
-            //   return resolver(relationship.rel, {
-            //     before,
-            //     after: afterList,
-            //   })(source, args, context, info);
-            // },
-            // };
-
+            };
             break;
 
           case "hasOne": //eslint-disable-line
