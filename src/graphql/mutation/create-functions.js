@@ -131,7 +131,28 @@ async function createProcessRelationships(model, models) {
           const assoc = model.associations[relName];
           const {mutationFunctions} = getModelDefinition(models[relationship.source]);
           switch (relationship.type) {
+            case "belongsTo":
+              await Promise.all(Object.keys(input[relName]).map(async command => {
+                switch (command) {
+                  case "create":
+                    const createArgs = {
+                      input: Object.assign({}, input[relName].create),
+                    };
+                    const result = await mutationFunctions.create(source, createArgs, context, info);
+                    let updateVars = {};
+                    updateVars[assoc.foreignKey] = result[assoc.targetKey];
+                    source = await source.update(updateVars, context);
+                    output.push(result);
+                    break;
+                  case "update":
+                    throw new Error("belongsTo update - Needs to be implemented properly");
+                }
+              }));
+              break;
+            case "hasOne": //eslint-disable-line
+              throw new Error("hasOne - Needs to be implemented properly");
             case "belongsToMany": //eslint-disable-line
+              throw new Error("belongsToMany - Needs to be implemented properly");
             case "hasMany":
               await Promise.all(input[relName].map(async(item) => {
                 await Promise.all(Object.keys(item).map(async(command) => {
