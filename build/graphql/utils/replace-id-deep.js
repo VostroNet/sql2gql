@@ -21,7 +21,11 @@ function replaceIdDeep(obj, keyMap) {
       if (typeof obj[key] === "function") {
         m[key] = createProxy(obj[key], key);
       } else {
-        m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
+        try {
+          m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
+        } catch (e) {
+          m[key] = obj[key]; //is not a global id
+        }
       }
     } else {
       if (Array.isArray(obj[key])) {

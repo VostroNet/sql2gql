@@ -68,18 +68,22 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
     }
-    const results = targetBeforeFuncs.reduce((prev, curr) => {
-      return curr(prev, args, context, info);
-    }, findOptions);
+    const results = targetBeforeFuncs.reduce((promise, curr) => {
+      return promise.then((prev) => {
+        return curr(prev, args, context, info);
+      });
+    }, Promise.resolve(findOptions));
     return results;
   };
   const targetAfter = (result, args, context, info) => {
     if (targetAfterFuncs.length === 0) {
       return result;
     }
-    return targetAfterFuncs.reduce((prev, curr) => {
-      return curr(prev, args, context, info);
-    }, result);
+    return targetAfterFuncs.reduce((promise, curr) => {
+      return promise.then((prev) => {
+        return curr(prev, args, context, info);
+      });
+    }, Promise.resolve(result));
   };
   const targetAfterArray = (results, args, context, info) => {
     if (targetAfterFuncs.length === 0) {

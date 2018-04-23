@@ -98,9 +98,11 @@ function createBeforeAfter(model, options, hooks = {}) {
       return findOptions;
     }
 
-    const results = targetBeforeFuncs.reduce((prev, curr) => {
-      return curr(prev, args, context, info);
-    }, findOptions);
+    const results = targetBeforeFuncs.reduce((promise, curr) => {
+      return promise.then(prev => {
+        return curr(prev, args, context, info);
+      });
+    }, Promise.resolve(findOptions));
     return results;
   };
 
@@ -109,9 +111,11 @@ function createBeforeAfter(model, options, hooks = {}) {
       return result;
     }
 
-    return targetAfterFuncs.reduce((prev, curr) => {
-      return curr(prev, args, context, info);
-    }, result);
+    return targetAfterFuncs.reduce((promise, curr) => {
+      return promise.then(prev => {
+        return curr(prev, args, context, info);
+      });
+    }, Promise.resolve(result));
   };
 
   const targetAfterArray = (results, args, context, info) => {
