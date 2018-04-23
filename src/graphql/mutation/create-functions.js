@@ -11,6 +11,8 @@ import {
   defaultListArgs,
 } from "graphql-sequelize";
 
+import {fromGlobalId} from "graphql-relay";
+
 
 import createBeforeAfter from "../models/create-before-after";
 import events from "../events";
@@ -33,6 +35,17 @@ export function onCreate(targetModel) {
         params: input, args, context, info,
         modelDefinition,
         type: events.MUTATION_CREATE,
+      });
+    }
+    const foreignKeys = Object.keys(targetModel.fieldRawAttributesMap).filter(k => {
+      return !!targetModel.fieldRawAttributesMap[k].references;
+    });
+
+    if (foreignKeys.length > 0) {
+      foreignKeys.forEach((fk) => {
+        if (input[fk] && typeof input[fk] === "string") {
+          input[fk] = fromGlobalId(input[fk]).id;
+        }
       });
     }
     let model = await targetModel.create(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
@@ -69,6 +82,17 @@ export function onUpdate(targetModel) {
         params: input, args, context, info,
         model, modelDefinition,
         type: events.MUTATION_UPDATE,
+      });
+    }
+    const foreignKeys = Object.keys(targetModel.fieldRawAttributesMap).filter(k => {
+      return !!targetModel.fieldRawAttributesMap[k].references;
+    });
+
+    if (foreignKeys.length > 0) {
+      foreignKeys.forEach((fk) => {
+        if (input[fk] && typeof input[fk] === "string") {
+          input[fk] = fromGlobalId(input[fk]).id;
+        }
       });
     }
     model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});

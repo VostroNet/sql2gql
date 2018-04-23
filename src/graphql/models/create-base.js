@@ -4,6 +4,7 @@ import {
   GraphQLScalarType,
   GraphQLEnumType,
   GraphQLNonNull,
+  GraphQLString,
 } from "graphql";
 
 
@@ -50,6 +51,18 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     exclude,
     globalId: true, //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
   });
+  const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
+    return !(!model.fieldRawAttributesMap[k].references);
+  });
+  if (foreignKeys.length > 0) {
+    foreignKeys.forEach((fk) => {
+      if (model.fieldRawAttributesMap[fk].allowNull) {
+        fields[fk].type = GraphQLString;
+      } else {
+        fields[fk].type = new GraphQLNonNull(GraphQLString);
+      }
+    });
+  }
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach((fieldName) => {
       if (options.permission) {

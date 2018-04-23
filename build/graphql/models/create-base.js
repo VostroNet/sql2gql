@@ -52,6 +52,19 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     globalId: true //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
 
   });
+  const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
+    return !!model.fieldRawAttributesMap[k].references;
+  });
+
+  if (foreignKeys.length > 0) {
+    foreignKeys.forEach(fk => {
+      if (model.fieldRawAttributesMap[fk].allowNull) {
+        fields[fk].type = _graphql.GraphQLString;
+      } else {
+        fields[fk].type = new _graphql.GraphQLNonNull(_graphql.GraphQLString);
+      }
+    });
+  }
 
   if (modelDefinition.override) {
     Object.keys(modelDefinition.override).forEach(fieldName => {

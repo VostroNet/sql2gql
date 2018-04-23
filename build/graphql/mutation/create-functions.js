@@ -12,6 +12,8 @@ var _graphql = require("graphql");
 
 var _graphqlSequelize = require("graphql-sequelize");
 
+var _graphqlRelay = require("graphql-relay");
+
 var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 
 var _events = _interopRequireDefault(require("../events"));
@@ -43,6 +45,18 @@ function onCreate(targetModel) {
         info,
         modelDefinition,
         type: _events.default.MUTATION_CREATE
+      });
+    }
+
+    const foreignKeys = Object.keys(targetModel.fieldRawAttributesMap).filter(k => {
+      return !!targetModel.fieldRawAttributesMap[k].references;
+    });
+
+    if (foreignKeys.length > 0) {
+      foreignKeys.forEach(fk => {
+        if (input[fk] && typeof input[fk] === "string") {
+          input[fk] = (0, _graphqlRelay.fromGlobalId)(input[fk]).id;
+        }
       });
     }
 
@@ -98,6 +112,18 @@ function onUpdate(targetModel) {
         model,
         modelDefinition,
         type: _events.default.MUTATION_UPDATE
+      });
+    }
+
+    const foreignKeys = Object.keys(targetModel.fieldRawAttributesMap).filter(k => {
+      return !!targetModel.fieldRawAttributesMap[k].references;
+    });
+
+    if (foreignKeys.length > 0) {
+      foreignKeys.forEach(fk => {
+        if (input[fk] && typeof input[fk] === "string") {
+          input[fk] = (0, _graphqlRelay.fromGlobalId)(input[fk]).id;
+        }
       });
     }
 
