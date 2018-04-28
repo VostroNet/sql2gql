@@ -96,7 +96,11 @@ function onUpdate(targetModel) {
     if (modelDefinition.override) {
       input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
         if (modelDefinition.override[fieldName].input) {
-          data[fieldName] = modelDefinition.override[fieldName].input(data[fieldName], args, context, info, model);
+          const testField = modelDefinition.override[fieldName].input(data[fieldName], args, context, info, model);
+
+          if (testField !== undefined) {
+            data[fieldName] = testField;
+          }
         }
 
         return data;
