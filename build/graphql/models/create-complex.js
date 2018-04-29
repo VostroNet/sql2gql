@@ -25,6 +25,15 @@ const {
   sequelizeConnection
 } = _graphqlSequelize.relay; // import createBaseModel from "./create-base";
 
+const orderBy = new _graphql.GraphQLEnumType({
+  name: "GeneralOrderBy",
+  values: {
+    ID: {
+      value: ["id", "DESC"]
+    }
+  }
+});
+
 async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
   await Promise.all(keys.map(async modelName => {
     if (models[modelName].relationships) {
@@ -120,11 +129,13 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
             // if (options.version === 3 || options.compat === 3) {
             //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
             // }
+            // const modelDefinition = getModelDefinition(models[targetType.name]);
             const c = sequelizeConnection({
               name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
-              // orderBy: def.orderBy,
+              orderBy,
+              //TODO: make this auto gen from fields, and extensible
               // edgeFields: def.edgeFields,
               // connectionFields: def.connectionFields,
               where: (key, value, currentWhere) => {

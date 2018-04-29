@@ -3,6 +3,7 @@
 import {
   GraphQLList,
   GraphQLBoolean,
+  GraphQLEnumType,
 } from "graphql";
 
 import {
@@ -19,6 +20,13 @@ import createBeforeAfter from "./create-before-after";
 import resetInterfaces from "../utils/reset-interfaces";
 import getModelDefinition from "../utils/get-model-def";
 
+
+const orderBy = new GraphQLEnumType({
+  name: "GeneralOrderBy",
+  values: {
+    ID: {value: ["id", "DESC"]}
+  },
+});
 
 export default async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
 
@@ -95,11 +103,12 @@ export default async function createComplexModels(models, keys, typeCollection, 
             //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
             // }
 
+            // const modelDefinition = getModelDefinition(models[targetType.name]);
             const c = sequelizeConnection({
               name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
-              // orderBy: def.orderBy,
+              orderBy, //TODO: make this auto gen from fields, and extensible
               // edgeFields: def.edgeFields,
               // connectionFields: def.connectionFields,
               where: (key, value, currentWhere) => {

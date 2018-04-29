@@ -22,22 +22,27 @@ export function createSubscriptionHook(schema, hookName, subscriptionName, pubsu
     }
   }
   const f = async function(instance, options) {
-    if (schemaHook) {
-      try {
-        if (!schemaHook.isSubHook) {
-          await schemaHook.apply(instance, [instance, options]);
-        } else {
-          log.error("attempting to call itself. check for BUGFIX#12", {hookName});
-        }
-      } catch (err) {
-        log.debug(`${hookName} threw error, will not fire subscription event`, {err});
-        return undefined;
-      }
-    }
     let output = {};
-    output[subscriptionName] = {instance, options, hookName};
-    // console.log("OUT", output);
-    return pubsub.publish(subscriptionName, output);
+    try {
+      if (schemaHook) {
+        try {
+          if (!schemaHook.isSubHook) {
+            await schemaHook.apply(instance, [instance, options]);
+          } else {
+            log.error("attempting to call itself. check for BUGFIX#12", {hookName});
+          }
+        } catch (err) {
+          log.debug(`${hookName} threw error, will not fire subscription event`, {err});
+          return undefined;
+        }
+      }
+      output[subscriptionName] = {instance, options, hookName};
+      // console.log("OUT", output);
+      return pubsub.publish(subscriptionName, output);
+    } catch (err) {
+      log.error("error attempting to pubsub", {err, subscriptionName, output});
+    }
+    return undefined;
   };
   f.isSubHook = true;// check for BUGFIX#12
   f.hookName = hookName;
