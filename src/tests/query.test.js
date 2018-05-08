@@ -70,7 +70,6 @@ describe("queries", () => {
     // console.log("result", result.data.models.Task[0]);
     return expect(result.data.models.Task.edges[0].node.options.hidden).toEqual("invisibot");
   });
-
   it("filter hooks", async() => {
     const instance = await createSqlInstance();
     const {Task, TaskItem} = instance.models;
@@ -140,5 +139,59 @@ describe("queries", () => {
     expect(result.data.models.Task.edges[1].node.testInstanceMethod[0].name).toEqual("item21");
     expect(result.data.models.Task.edges[2].node.testInstanceMethod[0].name).toEqual("item31");
     return expect(result.data.models.Task.edges.length).toEqual(3);
+  });
+  it("orderBy asc", async() => {
+    const instance = await createSqlInstance();
+    const {Task, TaskItem} = instance.models;
+    const model = await Task.create({
+      name: "task1",
+    });
+    await Promise.all([
+      TaskItem.create({
+        name: "taskitem1",
+        taskId: model.get("id"),
+      }),
+      TaskItem.create({
+        name: "taskitem2",
+        taskId: model.get("id"),
+      }),
+      TaskItem.create({
+        name: "taskitem3",
+        taskId: model.get("id"),
+      }),
+    ]);
+    const schema = await createSchema(instance);
+    const result = await graphql(schema, "query { models { Task { edges { node { id, name, items(orderBy: idAsc) {edges {node{id, name}}} } } } } }");
+    validateResult(result);
+    expect(result.data.models.Task.edges[0].node.name).toEqual("task1");
+    expect(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
+    return expect(result.data.models.Task.edges[0].node.items.edges[0].node.name).toEqual("taskitem1");
+  });
+  it("orderBy desc", async() => {
+    const instance = await createSqlInstance();
+    const {Task, TaskItem} = instance.models;
+    const model = await Task.create({
+      name: "task1",
+    });
+    await Promise.all([
+      TaskItem.create({
+        name: "taskitem1",
+        taskId: model.get("id"),
+      }),
+      TaskItem.create({
+        name: "taskitem2",
+        taskId: model.get("id"),
+      }),
+      TaskItem.create({
+        name: "taskitem3",
+        taskId: model.get("id"),
+      }),
+    ]);
+    const schema = await createSchema(instance);
+    const result = await graphql(schema, "query { models { Task { edges { node { id, name, items(orderBy: idDesc) {edges {node{id, name}}} } } } } }");
+    validateResult(result);
+    expect(result.data.models.Task.edges[0].node.name).toEqual("task1");
+    expect(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
+    return expect(result.data.models.Task.edges[0].node.items.edges[0].node.name).toEqual("taskitem3");
   });
 });
