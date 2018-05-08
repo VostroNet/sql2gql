@@ -15,8 +15,17 @@ import createBeforeAfter from "./create-before-after";
 import resetInterfaces from "../utils/reset-interfaces";
 import getModelDefinition from "../utils/get-model-def";
 
-export default async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
+/**
+ * @function createComplexModels
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} mutationFunctions
+ * @param {Object} options
+ * @returns {Object}
+*/
 
+export default async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
   await Promise.all(keys.map(async(modelName) => {
     if (models[modelName].relationships) {
       if (!typeCollection[modelName]) {

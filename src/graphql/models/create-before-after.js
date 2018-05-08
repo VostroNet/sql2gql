@@ -1,8 +1,21 @@
-
 import getModelDefinition from "../utils/get-model-def";
-import events from "../events";
 import replaceIdDeep from "../utils/replace-id-deep";
+import events from "../events";
 
+/**
+ * @typedef {Object} CreateBeforeAfterOutput
+ * @property {function} before
+ * @property {function} after
+ * @property {function[]} afterList
+*/
+
+/**
+ * @function createBeforeAfter
+ * @param {Object} model
+ * @param {Object} options
+ * @param {Object} hooks
+ * @returns {CreateBeforeAfterOutput}
+*/
 
 export default function createBeforeAfter(model, options, hooks = {}) {
   let targetBeforeFuncs = [], targetAfterFuncs = [];

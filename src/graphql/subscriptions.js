@@ -1,5 +1,16 @@
 import getModelDefinition from "./utils/get-model-def";
 
+/**
+ * @function createSubscriptionFunctions
+ * @param {Object} pubsub
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} options
+ * @param {Object} options
+ * @return {Object}
+*/
+
 export default async function createSubscriptionFunctions(pubsub, models, keys, typeCollection, options) {
   let subCollection = {};
   await Promise.all(keys.map(async(modelName) => {

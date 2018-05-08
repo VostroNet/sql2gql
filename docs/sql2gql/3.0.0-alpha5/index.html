@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Documentation Index</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.cerulean.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top ">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Documentation</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#createBeforeAfter">createBeforeAfter</a></li><li><a href="global.html#createComplexModels">createComplexModels</a></li><li><a href="global.html#createFunctions">createFunctions</a></li><li><a href="global.html#createModelLists">createModelLists</a></li><li><a href="global.html#createModelTypes">createModelTypes</a></li><li><a href="global.html#createMutationFunctions">createMutationFunctions</a></li><li><a href="global.html#createMutationInputs">createMutationInputs</a></li><li><a href="global.html#createMutationV3">createMutationV3</a></li><li><a href="global.html#createQueryFunctions">createQueryFunctions</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+        
+            <div class="col-sm-3 col-md-3">
+                <form class="navbar-form" role="search">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-8">
+	
+		<div id="main">
+			
+
+	
+	
+
+
+
+    <h3>sql2gql 3.0.0-alpha5</h3>
+
+
+
+
+
+
+
+
+
+	
+	
+
+
+
+
+
+    <section class="readme-section">
+        <article><h1>sql2gql</h1><p>Opininated Sequelize to GraphQL bridge, extending out graphql-sequelize with dynamically exposing relationships and functions via queries and mutations. We rely heavily on the Sequelize API for definition of the model classes.</p>
+<p><a href="https://travis-ci.org/VostroNet/sql2gql"><img src="https://travis-ci.org/VostroNet/sql2gql.svg?branch=master" alt="Build Status"></a></p>
+<h2>Requirements</h2><ul>
+<li><a href="https://nodejs.org/">NodeJs</a> &gt;= 4</li>
+<li><a href="http://docs.sequelizejs.com/">Sequelize</a> v3/v4</li>
+<li><a href="http://graphql.org/learn/">graphql</a></li>
+<li><a href="https://github.com/mickhansen/graphql-sequelize">graphql-sequelize</a></li>
+</ul>
+<h2>Features</h2><ul>
+<li>Dynamic mapping of sequelize models and relationships to graphql for query and mutation.</li>
+<li>Exposing classMethods as mutation/query options.</li>
+<li>Permissions to restrict access to parts of the graphql schema on generation.</li>
+<li>Generation of <a href="https://github.com/apollographql/graphql-subscriptions">subscriptions</a> from sequelize hooks</li>
+</ul>
+<h2>API</h2><h3>Model</h3><p>The model object is the bread and butter of the setup, it basically serves two purposes, creating the data model in sequelize and the graphql model.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td><a href="http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define">String(sequelize.define.modelName)</a>)</td>
+<td>Model name</td>
+</tr>
+<tr>
+<td>define</td>
+<td><a href="http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define">Object(sequelize.define.attributes)</a></td>
+<td>Model fields</td>
+</tr>
+<tr>
+<td>options</td>
+<td><a href="http://docs.sequelizejs.com/class/lib/sequelize.js~Sequelize.html#instance-method-define">Object(sequelize.define.options)</a></td>
+<td>Model sequelize.define options</td>
+</tr>
+<tr>
+<td>relationships</td>
+<td>Array[Model.Relationship]</td>
+<td>Model relationships</td>
+</tr>
+<tr>
+<td>expose</td>
+<td>Object(Model.Expose)</td>
+<td>this is used to make classMethods/instanceMethods available via queries or mutations in graphql</td>
+</tr>
+<tr>
+<td>classMethods</td>
+<td>Object</td>
+<td>static typed functions that are set on the model under sequelize (for v3 this will be copied into options instead)</td>
+</tr>
+<tr>
+<td>instanceMethods</td>
+<td>Object</td>
+<td>functions that are set on the model's prototype under sequelize (for v3 this will be copied into options instead)</td>
+</tr>
+<tr>
+<td>ignoreFields</td>
+<td>Array[String]</td>
+<td>TODO</td>
+</tr>
+<tr>
+<td>before</td>
+<td>({params, args, context, info, type}) =&gt;  return params</td>
+<td>This function is executed before graphql-sequelize resolver is tasked, you must return the params for it to be able to continue</td>
+</tr>
+<tr>
+<td>after</td>
+<td>({result, args, context, info, type}) =&gt; return result</td>
+<td>This function is executed after graphql-sequelize resolver has completed but before the result is passed up to graphql for queries, , , type determines ns</td>
+</tr>
+<tr>
+<td>override</td>
+<td>HashObject[fieldName -&gt; Model.override]</td>
+<td>overrides the field resolver functions to allow for complex types on on simple fields e.g. JSON,JSONB</td>
+</tr>
+<tr>
+<td>resolver</td>
+<td>() =&gt; Object</td>
+<td>the replaces graphql-sequelize resolver completely</td>
+</tr>
+<tr>
+<td>subscriptions</td>
+<td>HashObject[hookName -&gt; (instance, args, req, gql) =&gt; {return instance}]</td>
+<td>overrides default action of subscription hook event, this occurs after all sequelize hooks and must return a model.</td>
+</tr>
+</tbody>
+</table>
+<h4>Model.Override</h4><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td>{name: String, fields: <a href="http://graphql.org/graphql-js/type/#graphqlobjecttype">GraphQLFieldConfigMap</a>}</td>
+<td>GraphQLObject definition</td>
+</tr>
+<tr>
+<td>output</td>
+<td>(result, args, context, info) =&gt; fieldData</td>
+<td>This function processes outgoing data for the the field, the result is the parent model.</td>
+</tr>
+<tr>
+<td>output</td>
+<td>(field, args, context, info) =&gt; fieldData</td>
+<td>This function processes incoming data for the the field, the field param is the input argument set for the field.</td>
+</tr>
+</tbody>
+</table>
+<h4>Model.Expose</h4><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>classMethods</td>
+<td>Object({query: Model.Expose.Definition, mutation: Model.Expose.Definition})</td>
+<td>Object containing the graphql definition of classMethods you wish to expose on either query or mutation</td>
+</tr>
+<tr>
+<td>instanceMethods</td>
+<td>Object({query: Model.Expose.Definition})</td>
+<td>Object containing the graphql definition of instanceMethods you wish to expose as a field query</td>
+</tr>
+</tbody>
+</table>
+<h4>Model.Expose.Definition</h4><p>This object is a HashObject which the key must match the function name targeted.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td>String or <a href="http://graphql.org/graphql-js/type/#graphqlobjecttype">GraphQLObjectType</a></td>
+<td>If this is a string it will use the models generated graphql type (use &quot;List\<ModelName\>&quot; for lists) as the return value, other wise if it is <a href="http://graphql.org/graphql-js/type/#graphqlobjecttype">GraphQLObjectType</a> it will use this instead</td>
+</tr>
+<tr>
+<td>args</td>
+<td>Key value hash object that require <a href="http://graphql.org/graphql-js/type/#graphqlinputobjecttype">GraphQLInputObjectType</a></td>
+</tr>
+</tbody>
+</table>
+<h4>Model.Relationship</h4><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Relationship field name for model</td>
+</tr>
+<tr>
+<td>type</td>
+<td><a href="http://docs.sequelizejs.com/class/lib/associations/base.js~Association.html">String(sequelize.association)</a></td>
+<td>Executes the association function on the model.</td>
+</tr>
+<tr>
+<td>model</td>
+<td>String(Model.name)</td>
+<td>target model of the association</td>
+</tr>
+<tr>
+<td>options</td>
+<td><a href="http://docs.sequelizejs.com/class/lib/associations/base.js~Association.html">Object(sequelize.association.options)</a></td>
+<td>The available options depends on the type of association you pick</td>
+</tr>
+</tbody>
+</table>
+<h4>connect</h4><p>This creates sequelize models and injects appropriate metadata for the createSchema function</p>
+<pre class="prettyprint source lang-javascript"><code>import {connect} from &quot;sql2gql&quot;;</code></pre><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Array(Model)</td>
+<td>Array of models</td>
+</tr>
+<tr>
+<td><a href="http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection">Sequelize.instance</a></td>
+<td>Sequelize connection instance</td>
+</tr>
+</tbody>
+</table>
+<h4>createSchema</h4><p>Generates a graphql schema from the metadata stored in the sequelize instance.</p>
+<pre class="prettyprint source lang-javascript"><code>import {createSchema} from &quot;sql2gql&quot;;</code></pre><table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="http://docs.sequelizejs.com/manual/installation/getting-started.html#setting-up-a-connection">Sequelize.connection</a></td>
+<td>Sequelize connection instance</td>
+</tr>
+<tr>
+<td>Object(createSchema.options)</td>
+<td>createSchema options</td>
+</tr>
+</tbody>
+</table>
+<h4>createSchema.options</h4><p>Generates a graphql schema from the metadata stored in the sequelize instance.</p>
+<p>Returns Object(<a href="http://graphql.org/graphql-js/type/#graphqlschema">GraphQLSchema</a>)</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>String</td>
+<td>Relationship field name for model</td>
+</tr>
+<tr>
+<td>permissions</td>
+<td>Object(createSchema.options.permissions)</td>
+<td>optional hooks to constrain visibility of fields and functions</td>
+</tr>
+<tr>
+<td>query</td>
+<td>Object(<a href="http://graphql.org/graphql-js/type/#graphqlschema">GraphQLSchema</a>)</td>
+<td>merges into base RootQuery field via Object.assign</td>
+</tr>
+<tr>
+<td>mutation</td>
+<td>Object(<a href="http://graphql.org/graphql-js/type/#graphqlschema">GraphQLSchema</a>)</td>
+<td>merges into base Mutation field via Object.assign</td>
+</tr>
+<tr>
+<td>before</td>
+<td>(model: Model, findOptions, args, context, info) =&gt;  return findOptions</td>
+<td></td>
+</tr>
+<tr>
+<td>after</td>
+<td>(model: Model, result, args, context, info) =&gt; return result</td>
+<td></td>
+</tr>
+<tr>
+<td>subscriptions</td>
+<td>Object[createSchema.options.subscriptions]</td>
+<td>config options for the subscriptions</td>
+</tr>
+</tbody>
+</table>
+<h4>createSchema.options.subscriptions</h4><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hookNames</td>
+<td>[String]</td>
+<td>list of hooks that will be registered per model, please see <a href="http://docs.sequelizejs.com/manual/tutorial/hooks.html">Sequelize.Hooks</a> for the full list of available. [&quot;afterCreate&quot;, &quot;afterDestroy&quot;, &quot;afterUpdate&quot;] are the default settings. Currently only (instance, options) typed hooks are automatically support as each subscription is configured to return the type of the model it is for.</td>
+</tr>
+<tr>
+<td>pubsub</td>
+<td><a href="https://github.com/apollographql/graphql-subscriptions">PubSub</a></td>
+<td>pubsub is required for handling events between sequelize and the graphql instance. Please see <a href="http://dev.apollodata.com/tools/graphql-subscriptions/index.html">GraphQL Subscriptions</a> for more information</td>
+</tr>
+</tbody>
+</table>
+<h4>createSchema.options.permissions</h4><p>hooks to constrain visibility of fields and functions will only hide elements by default if hook is defined,</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>model</td>
+<td>(modelName: String) =&gt; Boolean</td>
+<td>False ensures the model itself is no where available across the entire schema</td>
+</tr>
+<tr>
+<td>field</td>
+<td>(modelName: String, fieldName: String) =&gt; Boolean</td>
+<td>False ensures model field &quot;query {model {modelName {fieldName}}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>relationship</td>
+<td>(modelName: String,relationshipName: String, targetModelName: String) =&gt; Boolean</td>
+<td>False ensures model field option &quot;modelName {relationshipName}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>query</td>
+<td>(modelName: String) =&gt; Boolean</td>
+<td>False ensures query option &quot;query {model {modelName}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>queryClassMethods</td>
+<td>(modelName: String, methodName: String) =&gt; Boolean</td>
+<td>False ensures query option &quot;query {classMethods {modelName {methodName}}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>queryInstanceMethods</td>
+<td>(modelName: String, methodName: String) =&gt; Boolean</td>
+<td>False ensures query option &quot;query {classMethods {modelName {methodName}}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>mutation</td>
+<td>(modelName) =&gt; Boolean</td>
+<td>False ensures mutation option &quot;mutation {models {modelName}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>mutationUpdate</td>
+<td>(modelName) =&gt; Boolean</td>
+<td>False ensures mutation option &quot;mutation {models {modelName{update}}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>mutationCreate</td>
+<td>(modelName) =&gt; Boolean</td>
+<td>False ensures mutation option &quot;mutation {models {modelName{create}}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>mutationDelete</td>
+<td>(modelName) =&gt; Boolean</td>
+<td>False ensures mutation option &quot;mutation {models {modelName{delete}}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>mutationClassMethods</td>
+<td>(modelName: String, methodName: String) =&gt; Boolean</td>
+<td>False ensures mutation option &quot;mutation {classMethods {modelName {methodName}}}&quot; is unavailable</td>
+</tr>
+<tr>
+<td>subscription</td>
+<td>(modelName, hookName) =&gt; Boolean</td>
+<td>False ensures mutation option &quot;subscription { `{$hookName}${modelName}`{ id } }&quot; is unavailable</td>
+</tr>
+</tbody>
+</table>
+<h4>GraphqlSchema</h4><p><a href="https://github.com/mickhansen/graphql-sequelize#args-helpers">graphql-sequlize helpers</a></p>
+<h5>Query</h5><pre class="prettyprint source lang-graphql"><code>query {
+  models {
+    modelName(defaultListArgs): GraphQLList&lt;Model> {
+      field
+      relationship(args) {
+        field
+      }
+    }
+  }
+  classMethods {
+    modelName {
+      functionName(params) {
+        {definedModel}
+      }
+    }
+  }
+}</code></pre><h5>Mutation</h5><pre class="prettyprint source lang-graphql"><code>mutation {
+  models {
+    modelName {
+      create(input: modelDefinition) {
+        field
+      }
+      update(where: SequelizeJSONType, input: modelDefinition) {
+        field
+      }
+      classMethod(params) {
+        field
+      }
+    }
+  }
+}</code></pre><h5>Subscription</h5><p><a href="https://github.com/apollographql/graphql-subscriptions">Reference</a></p>
+<pre class="prettyprint source lang-graphql"><code>subscription X {
+  afterCreateTask {
+    id,
+    name
+  }
+  afterUpdateTask {
+    id,
+    name
+  }
+}</code></pre><h2>Example</h2><p><a href="https://github.com/VostroNet/sql2gql-example">Github Repo</a></p>
+<pre class="prettyprint source lang-javascript"><code>import Sequelize from &quot;sequelize&quot;;
+import {connect, createSchema} from &quot;sql2gql&quot;;
+import expect from &quot;expect&quot;;
+import {
+  graphql,
+  GraphQLString,
+  GraphQLNonNull,
+  GraphQLInputObjectType,
+  GraphQLObjectType,
+  GraphQLInt,
+} from &quot;graphql&quot;;
+
+const TaskModel = {
+  name: &quot;Task&quot;,
+  define: {
+    name: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      validate: {
+        isAlphanumeric: {
+          msg: &quot;Your task name can only use letters and numbers&quot;,
+        },
+        len: {
+          args: [1, 50],
+          msg: &quot;Your task name must be between 1 and 50 characters&quot;,
+        },
+      },
+    },
+    options: {
+      type: Sequelize.STRING,
+      allowNull: true,
+    },
+  },
+  before(findOptions, args, context, info) {
+    return findOptions;
+  },
+  after(result, args, context, info) {
+    return result;
+  },
+  override: {
+    options: {
+      type: {
+        name: &quot;TaskOptions&quot;,
+        fields: {
+          hidden: {type: GraphQLString},
+        },
+      },
+      output(result, args, context, info) {
+        return JSON.parse(result.get(&quot;options&quot;));
+      },
+      input(field, args, context, info) {
+        return JSON.stringify(field);
+      },
+    },
+  },
+  relationships: [{
+    type: &quot;hasMany&quot;,
+    model: &quot;TaskItem&quot;,
+    name: &quot;items&quot;,
+  }],
+  expose: {
+    classMethods: {
+      mutations: {
+        reverseName: {
+          type: &quot;Task&quot;,
+          args: {
+            input: {
+              type: new GraphQLNonNull(new GraphQLInputObjectType({
+                name: &quot;TaskReverseNameInput&quot;,
+                fields: {
+                  amount: {type: new GraphQLNonNull(GraphQLInt)},
+                },
+              })),
+            },
+          },
+        },
+      },
+      query: {
+        getHiddenData: {
+          type: new GraphQLObjectType({
+            name: &quot;TaskHiddenData&quot;,
+            fields: () => ({
+              hidden: {type: GraphQLString},
+            }),
+          }),
+          args: {},
+        },
+        getHiddenData2: {
+          type: new GraphQLObjectType({
+            name: &quot;TaskHiddenData2&quot;,
+            fields: () => ({
+              hidden: {type: GraphQLString},
+            }),
+          }),
+          args: {},
+        },
+      },
+    },
+  },
+  options: {
+    tableName: &quot;tasks&quot;,
+    classMethods: {
+      reverseName({input: {amount}}, context) {
+        return {
+          id: 1,
+          name: `reverseName${amount}`,
+        };
+      },
+      getHiddenData(args, context) {
+        return {
+          hidden: &quot;Hi&quot;,
+        };
+      },
+      getHiddenData2(args, context) {
+        return {
+          hidden: &quot;Hi2&quot;,
+        };
+      },
+    },
+    hooks: {
+      beforeFind(options) {
+        return undefined;
+      },
+      beforeCreate(instance, options) {
+        return undefined;
+      },
+      beforeUpdate(instance, options) {
+        return undefined;
+      },
+      beforeDestroy(instance, options) {
+        return undefined;
+      },
+    },
+    indexes: [
+      // {unique: true, fields: [&quot;name&quot;]},
+    ],
+    //instanceMethods: {}, //TODO: figure out a way to expose this on graphql
+  },
+};
+
+
+const schemas = [TaskModel];
+
+(async() => {
+  let instance = new Sequelize(&quot;database&quot;, &quot;username&quot;, &quot;password&quot;, {
+    dialect: &quot;sqlite&quot;,
+    logging: false
+  });
+  connect(schemas, instance, {}); // this populates the sequelize instance with the appropriate models and referential information for schema generation
+  await instance.sync();
+
+  const schema = await createSchema(instance); //creates graphql schema
+  const mutation = `mutation {
+    models {
+      Task {
+        create(input: {name: &quot;item1&quot;, options: {hidden: &quot;nowhere&quot;}}) {
+          id, 
+          name
+          options {
+            hidden
+          }
+        }
+      }
+    }
+  }`; // create item in database
+  const mutationResult = await graphql(schema, mutation);
+  expect(mutationResult.data.models.Task.create.options.hidden).toEqual(&quot;nowhere&quot;);
+  const queryResult = await graphql(schema, &quot;query { models { Task { id, name, options {hidden} } } }&quot;); // retrieves information from database
+  return expect(queryResult.data.models.Task[0].options.hidden).toEqual(&quot;nowhere&quot;);
+})();</code></pre><h2>Permission Helper</h2><p>The is a simple role base helper for hooking into the permission events for deny and allowing sections during schema generation based on roles provided.</p>
+<pre class="prettyprint source lang-javascript"><code>/* 
+  options = {
+    defaultDeny: true
+    defaults: {
+
+    }
+  }
+  defaultPerm = {
+    &quot;fields&quot;: {
+      &quot;Task&quot;: {
+        &quot;options&quot;: &quot;deny&quot;,
+      },
+    },
+    &quot;classMethods&quot;: {
+      &quot;User&quot;: {
+        &quot;login&quot;: &quot;allow&quot;,
+        &quot;logout&quot;: &quot;allow&quot;,
+      },
+    },
+  };
+
+  rules = {
+    &quot;admin&quot;: {
+      &quot;field&quot;: {
+        &quot;User&quot;: &quot;allow&quot;,
+      } 
+      &quot;model&quot;: &quot;allow&quot;,
+      &quot;classMethods&quot;: {
+        &quot;User&quot;: {
+          &quot;login&quot;: &quot;deny&quot;,
+        },
+      },
+    },
+    &quot;user&quot;: {
+      &quot;mutation&quot;: &quot;deny&quot;,
+    },
+  };
+
+*/
+
+const ruleSet = {
+  &quot;someone&quot;: &quot;deny&quot;,
+  &quot;anyone&quot;: {
+    &quot;query&quot;: &quot;allow&quot;,
+    &quot;model&quot;: {
+      &quot;Task&quot;: &quot;allow&quot;,
+    },
+    &quot;field&quot;: {
+      &quot;Task&quot;: {
+        &quot;name&quot;: &quot;allow&quot;,
+      },
+    },
+  },
+};
+
+const anyoneSchema = await createSchema(instance, {
+  permission: permissionHelper(&quot;anyone&quot;, ruleSet)
+});
+
+const someoneSchema = await createSchema(instance, {
+  permission: permissionHelper(&quot;someone&quot;, ruleSet)
+});</code></pre><h2>ChangeLog</h2><p>1.1.0</p>
+<ul>
+<li>delete mutations now return object that it has deleted instead of boolean - <strong>[Breaking change from 1.0.0]</strong></li>
+<li>subscriptions are now supported, defaults will hook into afterCreate, afterUpdate, afterDestroy on the sequelize models</li>
+<li>added extend to options in createScheme for supporting unknown/future root variables </li>
+<li>set all functions to export to allow for anyone wanting to use the api directly</li>
+</ul>
+<p>1.2.0</p>
+<ul>
+<li>changed before and after hooks on the model definition to include mutations, the arguments have been reduced to a single object - <strong>[Breaking change from 1.1.0]</strong></li>
+</ul>
+<p>1.2.1</p>
+<ul>
+<li>fixed before, after hooks arguments for mutations </li>
+</ul>
+<p>1.2.2</p>
+<ul>
+<li>adding rootValue and context to the findOptions statement provided to sequelize. accessible from the hook beforeFind. </li>
+<li>updated base model before after hooks.</li>
+</ul>
+<p>1.2.4</p>
+<ul>
+<li>updated override to allow scalar and enum types to be set as the field type directly </li>
+</ul>
+<p>1.2.5</p>
+<ul>
+<li>added Instance Methods to the query field definition if exposed.</li>
+</ul>
+<p>1.2.6</p>
+<ul>
+<li>exposed generated types via $sql2gql.types on the schema returned from connect</li>
+</ul>
+<p>1.2.7</p>
+<ul>
+<li>Added field permission option</li>
+</ul>
+<p>2.0.0</p>
+<ul>
+<li>Added subscription permission option</li>
+<li>added a simple role based permission helper</li>
+<li>fixed field permissions return value to be correct</li>
+<li>removed some let over debugging mechanics from 1.2.7</li>
+<li>updated package dependencies</li>
+<li>switch to the official graphql subscriptions mechanic in the test cases</li>
+<li>updated all the tests to match the jest version of expect</li>
+<li>implemented a basic role based permission helper.</li>
+<li>added checks for over aggressive permission handling</li>
+<li>added the default fields to the permission check</li>
+<li>dropping node support for anything lesser then current LTS aka compile target is currently v6.11.3</li>
+</ul>
+<p>2.0.1</p>
+<ul>
+<li>total overcomplicated implementation for field filtering in permissions - now fixed.</li>
+<li>added a new permissions test</li>
+</ul>
+<p>2.0.2</p>
+<ul>
+<li>added list types for all available models for instanceMethods, classMethods and schema.$sql2gql.types. format is &quot;List&lt;${modelName}&gt;&quot;</li>
+</ul>
+<p>2.1.0</p>
+<ul>
+<li>BUGFIX #21 - Unable to use list types in for instanceMethods</li>
+<li><strong>[Breaking Change]</strong> switch formatting from List<Object> to Object[] to be more consistent with javascript syntax</li>
+</ul>
+<p>2.1.1</p>
+<ul>
+<li>Added model to parameters of override.input on updates</li>
+</ul>
+<p>3.0.0-alpha</p>
+<ul>
+<li>Rebuilt mutation crud to allow for related objects to be created at the same time</li>
+<li>Allowed query class methods to be allowed without models that they are created upon</li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+		<div class="col-md-3">
+			<div id="toc" class="col-md-3 hidden-xs hidden-sm hidden-md"></div>
+		</div>
+	
+
+</div>
+</div>
+
+
+    <div class="modal fade" id="searchResults">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Search results</h4>
+          </div>
+          <div class="modal-body"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div>
+
+
+<footer>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a>
+	
+		on May 8th 2018, 12:50:28 pm
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+
+    <script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre, pre.prettyprint.source" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			return $( heading ).attr( "id" ) || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            SearcherDisplay.init();
+        });
+    </script>
+
+
+</body>
+</html>

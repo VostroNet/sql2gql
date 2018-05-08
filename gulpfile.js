@@ -5,6 +5,7 @@ const del = require("del");
 const mocha = require("gulp-mocha");
 const babel = require("gulp-babel");
 const sourcemaps = require("gulp-sourcemaps");
+const jsdoc3 = require("gulp-jsdoc3");
 
 gulp.task("clean", () => {
   return del(["build/**/*"]);
@@ -18,6 +19,7 @@ gulp.task("lint", ["clean"], () => {
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
 });
+
 gulp.task("compile:publish", ["lint"], () => {
   return gulp.src(["src/**/*"])
     .pipe(sourcemaps.init())
@@ -30,7 +32,7 @@ gulp.task("compile:publish", ["lint"], () => {
           "useBuiltIns": "usage",
         },
       ]],
-      "plugins": ["@babel/plugin-proposal-object-rest-spread"]
+      "plugins": ["@babel/plugin-proposal-object-rest-spread"],
     }))
     .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
     .pipe(gulp.dest("build/"));
@@ -46,7 +48,7 @@ gulp.task("compile", ["lint"], () => {
           },
           "useBuiltIns": "usage",
         }],
-      ], plugins: ["@babel/plugin-proposal-object-rest-spread"]
+      ], plugins: ["@babel/plugin-proposal-object-rest-spread"],
     }))
     .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
     .pipe(gulp.dest("build/"));
@@ -57,6 +59,11 @@ gulp.task("test", ["compile"], function() {
     .pipe(mocha());
 });
 
+gulp.task("doc", function(cb) {
+  var config = require("./jsdoc.json");
+  gulp.src(["README.md", "package.json", "./src/**/*.js"], {read: false})
+    .pipe(jsdoc3(config, cb));
+});
 
 gulp.task("watch", () => {
   gulp.watch("src/**/*.*", ["test"]);

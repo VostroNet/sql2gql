@@ -1,4 +1,3 @@
-
 import {
   GraphQLObjectType,
   GraphQLScalarType,
@@ -6,17 +5,22 @@ import {
   GraphQLNonNull,
   GraphQLString,
 } from "graphql";
-
-
 import {
   resolver,
   attributeFields,
 } from "graphql-sequelize";
-
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
 
-
+/**
+ * @function createModelTypes
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {string} prefix
+ * @param {Object} options
+ * @param {Object} nodeInterface
+ * @return {Object}
+*/
 export default async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
   const result = await keys.reduce((promise, modelName) => {
     return promise.then(async(o) => {

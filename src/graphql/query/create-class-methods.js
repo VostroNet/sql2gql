@@ -1,9 +1,16 @@
 import {
   GraphQLObjectType,
 } from "graphql";
-
 import getModelDefinition from "../utils/get-model-def";
 
+/**
+ * @function createQueryFunctions
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} options
+ * @returns {Object}
+*/
 
 export default async function createQueryFunctions(models, keys, typeCollection, options) {
   let queryCollection = {};
