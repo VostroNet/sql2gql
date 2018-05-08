@@ -3,15 +3,31 @@ if (global.Promise) {
   Sequelize.Promise = global.Promise;
 }
 import logger from "./utils/logger";
+
 const log = logger("sql2gql::database:");
 
+/**
+ * @function connect
+ * @param {Object[]} schemas
+ * @param {Object} sqlInstance
+ * @param {Object} options
+ * @return {Object}
+*/
 
 export function connect(schemas, sqlInstance, options) {
   loadSchemas(schemas, sqlInstance, options);
   return sqlInstance;
 }
 
-
+/**
+ * @function createSubscriptionHook
+ * @param {Object} schema
+ * @param {string} hookName
+ * @param {string} subscriptionName
+ * @param {Object} pubsub
+ * @param {Object} schemaOptions
+ * @return {function}
+*/
 export function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions = {}) {
   const {hooks} = schemaOptions;
   const schemaHook = hooks[hookName];
@@ -50,6 +66,12 @@ export function createSubscriptionHook(schema, hookName, subscriptionName, pubsu
   return f;
 }
 
+/**
+ * @function loadSchemas
+ * @param {Object[]} schemas
+ * @param {Object} sqlInstance
+ * @param {Object} options
+*/
 export function loadSchemas(schemas, sqlInstance, options = {}) {
   // const schemas = s.slice(0);
   // console.log("calling loadSchemas");
