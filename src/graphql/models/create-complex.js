@@ -15,13 +15,6 @@ import createBeforeAfter from "./create-before-after";
 import resetInterfaces from "../utils/reset-interfaces";
 import getModelDefinition from "../utils/get-model-def";
 
-// const orderBy = new GraphQLEnumType({
-//   name: "GeneralOrderBy",
-//   values: {
-//     ID: {value: ["id", "DESC"]}
-//   },
-// });
-
 export default async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
 
   await Promise.all(keys.map(async(modelName) => {
@@ -112,6 +105,10 @@ export default async function createComplexModels(models, keys, typeCollection, 
                 }, {
                   idAsc: {value: ["id", "ASC"]},
                   idDesc: {value: ["id", "DESC"]},
+                  createdAtAsc: {value: ["createdAt", "ASC"]},
+                  createdAtDesc: {value: ["createdAt", "DESC"]},
+                  updatedAtAsc: {value: ["updatedAt", "ASC"]},
+                  updatedAtDesc: {value: ["updatedAt", "DESC"]},
                 }),
               }),
               // edgeFields: def.edgeFields,

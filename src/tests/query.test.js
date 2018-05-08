@@ -194,4 +194,23 @@ describe("queries", () => {
     expect(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
     return expect(result.data.models.Task.edges[0].node.items.edges[0].node.name).toEqual("taskitem3");
   });
+  it("orderBy values", async() => {
+    const instance = await createSqlInstance();
+    const {TaskItem} = instance.models;
+    const fields = TaskItem.$sqlgql.define;
+    const schema = await createSchema(instance);
+    const result = await graphql(schema, "query {__type(name:\"TaskitemsOrderBy\") { enumValues {name} }}");
+    const enumValues = result.data.__type.enumValues.map(x => x.name);// eslint-disable-line
+
+    Object.keys(fields).map((field) => {
+      expect(enumValues).toContain(`${field}Asc`);
+      expect(enumValues).toContain(`${field}Desc`);
+    });
+    expect(enumValues).toContain("createdAtAsc");
+    expect(enumValues).toContain("createdAtDesc");
+    expect(enumValues).toContain("updatedAtAsc");
+    expect(enumValues).toContain("updatedAtDesc");
+    expect(enumValues).toContain("idAsc");
+    return expect(enumValues).toContain("idDesc");
+  });
 });

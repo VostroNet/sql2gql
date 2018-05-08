@@ -25,12 +25,6 @@ const {
   sequelizeConnection
 } = _graphqlSequelize.relay; // import createBaseModel from "./create-base";
 
-// const orderBy = new GraphQLEnumType({
-//   name: "GeneralOrderBy",
-//   values: {
-//     ID: {value: ["id", "DESC"]}
-//   },
-// });
 async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
   await Promise.all(keys.map(async modelName => {
     if (models[modelName].relationships) {
@@ -148,6 +142,18 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
                   },
                   idDesc: {
                     value: ["id", "DESC"]
+                  },
+                  createdAtAsc: {
+                    value: ["createdAt", "ASC"]
+                  },
+                  createdAtDesc: {
+                    value: ["createdAt", "DESC"]
+                  },
+                  updatedAtAsc: {
+                    value: ["updatedAt", "ASC"]
+                  },
+                  updatedAtDesc: {
+                    value: ["updatedAt", "DESC"]
                   }
                 })
               }),
