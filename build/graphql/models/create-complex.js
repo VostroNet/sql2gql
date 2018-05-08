@@ -25,15 +25,12 @@ const {
   sequelizeConnection
 } = _graphqlSequelize.relay; // import createBaseModel from "./create-base";
 
-const orderBy = new _graphql.GraphQLEnumType({
-  name: "GeneralOrderBy",
-  values: {
-    ID: {
-      value: ["id", "DESC"]
-    }
-  }
-});
-
+// const orderBy = new GraphQLEnumType({
+//   name: "GeneralOrderBy",
+//   values: {
+//     ID: {value: ["id", "DESC"]}
+//   },
+// });
 async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
   await Promise.all(keys.map(async modelName => {
     if (models[modelName].relationships) {
@@ -68,7 +65,7 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
           before,
           after,
           afterList
-        } = (0, _createBeforeAfter.default)(models[modelName], options);
+        } = (0, _createBeforeAfter.default)(models[modelName], options); //eslint-disable-line
 
         if (!targetType) {
           throw `targetType ${targetType} not defined for relationship`;
@@ -129,13 +126,31 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
             // if (options.version === 3 || options.compat === 3) {
             //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
             // }
-            // const modelDefinition = getModelDefinition(models[targetType.name]);
+            const modelDefinition = (0, _getModelDef.default)(models[targetType.name]);
             const c = sequelizeConnection({
               name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
-              orderBy,
-              //TODO: make this auto gen from fields, and extensible
+              orderBy: new _graphql.GraphQLEnumType({
+                name: `${modelName}${relName}OrderBy`,
+                values: Object.keys(modelDefinition.define).reduce((obj, field) => {
+                  return Object.assign({}, obj, {
+                    [`${field}Asc`]: {
+                      value: [field, "ASC"]
+                    },
+                    [`${field}Desc`]: {
+                      value: [field, "DESC"]
+                    }
+                  });
+                }, {
+                  idAsc: {
+                    value: ["id", "ASC"]
+                  },
+                  idDesc: {
+                    value: ["id", "DESC"]
+                  }
+                })
+              }),
               // edgeFields: def.edgeFields,
               // connectionFields: def.connectionFields,
               where: (key, value, currentWhere) => {
