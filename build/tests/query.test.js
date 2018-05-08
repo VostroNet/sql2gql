@@ -150,5 +150,80 @@ describe("queries", () => {
     (0, _expect.default)(result.data.models.Task.edges[2].node.testInstanceMethod[0].name).toEqual("item31");
     return (0, _expect.default)(result.data.models.Task.edges.length).toEqual(3);
   });
+  it("orderBy asc", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const {
+      Task,
+      TaskItem
+    } = instance.models;
+    const model = await Task.create({
+      name: "task1"
+    });
+    await Promise.all([TaskItem.create({
+      name: "taskitem1",
+      taskId: model.get("id")
+    }), TaskItem.create({
+      name: "taskitem2",
+      taskId: model.get("id")
+    }), TaskItem.create({
+      name: "taskitem3",
+      taskId: model.get("id")
+    })]);
+    const schema = await (0, _index.createSchema)(instance);
+    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name, items(orderBy: idAsc) {edges {node{id, name}}} } } } } }");
+    (0, _utils.validateResult)(result);
+    (0, _expect.default)(result.data.models.Task.edges[0].node.name).toEqual("task1");
+    (0, _expect.default)(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
+    return (0, _expect.default)(result.data.models.Task.edges[0].node.items.edges[0].node.name).toEqual("taskitem1");
+  });
+  it("orderBy desc", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const {
+      Task,
+      TaskItem
+    } = instance.models;
+    const model = await Task.create({
+      name: "task1"
+    });
+    await Promise.all([TaskItem.create({
+      name: "taskitem1",
+      taskId: model.get("id")
+    }), TaskItem.create({
+      name: "taskitem2",
+      taskId: model.get("id")
+    }), TaskItem.create({
+      name: "taskitem3",
+      taskId: model.get("id")
+    })]);
+    const schema = await (0, _index.createSchema)(instance);
+    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name, items(orderBy: idDesc) {edges {node{id, name}}} } } } } }");
+    (0, _utils.validateResult)(result);
+    (0, _expect.default)(result.data.models.Task.edges[0].node.name).toEqual("task1");
+    (0, _expect.default)(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
+    return (0, _expect.default)(result.data.models.Task.edges[0].node.items.edges[0].node.name).toEqual("taskitem3");
+  });
+  it("orderBy values", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const {
+      TaskItem
+    } = instance.models;
+    const fields = TaskItem.$sqlgql.define;
+    const schema = await (0, _index.createSchema)(instance);
+    const result = await (0, _graphql.graphql)(schema, "query {__type(name:\"TaskitemsOrderBy\") { enumValues {name} }}");
+
+    const enumValues = result.data.__type.enumValues.map(x => x.name); // eslint-disable-line
+
+
+    Object.keys(fields).map(field => {
+      (0, _expect.default)(enumValues).toContain(`${field}Asc`);
+      (0, _expect.default)(enumValues).toContain(`${field}Desc`);
+    });
+    (0, _expect.default)(enumValues).toContain("createdAtAsc");
+    (0, _expect.default)(enumValues).toContain("createdAtDesc");
+    (0, _expect.default)(enumValues).toContain("updatedAtAsc");
+    (0, _expect.default)(enumValues).toContain("updatedAtDesc");
+    (0, _expect.default)(enumValues).toContain("idAsc");
+    return (0, _expect.default)(enumValues).toContain("idDesc");
+  });
 });
 //# sourceMappingURL=query.test.js.map

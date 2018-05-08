@@ -1,14 +1,9 @@
-
-
 import {
   GraphQLList,
-  GraphQLBoolean,
   GraphQLEnumType,
 } from "graphql";
-
 import {
   resolver,
-  defaultListArgs,
   JSONType,
   relay,
 } from "graphql-sequelize";
@@ -19,14 +14,6 @@ const {sequelizeConnection} =  relay;
 import createBeforeAfter from "./create-before-after";
 import resetInterfaces from "../utils/reset-interfaces";
 import getModelDefinition from "../utils/get-model-def";
-
-
-const orderBy = new GraphQLEnumType({
-  name: "GeneralOrderBy",
-  values: {
-    ID: {value: ["id", "DESC"]}
-  },
-});
 
 export default async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
 
@@ -52,7 +39,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
             }
           }
         }
-        const {before, after, afterList} = createBeforeAfter(models[modelName], options);
+        const {before, after, afterList} = createBeforeAfter(models[modelName], options); //eslint-disable-line
         if (!targetType) {
           throw `targetType ${targetType} not defined for relationship`;
         }
@@ -92,7 +79,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
                 ...bc.connectionArgs,
                 where: {
                   type: JSONType.default,
-                }
+                },
               },
               resolve: bc.resolve,
             };
@@ -103,12 +90,27 @@ export default async function createComplexModels(models, keys, typeCollection, 
             //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
             // }
 
-            // const modelDefinition = getModelDefinition(models[targetType.name]);
+            const modelDefinition = getModelDefinition(models[targetType.name]);
             const c = sequelizeConnection({
               name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
-              orderBy, //TODO: make this auto gen from fields, and extensible
+              orderBy: new GraphQLEnumType({
+                name: `${modelName}${relName}OrderBy`,
+                values: Object.keys(modelDefinition.define).reduce((obj, field) => {
+                  return Object.assign({}, obj, {
+                    [`${field}Asc`]: {value: [field, "ASC"]},
+                    [`${field}Desc`]: {value: [field, "DESC"]},
+                  });
+                }, {
+                  idAsc: {value: ["id", "ASC"]},
+                  idDesc: {value: ["id", "DESC"]},
+                  createdAtAsc: {value: ["createdAt", "ASC"]},
+                  createdAtDesc: {value: ["createdAt", "DESC"]},
+                  updatedAtAsc: {value: ["updatedAt", "ASC"]},
+                  updatedAtDesc: {value: ["updatedAt", "DESC"]},
+                }),
+              }),
               // edgeFields: def.edgeFields,
               // connectionFields: def.connectionFields,
               where: (key, value, currentWhere) => {
@@ -123,7 +125,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
                 const model = models[modelName];
                 const assoc = model.associations[relName];
                 findOptions.where = {
-                  $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}]
+                  $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}],
                 };
                 return before(findOptions, args, context, info);
               }, after,
@@ -134,7 +136,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
                 ...c.connectionArgs,
                 where: {
                   type: JSONType.default,
-                }
+                },
               },
               resolve: c.resolve,
             };

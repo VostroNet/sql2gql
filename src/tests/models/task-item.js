@@ -23,7 +23,7 @@ export default {
     name: "task",
     options: {
       foreignKey: "taskId",
-    }
+    },
   }],
   options: {
     tableName: "task-items",

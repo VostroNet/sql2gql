@@ -19,7 +19,7 @@ export function createSqlInstance(options) {
   return instance.sync().then(() => instance);
 }
 
-export function validateResult( result) {
+export function validateResult(result) {
   if ((result.errors || []).length > 0) {
     console.log("Graphql Error", result.errors); //eslint-disable-line
   }

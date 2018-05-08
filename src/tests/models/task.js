@@ -102,7 +102,7 @@ export default {
     name: "items",
     options: {
       foreignKey: "taskId",
-    }
+    },
   }],
   expose: {
     instanceMethods: {
@@ -120,7 +120,7 @@ export default {
             },
           },
         },
-      }
+      },
     },
     classMethods: {
       mutations: {
