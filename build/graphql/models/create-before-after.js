@@ -7,12 +7,18 @@ exports.default = createBeforeAfter;
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
-var _events = _interopRequireDefault(require("../events"));
-
 var _replaceIdDeep = _interopRequireDefault(require("../utils/replace-id-deep"));
+
+var _events = _interopRequireDefault(require("../events"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * @function createBeforeAfter
+ * @param model
+ * @param options
+ * @param hooks
+*/
 function createBeforeAfter(model, options, hooks = {}) {
   let targetBeforeFuncs = [],
       targetAfterFuncs = [];

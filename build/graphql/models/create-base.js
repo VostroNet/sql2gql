@@ -15,6 +15,14 @@ var _createBeforeAfter = _interopRequireDefault(require("./create-before-after")
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * @function createModelTypes
+ * @param models
+ * @param keys
+ * @param prefix
+ * @param options
+ * @param nodeInterface
+*/
 async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
   const result = await keys.reduce((promise, modelName) => {
     return promise.then(async o => {

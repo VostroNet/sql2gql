@@ -1,5 +1,3 @@
-
-
 import {
   GraphQLNonNull,
   GraphQLInputObjectType,
@@ -7,9 +5,17 @@ import {
   GraphQLEnumType,
   GraphQLList,
 } from "graphql";
-
 import getModelDefinition from "../utils/get-model-def";
 import jsonType from "graphql-sequelize/lib/types/jsonType";
+
+/**
+ * @function createMutationInputs
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} options
+ * @returns {Object}
+*/
 
 function createMutationInput(modelName, model, gqlFields, prefix, allOptional = false) {
   const modelDefinition = getModelDefinition(model);
@@ -68,7 +74,7 @@ function createMutationInput(modelName, model, gqlFields, prefix, allOptional = 
     fields,
   };
 }
-//new GraphQLInputObjectType(
+
 export default async function createMutationInputs(models, keys, typeCollection, options) {
   let inputs = keys.reduce((o, modelName) => {
     if (!typeCollection[modelName]) {
@@ -155,7 +161,7 @@ export default async function createMutationInputs(models, keys, typeCollection,
       [k]: {
         required: new GraphQLInputObjectType(inputs[k].required),
         optional: new GraphQLInputObjectType(inputs[k].optional),
-      }
+      },
     };
   }, {});
 }

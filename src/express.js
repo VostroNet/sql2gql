@@ -6,6 +6,11 @@ import {
   runHttpQuery,
 } from "apollo-server-core";
 
+/**
+ * @function graphqlExpress
+ * @param {Object} options
+*/
+
 export default function graphqlExpress(options) {
   if (!options) {
     throw new Error("Apollo Server requires options.");

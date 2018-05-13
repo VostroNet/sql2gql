@@ -1,22 +1,26 @@
-
-
 import {
   GraphQLList,
   GraphQLInputObjectType,
   GraphQLNonNull,
 } from "graphql";
-
 import {
   resolver,
   defaultListArgs,
 } from "graphql-sequelize";
-
 import {fromGlobalId} from "graphql-relay";
-
-
 import createBeforeAfter from "../models/create-before-after";
 import events from "../events";
 import getModelDefinition from "../utils/get-model-def";
+
+/**
+ * @function createFunctions
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} mutationInputTypes
+ * @param {Object} options
+ * @returns {Object}
+*/
 
 export function onCreate(targetModel) {
   const modelDefinition = getModelDefinition(targetModel);
@@ -59,7 +63,6 @@ export function onCreate(targetModel) {
     return model;
   };
 }
-
 export function onUpdate(targetModel) {
 
   const modelDefinition = getModelDefinition(targetModel);
@@ -130,9 +133,6 @@ export function onDelete(targetModel) {
     return model;
   };
 }
-
-
-
 
 export default async function createFunctions(models, keys, typeCollection, mutationInputTypes, options) {
   const result = await keys.reduce((promise, modelName) => {

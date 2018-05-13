@@ -1,19 +1,19 @@
-
-
 import {
-  GraphQLList, GraphQLInt
-} from "graphql";
-
-import {
-  resolver,
-  defaultListArgs,
   JSONType,
   relay,
 } from "graphql-sequelize";
-
 import getModelDefinition from "../utils/get-model-def";
-
 import createBeforeAfter from "../models/create-before-after";
+
+/**
+ * @function createModelLists
+ * @param {Object} models
+ * @param {string[]} modelNames
+ * @param {Object} typeCollection
+ * @param {Object} options
+ * @param {Object} fields
+ * @returns {Object}
+*/
 
 const {sequelizeConnection} =  relay;
 

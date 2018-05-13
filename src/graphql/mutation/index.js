@@ -1,15 +1,20 @@
-
 import {
   GraphQLList,
 } from "graphql";
-
 import {
   resolver,
-  defaultListArgs,
-  // defaultArgs,
 } from "graphql-sequelize";
-
 import createBeforeAfter from "../models/create-before-after";
+
+/**
+ * @function createMutationV3
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {function[]} mutationFunctions
+ * @param {Object} options
+ * @returns {Object}
+*/
 
 export default async function createMutationV3(models, keys, typeCollection, mutationFunctions, options) {
   let mutationCollection = {};

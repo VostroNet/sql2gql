@@ -1,21 +1,12 @@
-
 import {
   GraphQLSchema,
   GraphQLObjectType,
 } from "graphql";
-
-
 import {
   relay,
 } from "graphql-sequelize";
 
 const {sequelizeNodeInterface} = relay;
-
-// import deepmerge from "deepmerge";
-// import Sequelize from "sequelize";
-// import cls from "continuation-local-storage";
-// const namespace = cls.createNamespace("sql2gql");
-// Sequelize.useCLS(namespace);
 
 import getModelDefinition from "./utils/get-model-def";
 import createBasicModels from "./models/create-base";
@@ -29,6 +20,13 @@ import createMutationClassMethods from "./mutation/create-class-methods";
 import createQueryLists from "./query/create-lists";
 import createQueryClassMethods from "./query/create-class-methods";
 import createSubscriptionFunctions from "./subscriptions";
+
+/**
+ * @function createSchema
+ * @param {Object} sqlInstance
+ * @param {Object} options
+ * @return {GraphQLSchema}
+*/
 
 export async function createSchema(sqlInstance, options = {}) {
   const {nodeInterface, nodeField, nodeTypeMapper} = sequelizeNodeInterface(sqlInstance);
