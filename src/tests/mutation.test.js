@@ -4,6 +4,7 @@ import {graphql} from "graphql";
 import {createSchema, connect} from "../index";
 import Sequelize from "sequelize";
 import {toGlobalId} from "graphql-relay";
+
 Sequelize.Promise = global.Promise;
 
 describe("mutations", () => {
@@ -283,7 +284,6 @@ describe("mutations", () => {
     validateResult(mutationResult);
     return expect(mutationResult.data.models.Task[0].mutationCheck).toEqual("create");
   });
-
   it("update - before hook", async() => {
     const instance = await createSqlInstance();
     const {Task} = instance.models;
@@ -458,5 +458,47 @@ describe("mutations", () => {
     }`;
     const deleteResult = await graphql(schema, deleteMutation, {req: "exists"});
     validateResult(deleteResult);
+  });
+  it("create inputs - with no PK defined", async() => {
+    const instance = await createSqlInstance();
+    const {TaskItem} = instance.models;
+    const fields = TaskItem.$sqlgql.define;
+    const schema = await createSchema(instance);
+    const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"TaskRequiredInput\") { inputFields {name} }}");
+    const mutationInputFields = inputFields.map(x => x.name);
+
+    Object.keys(fields).map((field) => {
+      expect(mutationInputFields).toContain(field);
+    });
+  });
+  it("create inputs - with PK defined", async() => {
+    const taskModel = {
+      name: "Task",
+      define: {
+        id: {
+          type: Sequelize.UUID,
+          allowNull: false,
+          primaryKey: true,
+        },
+        name: {
+          type: Sequelize.STRING,
+          allowNull: false,
+        },
+      },
+      options: {
+        tableName: "tasks",
+      },
+    };
+
+    let instance = new Sequelize("database", "username", "password", {
+      dialect: "sqlite",
+      logging: false,
+    });
+    connect([taskModel], instance, {});
+    await instance.sync();
+
+    const schema = await createSchema(instance);
+    const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"TaskRequiredInput\") { inputFields {name} }}");
+    expect(Object.keys(inputFields).filter(x => x.name === "id").length).toBe(0);
   });
 });
