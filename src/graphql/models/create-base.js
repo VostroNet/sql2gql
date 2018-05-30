@@ -60,6 +60,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
   });
   if (foreignKeys.length > 0) {
     foreignKeys.forEach((fk) => {
+      if (fields[fk]) {
+        return;
+      }
       if (model.fieldRawAttributesMap[fk].allowNull) {
         fields[fk].type = GraphQLString;
       } else {
