@@ -7,8 +7,9 @@ import expect from "expect";
 import {connect} from "../index";
 import TaskModel from "./models/task";
 import TaskItemModel from "./models/task-item";
+import Item from "./models/item";
 
-const schemas = [TaskModel, TaskItemModel];
+const schemas = [TaskModel, TaskItemModel, Item];
 export function createSqlInstance(options) {
   let instance = new Sequelize("database", "username", "password", {
     dialect: "sqlite",

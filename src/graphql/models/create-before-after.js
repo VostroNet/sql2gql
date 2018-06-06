@@ -95,6 +95,9 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     return targetAfterFuncs.reduce((promise, curr) => {
       return promise.then((prev) => {
         return curr(prev, args, context, info);
+        // const data = curr(prev, args, context, info);
+        // data.edges = data.edges.filter(x => !!x);
+        // return data;
       });
     }, Promise.resolve(result));
   };

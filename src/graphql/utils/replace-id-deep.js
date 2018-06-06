@@ -21,6 +21,8 @@ export default function replaceIdDeep(obj, keyMap) {
         } catch (e) {
           m[key] = obj[key]; //is not a global id
         }
+      // } else {
+      //   m[key] = obj[key];
       }
     } else {
       if (Array.isArray(obj[key])) {
