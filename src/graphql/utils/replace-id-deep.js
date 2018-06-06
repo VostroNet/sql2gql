@@ -15,14 +15,14 @@ export default function replaceIdDeep(obj, keyMap) {
     if (keyMap.indexOf(key) > -1) {
       if (typeof obj[key] === "function") {
         m[key] = createProxy(obj[key], key);
-      } else if (obj[key].endsWith("=")) {
+      } else {
         try {
           m[key] = fromGlobalId(obj[key]).id;
         } catch (e) {
           m[key] = obj[key]; //is not a global id
         }
-      } else {
-        m[key] = obj[key];
+      // } else {
+      //   m[key] = obj[key];
       }
     } else {
       if (Array.isArray(obj[key])) {
