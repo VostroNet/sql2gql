@@ -214,36 +214,36 @@ describe("queries", () => {
     expect(enumValues).toContain("idAsc");
     return expect(enumValues).toContain("idDesc");
   });
-  // it("filter non-null", async() => {
-  //   const instance = await createSqlInstance();
-  //   const schema = await createSchema(instance);
-  //   const mutation = `mutation {
-  //     models {
-  //       Item(create: [
-  //         {name: "item", id: "${uuid()}"},
-  //         {name: "item-null", id: "${uuid()}"}
-  //       ]) {
-  //         id,
-  //         name
-  //       }
-  //     }
-  //   }`;
-  //   const itemResult = await graphql(schema, mutation);
-  //   validateResult(itemResult);
+  it("filter non-null", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: [
+          {name: "item", id: "${uuid()}"},
+          {name: "item-null", id: "${uuid()}"}
+        ]) {
+          id,
+          name
+        }
+      }
+    }`;
+    const itemResult = await graphql(schema, mutation);
+    validateResult(itemResult);
 
-  //   const queryResult = await graphql(schema, `query {
-  //     models {
-  //       Item {
-  //         edges {
-  //           node {
-  //             id
-  //             name
-  //           }
-  //         }
-  //       }
-  //     }
-  //   }`);
-  //   validateResult(queryResult);
-  //   expect(queryResult.data.models.Item.edges.length).toBe(1);
-  // });
+    const queryResult = await graphql(schema, `query {
+      models {
+        Item {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }`);
+    validateResult(queryResult);
+    expect(queryResult.data.models.Item.edges.length).toBe(1);
+  });
 });

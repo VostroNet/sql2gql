@@ -94,10 +94,15 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     }
     return targetAfterFuncs.reduce((promise, curr) => {
       return promise.then((prev) => {
-        return curr(prev, args, context, info);
-        // const data = curr(prev, args, context, info);
-        // data.edges = data.edges.filter(x => !!x);
-        // return data;
+        return Promise.resolve(curr(prev, args, context, info)).then((data) => {
+          if (!data) {
+            return undefined;
+          }
+          if (data.edges) {
+            data.edges = data.edges.filter(x => !!x);
+          }
+          return data;
+        });
       });
     }, Promise.resolve(result));
   };

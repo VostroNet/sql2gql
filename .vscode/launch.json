@@ -11,6 +11,10 @@
         "--colors",
         "${workspaceRoot}/build/tests/**/*.test.js"
     ],
+    "env": {
+      "NODE_ENV": "development",
+      "DEBUG": "*"
+    },
     "console": "integratedTerminal",
     "internalConsoleOptions": "neverOpen",
     "sourceMaps": true,
