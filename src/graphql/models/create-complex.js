@@ -52,6 +52,48 @@ export default async function createComplexModels(models, keys, typeCollection, 
         if (!targetType) {
           throw `targetType ${targetType} not defined for relationship`;
         }
+
+        const modelDefinition = getModelDefinition(models[targetType.name]);
+        const conn = sequelizeConnection({
+          name: `${modelName}${relName}`,
+          nodeType: targetType,
+          target: relationship.rel,
+          orderBy: new GraphQLEnumType({
+            name: `${modelName}${relName}OrderBy`,
+            values: Object.keys(modelDefinition.define).reduce((obj, field) => {
+              return Object.assign({}, obj, {
+                [`${field}Asc`]: {value: [field, "ASC"]},
+                [`${field}Desc`]: {value: [field, "DESC"]},
+              });
+            }, {
+              idAsc: {value: ["id", "ASC"]},
+              idDesc: {value: ["id", "DESC"]},
+              createdAtAsc: {value: ["createdAt", "ASC"]},
+              createdAtDesc: {value: ["createdAt", "DESC"]},
+              updatedAtAsc: {value: ["updatedAt", "ASC"]},
+              updatedAtDesc: {value: ["updatedAt", "DESC"]},
+            }),
+          }),
+          // edgeFields: def.edgeFields,
+          // connectionFields: def.connectionFields,
+          where: (key, value, currentWhere) => {
+            // for custom args other than connectionArgs return a sequelize where parameter
+            if (key === "where") {
+              return value;
+            }
+            return {[key]: value};
+          },
+          async before(findOptions, args, context, info) {
+            const options = await before(findOptions, args, context, info);
+            const {source} = info;
+            const model = models[modelName];
+            const assoc = model.associations[relName];
+            options.where = {
+              $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, options.where],
+            };
+            return options;
+          }, after,
+        });
         switch (relationship.type) {
           case "belongsToMany": //eslint-disable-line
             const bc = sequelizeConnection({
@@ -94,61 +136,15 @@ export default async function createComplexModels(models, keys, typeCollection, 
             };
             break;
           case "hasMany":
-            // let manyArgs = defaultListArgs();
-            // if (options.version === 3 || options.compat === 3) {
-            //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
-            // }
-
-            const modelDefinition = getModelDefinition(models[targetType.name]);
-            const c = sequelizeConnection({
-              name: `${modelName}${relName}`,
-              nodeType: targetType,
-              target: relationship.rel,
-              orderBy: new GraphQLEnumType({
-                name: `${modelName}${relName}OrderBy`,
-                values: Object.keys(modelDefinition.define).reduce((obj, field) => {
-                  return Object.assign({}, obj, {
-                    [`${field}Asc`]: {value: [field, "ASC"]},
-                    [`${field}Desc`]: {value: [field, "DESC"]},
-                  });
-                }, {
-                  idAsc: {value: ["id", "ASC"]},
-                  idDesc: {value: ["id", "DESC"]},
-                  createdAtAsc: {value: ["createdAt", "ASC"]},
-                  createdAtDesc: {value: ["createdAt", "DESC"]},
-                  updatedAtAsc: {value: ["updatedAt", "ASC"]},
-                  updatedAtDesc: {value: ["updatedAt", "DESC"]},
-                }),
-              }),
-              // edgeFields: def.edgeFields,
-              // connectionFields: def.connectionFields,
-              where: (key, value, currentWhere) => {
-                // for custom args other than connectionArgs return a sequelize where parameter
-                if (key === "where") {
-                  return value;
-                }
-                return {[key]: value};
-              },
-              async before(findOptions, args, context, info) {
-                const options = await before(findOptions, args, context, info);
-                const {source} = info;
-                const model = models[modelName];
-                const assoc = model.associations[relName];
-                options.where = {
-                  $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, options.where],
-                };
-                return options;
-              }, after,
-            });
             fields[relName] = {
-              type: c.connectionType,
+              type: conn.connectionType,
               args: {
-                ...c.connectionArgs,
+                ...conn.connectionArgs,
                 where: {
                   type: JSONType.default,
                 },
               },
-              resolve: c.resolve,
+              resolve: conn.resolve,
             };
             break;
           case "hasOne": //eslint-disable-line

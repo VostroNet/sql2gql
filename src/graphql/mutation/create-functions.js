@@ -157,16 +157,17 @@ async function createProcessRelationships(model, models) {
           const relationship = model.relationships[relName];
           const assoc = model.associations[relName];
           const {mutationFunctions} = getModelDefinition(models[relationship.source]);
+          let createArgs, updateArgs, result, updateVars = {};
+
           switch (relationship.type) {
             case "belongsTo":
               await Promise.all(Object.keys(input[relName]).map(async command => {
                 switch (command) {
                   case "create":
-                    const createArgs = {
+                    createArgs = {
                       input: Object.assign({}, input[relName].create),
                     };
-                    const result = await mutationFunctions.create(source, createArgs, context, info);
-                    let updateVars = {};
+                    result = await mutationFunctions.create(source, createArgs, context, info);
                     updateVars[assoc.foreignKey] = result[assoc.targetKey];
                     source = await source.update(updateVars, context);
                     output.push(result);
@@ -185,12 +186,15 @@ async function createProcessRelationships(model, models) {
                 await Promise.all(Object.keys(item).map(async(command) => {
                   switch (command) {
                     case "create":
-                      const createArgs = {input: Object.assign({}, item.create, {[assoc.foreignKey]: source.get(assoc.sourceKey)})};
-
+                      createArgs = {
+                        input: Object.assign({}, item.create, {
+                          [assoc.foreignKey]: source.get(assoc.sourceKey)
+                        }),
+                      };
                       output.push((await mutationFunctions.create(source, createArgs, context, info)));
                       break;
                     case "update":
-                      const updateArgs = {
+                      updateArgs = {
                         where: {and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, item.update.where]},
                         input: item.update.input,
                       };
