@@ -13,7 +13,7 @@ const schemas = [TaskModel, TaskItemModel, Item];
 export function createSqlInstance(options) {
   let instance = new Sequelize("database", "username", "password", {
     dialect: "sqlite",
-    logging: true,
+    logging: false,
   });
 
   connect(schemas, instance, Object.assign({}, options));

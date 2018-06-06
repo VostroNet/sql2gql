@@ -1,6 +1,7 @@
 import expect from "expect";
-import {createSqlInstance, validateResult} from "./utils";
 import {graphql} from "graphql";
+import uuid from "uuid";
+import {createSqlInstance, validateResult} from "./utils";
 import {createSchema} from "../index";
 
 describe("queries", () => {
@@ -212,5 +213,37 @@ describe("queries", () => {
     expect(enumValues).toContain("updatedAtDesc");
     expect(enumValues).toContain("idAsc");
     return expect(enumValues).toContain("idDesc");
+  });
+  it("filter non-null", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: [
+          {name: "item", id: "${uuid()}"},
+          {name: "item-null", id: "${uuid()}"}
+        ]) {
+          id, 
+          name
+        }
+      }
+    }`;
+    const itemResult = await graphql(schema, mutation);
+    validateResult(itemResult);
+
+    const queryResult = await graphql(schema, `query {
+      models {
+        Item {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }`);
+    validateResult(queryResult);
+    expect(queryResult.data.models.Item.edges.length).toBe(1);
   });
 });
