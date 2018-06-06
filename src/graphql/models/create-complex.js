@@ -129,14 +129,15 @@ export default async function createComplexModels(models, keys, typeCollection, 
                 }
                 return {[key]: value};
               },
-              before(findOptions, args, context, info) {
+              async before(findOptions, args, context, info) {
+                const options = await before(findOptions, args, context, info);
                 const {source} = info;
                 const model = models[modelName];
                 const assoc = model.associations[relName];
-                findOptions.where = {
-                  $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}],
+                options.where = {
+                  $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, options.where],
                 };
-                return before(findOptions, args, context, info);
+                return options;
               }, after,
             });
             fields[relName] = {

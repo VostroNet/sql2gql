@@ -1,6 +1,7 @@
 import expect from "expect";
-import {createSqlInstance, validateResult} from "./utils";
 import {graphql} from "graphql";
+import uuid from "uuid";
+import {createSqlInstance, validateResult} from "./utils";
 import {createSchema} from "../index";
 
 describe("relay", () => {
@@ -32,5 +33,64 @@ describe("relay", () => {
     expect(queryResult.data.node.id).toEqual(modelId);
     expect(queryResult.data.node.name).toEqual("test");
     return expect(queryResult.data.node.__typename).toEqual("Task"); //eslint-disable-line
+  });
+  it("node id - redundant convert to global id", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {name: "item1", id: "${uuid()}"}) {
+          id, 
+          name
+        }
+      }
+    }`;
+    const itemResult = await graphql(schema, mutation);
+    validateResult(itemResult);
+    const {data: {models: {Item}}} = itemResult;
+    const itemChildrenMutation = `mutation {
+      models {
+        Item(create: [
+          {name: "item1.1", id: "${uuid()}", parentId: "${Item[0].id}"},
+          {name: "item1.2", id: "${uuid()}", parentId: "${Item[0].id}"},
+        ]) {
+          id
+          name
+          parent {
+            id
+            name
+          }
+        }
+      }
+    }`;
+    const itemChildrenResult = await graphql(schema, itemChildrenMutation);
+    validateResult(itemChildrenResult);
+
+    const queryResult = await graphql(schema, `query {
+      models {
+        Item(where:{name:"item1"}) {
+          edges {
+            node {
+              id
+              name
+              parent {
+                id
+                name
+              }
+              children {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`);
+    validateResult(queryResult);
+    expect(queryResult.data.models.Item.edges[0].node.children.edges.length).toBe(2);
   });
 });
