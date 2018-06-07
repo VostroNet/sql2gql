@@ -474,6 +474,16 @@ describe("mutations", () => {
   it("create inputs - with PK defined", async() => {
     const instance = await createSqlInstance();
     const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {name: "item1"}) {
+          id, 
+          name
+        }
+      }
+    }`;
+    const itemResult = await graphql(schema, mutation);
+    validateResult(itemResult);
     const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"ItemRequiredInput\") { inputFields {name} }}");
     expect(Object.keys(inputFields).filter(x => x.name === "id").length).toBe(0);
   });
