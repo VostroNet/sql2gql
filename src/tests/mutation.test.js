@@ -472,33 +472,9 @@ describe("mutations", () => {
     });
   });
   it("create inputs - with PK defined", async() => {
-    const taskModel = {
-      name: "Task",
-      define: {
-        id: {
-          type: Sequelize.UUID,
-          allowNull: false,
-          primaryKey: true,
-        },
-        name: {
-          type: Sequelize.STRING,
-          allowNull: false,
-        },
-      },
-      options: {
-        tableName: "tasks",
-      },
-    };
-
-    let instance = new Sequelize("database", "username", "password", {
-      dialect: "sqlite",
-      logging: false,
-    });
-    connect([taskModel], instance, {});
-    await instance.sync();
-
+    const instance = await createSqlInstance();
     const schema = await createSchema(instance);
-    const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"TaskRequiredInput\") { inputFields {name} }}");
+    const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"ItemRequiredInput\") { inputFields {name} }}");
     expect(Object.keys(inputFields).filter(x => x.name === "id").length).toBe(0);
   });
 });
