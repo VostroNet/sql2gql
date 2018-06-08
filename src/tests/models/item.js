@@ -30,7 +30,7 @@ export default {
     classMethods: {},
     instanceMethods: {},
   },
-  async after({result}) {
+  after({result}) {
     if (!result) {
       return result;
     }
