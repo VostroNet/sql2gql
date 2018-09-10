@@ -1,6 +1,7 @@
 import getModelDefinition from "../utils/get-model-def";
 import replaceIdDeep from "../utils/replace-id-deep";
 import events from "../events";
+import { toGlobalId } from "graphql-relay/lib/node/node";
 
 /**
  * @typedef {Object} CreateBeforeAfterOutput
@@ -89,6 +90,28 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     return results;
   };
   const targetAfter = (result, args, context, info) => {
+    if (foreignKeys && result) {
+      foreignKeys.forEach((fk) => {
+        const assoc = Object.keys(model.associations).filter((assocName) => {
+          return model.associations[assocName].foreignKey === fk;
+        })[0];
+        const targetName = model.associations[assoc].target.name;
+        if (result.edges) {
+          result.edges.forEach((e) => {
+            // const globalId = toGlobalId(targetName, result.get(fk));
+            // result.set(fk, globalId);
+            const globalId = toGlobalId(targetName, e.node.get(fk));
+            e.node.set(fk, globalId);
+          });
+        } else {
+          const globalId = toGlobalId(targetName, result.get(fk));
+          result.set(fk, globalId);
+        }
+
+      });
+    }
+
+
     if (targetAfterFuncs.length === 0) {
       return result;
     }
@@ -114,11 +137,12 @@ export default function createBeforeAfter(model, options, hooks = {}) {
       return targetAfter(result, args, context, info);
     });
   };
-
-
-  return {
+  const events = {
     before: targetBefore,
     after: targetAfter,
     afterList: targetAfterArray,
   };
+  modelDefinition.events = events;
+
+  return events;
 }

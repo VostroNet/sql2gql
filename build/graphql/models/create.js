@@ -13,6 +13,8 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _createBeforeAfter = _interopRequireDefault(require("./create-before-after"));
 
+var _node = require("graphql-relay/lib/node/node");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -232,13 +234,22 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               return options;
             },
 
-            after
+            after(result, args, context, info) {
+              result.edges.forEach(e => {
+                const fk = relationship.rel.foreignKeyField;
+                const globalId = (0, _node.toGlobalId)(relationship.target, e.node.get(fk));
+                e.node.set(fk, globalId);
+              });
+              return after(result, args, context, info);
+            }
+
           });
+          let bc;
 
           switch (relationship.type) {
             case "belongsToMany":
               //eslint-disable-line
-              conn = sequelizeConnection({
+              bc = sequelizeConnection({
                 name: `${modelName}${relName}`,
                 nodeType: targetType,
                 target: relationship.rel,
@@ -271,13 +282,13 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 after
               });
               fieldDefinitions[relName] = {
-                type: conn.connectionType,
-                args: _objectSpread({}, conn.connectionArgs, {
+                type: bc.connectionType,
+                args: _objectSpread({}, bc.connectionArgs, {
                   where: {
                     type: _graphqlSequelize.JSONType.default
                   }
                 }),
-                resolve: conn.resolve
+                resolve: bc.resolve
               };
               break;
 
@@ -366,4 +377,4 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
   typeCollection[`${modelName}[]`] = new _graphql.GraphQLList(obj);
   return obj;
 }
-//# sourceMappingURL=create-new.js.map
+//# sourceMappingURL=create.js.map

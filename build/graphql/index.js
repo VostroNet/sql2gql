@@ -11,7 +11,7 @@ var _graphqlSequelize = require("graphql-sequelize");
 
 var _getModelDef = _interopRequireDefault(require("./utils/get-model-def"));
 
-var _createNew = _interopRequireDefault(require("./models/create-new"));
+var _create = _interopRequireDefault(require("./models/create"));
 
 var _mutation = _interopRequireDefault(require("./mutation/"));
 
@@ -58,10 +58,9 @@ async function createSchema(sqlInstance, options = {}) {
 
     return o;
   }, []);
-  let typeCollection = await (0, _createNew.default)(sqlInstance.models, validKeys, "", options, nodeInterface);
+  let typeCollection = await (0, _create.default)(sqlInstance.models, validKeys, "", options, nodeInterface);
   const mutationInputTypes = await (0, _createInput.default)(sqlInstance.models, validKeys, typeCollection, options);
-  const mutationFunctions = await (0, _createFunctions.default)(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options, () => mutationFunctions); // typeCollection = await createComplexModels(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
-
+  const mutationFunctions = await (0, _createFunctions.default)(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options, () => mutationFunctions);
   let mutationCollection = await (0, _mutation.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
   let queryRootFields = Object.assign({
     node: nodeField

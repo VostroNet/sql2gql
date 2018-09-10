@@ -524,5 +524,27 @@ describe("mutations", () => {
     } = await (0, _graphql.graphql)(schema, "query {__type(name:\"ItemRequiredInput\") { inputFields {name} }}");
     (0, _expect.default)(Object.keys(inputFields).filter(x => x.name === "id").length).toBe(0);
   });
+  it("create complex object", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: { create: { name: "testitem" } } }) {
+      id
+      items {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(queryResults);
+    (0, _expect.default)(queryResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(queryResults.data.models.Task[0].items.edges.length).toEqual(1);
+  });
 });
 //# sourceMappingURL=mutation.test.js.map

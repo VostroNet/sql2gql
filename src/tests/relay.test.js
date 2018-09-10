@@ -3,8 +3,51 @@ import {graphql} from "graphql";
 import uuid from "uuid";
 import {createSqlInstance, validateResult} from "./utils";
 import {createSchema} from "../index";
+import {fromGlobalId} from "graphql-relay";
 
 describe("relay", () => {
+  it("validate foreign key global conversion", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: { create: { name: "testitem" } } }) {
+      id
+      items {
+        edges {
+          node {
+            id
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const mutationResults = await graphql(schema, mutation);
+    validateResult(mutationResults);
+    expect(mutationResults.data.models.Task.length).toEqual(1);
+    expect(mutationResults.data.models.Task[0].items.edges.length).toEqual(1);
+    const mutationTaskId = fromGlobalId(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    expect(mutationTaskId).toEqual("1");
+    const query = `query {
+  models {
+    TaskItem {
+      edges {
+        node {
+          id
+          taskId
+        }
+      }
+    }
+  }
+}`;
+    const queryResults = await graphql(schema, query);
+    validateResult(queryResults);
+    expect(queryResults.data.models.TaskItem.edges.length).toEqual(1);
+    const taskId = fromGlobalId(queryResults.data.models.TaskItem.edges[0].node.taskId).id;
+    expect(taskId).toEqual("1");
+  });
   it("node id validation", async() => {
     const instance = await createSqlInstance();
     const schema = await createSchema(instance);

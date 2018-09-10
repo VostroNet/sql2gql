@@ -11,6 +11,8 @@ var _replaceIdDeep = _interopRequireDefault(require("../utils/replace-id-deep"))
 
 var _events = _interopRequireDefault(require("../events"));
 
+var _node = require("graphql-relay/lib/node/node");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -52,7 +54,7 @@ function createBeforeAfter(model, options, hooks = {}) {
         context,
         info,
         modelDefinition,
-        type: _events.default.QUERY
+        type: events.QUERY
       });
     });
   }
@@ -65,7 +67,7 @@ function createBeforeAfter(model, options, hooks = {}) {
         context,
         info,
         modelDefinition,
-        type: _events.default.QUERY
+        type: events.QUERY
       });
     });
   }
@@ -78,7 +80,7 @@ function createBeforeAfter(model, options, hooks = {}) {
         context,
         info,
         modelDefinition,
-        type: _events.default.QUERY
+        type: events.QUERY
       });
     });
   }
@@ -91,7 +93,7 @@ function createBeforeAfter(model, options, hooks = {}) {
         context,
         info,
         modelDefinition: modelDefinition,
-        type: _events.default.QUERY
+        type: events.QUERY
       });
     });
   }
@@ -121,6 +123,27 @@ function createBeforeAfter(model, options, hooks = {}) {
   };
 
   const targetAfter = (result, args, context, info) => {
+    if (foreignKeys && result) {
+      foreignKeys.forEach(fk => {
+        const assoc = Object.keys(model.associations).filter(assocName => {
+          return model.associations[assocName].foreignKey === fk;
+        })[0];
+        const targetName = model.associations[assoc].target.name;
+
+        if (result.edges) {
+          result.edges.forEach(e => {
+            // const globalId = toGlobalId(targetName, result.get(fk));
+            // result.set(fk, globalId);
+            const globalId = (0, _node.toGlobalId)(targetName, e.node.get(fk));
+            e.node.set(fk, globalId);
+          });
+        } else {
+          const globalId = (0, _node.toGlobalId)(targetName, result.get(fk));
+          result.set(fk, globalId);
+        }
+      });
+    }
+
     if (targetAfterFuncs.length === 0) {
       return result;
     }
@@ -152,10 +175,12 @@ function createBeforeAfter(model, options, hooks = {}) {
     });
   };
 
-  return {
+  const events = {
     before: targetBefore,
     after: targetAfter,
     afterList: targetAfterArray
   };
+  modelDefinition.events = events;
+  return events;
 }
 //# sourceMappingURL=create-before-after.js.map

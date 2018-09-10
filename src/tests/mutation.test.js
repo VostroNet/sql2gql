@@ -487,4 +487,26 @@ describe("mutations", () => {
     const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"ItemRequiredInput\") { inputFields {name} }}");
     expect(Object.keys(inputFields).filter(x => x.name === "id").length).toBe(0);
   });
+  it("create complex object", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: { create: { name: "testitem" } } }) {
+      id
+      items {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  }
+}`;
+    const queryResults = await graphql(schema, mutation);
+    validateResult(queryResults);
+    expect(queryResults.data.models.Task.length).toEqual(1);
+    expect(queryResults.data.models.Task[0].items.edges.length).toEqual(1);
+  });
 });

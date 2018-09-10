@@ -14,6 +14,7 @@ import {
 } from "graphql-sequelize";
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
+import { toGlobalId } from "graphql-relay/lib/node/node";
 
 const {sequelizeConnection} =  relay;
 
@@ -39,7 +40,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
   }
   const model = models[modelName];
   const modelDefinition = getModelDefinition(model);
-
   let resolve;
   if (modelDefinition.resolver) {
     resolve = modelDefinition.resolver;
@@ -176,11 +176,20 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, options.where],
               };
               return options;
-            }, after,
+            },
+            after(result, args, context, info) {
+              result.edges.forEach((e) => {
+                const fk = relationship.rel.foreignKeyField;
+                const globalId = toGlobalId(relationship.target, e.node.get(fk));
+                e.node.set(fk, globalId);
+              });
+              return after(result, args, context, info);
+            },
           });
+          let bc;
           switch (relationship.type) {
             case "belongsToMany": //eslint-disable-line
-              conn = sequelizeConnection({
+              bc = sequelizeConnection({
                 name: `${modelName}${relName}`,
                 nodeType: targetType,
                 target: relationship.rel,
@@ -205,14 +214,14 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 }, after,
               });
               fieldDefinitions[relName] = {
-                type: conn.connectionType,
+                type: bc.connectionType,
                 args: {
-                  ...conn.connectionArgs,
+                  ...bc.connectionArgs,
                   where: {
                     type: JSONType.default,
                   },
                 },
-                resolve: conn.resolve,
+                resolve: bc.resolve,
               };
               break;
             case "hasMany":

@@ -227,9 +227,7 @@ async function createProcessRelationships(model, models) {
           const output = [];
           const relationship = model.relationships[relName];
           const assoc = model.associations[relName];
-          const {
-            mutationFunctions
-          } = (0, _getModelDef.default)(models[relationship.source]);
+          const modelDefinition = (0, _getModelDef.default)(models[relationship.source]);
           let createArgs,
               updateArgs,
               result,
@@ -243,9 +241,10 @@ async function createProcessRelationships(model, models) {
                     createArgs = {
                       input: Object.assign({}, input[relName].create)
                     };
-                    result = await mutationFunctions.create(source, createArgs, context, info);
+                    result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                     updateVars[assoc.foreignKey] = result[assoc.targetKey];
                     source = await source.update(updateVars, context);
+                    result = await modelDefinition.events.after(result, createArgs, context, info);
                     output.push(result);
                     break;
 
@@ -273,7 +272,9 @@ async function createProcessRelationships(model, models) {
                           [assoc.foreignKey]: source.get(assoc.sourceKey)
                         })
                       };
-                      output.push((await mutationFunctions.create(source, createArgs, context, info)));
+                      await modelDefinition.mutationFunctions.create(source, createArgs, context, info); // result = await modelDefinition.events.after(result, createArgs, context, info);
+                      // output.push(result);
+
                       break;
 
                     case "update":
@@ -285,7 +286,9 @@ async function createProcessRelationships(model, models) {
                         },
                         input: item.update.input
                       };
-                      output.push((await mutationFunctions.update(source, updateArgs, context, info)));
+                      await modelDefinition.mutationFunctions.update(source, updateArgs, context, info); // result = await modelDefinition.events.after(result, createArgs, context, info);
+                      // output.push(result);
+
                       break;
                   }
                 }));

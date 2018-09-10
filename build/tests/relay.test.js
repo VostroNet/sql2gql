@@ -10,9 +10,53 @@ var _utils = require("./utils");
 
 var _index = require("../index");
 
+var _graphqlRelay = require("graphql-relay");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 describe("relay", () => {
+  it("validate foreign key global conversion", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: { create: { name: "testitem" } } }) {
+      id
+      items {
+        edges {
+          node {
+            id
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const mutationResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResults);
+    (0, _expect.default)(mutationResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(mutationResults.data.models.Task[0].items.edges.length).toEqual(1);
+    const mutationTaskId = (0, _graphqlRelay.fromGlobalId)(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    (0, _expect.default)(mutationTaskId).toEqual("1");
+    const query = `query {
+  models {
+    TaskItem {
+      edges {
+        node {
+          id
+          taskId
+        }
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, query);
+    (0, _utils.validateResult)(queryResults);
+    (0, _expect.default)(queryResults.data.models.TaskItem.edges.length).toEqual(1);
+    const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.models.TaskItem.edges[0].node.taskId).id;
+    (0, _expect.default)(taskId).toEqual("1");
+  });
   it("node id validation", async () => {
     const instance = await (0, _utils.createSqlInstance)();
     const schema = await (0, _index.createSchema)(instance);
