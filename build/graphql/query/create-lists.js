@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = createModelLists;
 
-var _graphql = require("graphql");
-
 var _graphqlSequelize = require("graphql-sequelize");
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
@@ -19,6 +17,15 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+/**
+ * @function createModelLists
+ * @param {Object} models
+ * @param {string[]} modelNames
+ * @param {Object} typeCollection
+ * @param {Object} options
+ * @param {Object} fields
+ * @returns {Object}
+*/
 const {
   sequelizeConnection
 } = _graphqlSequelize.relay;

@@ -8,10 +8,12 @@ function createProxy(func, keyMap) {
   };
 }
 
+function getProperties(obj) {
+  return [].concat(Object.keys(obj), Object.getOwnPropertySymbols(obj));
+}
+
 export default function replaceIdDeep(obj, keyMap) {
-  // console.log("obj", obj);
-  // return obj;
-  return Object.keys(obj).reduce((m, key) => {
+  return getProperties(obj).reduce((m, key) => {
     if (keyMap.indexOf(key) > -1) {
       if (typeof obj[key] === "function") {
         m[key] = createProxy(obj[key], key);

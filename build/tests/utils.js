@@ -18,11 +18,13 @@ var _task = _interopRequireDefault(require("./models/task"));
 
 var _taskItem = _interopRequireDefault(require("./models/task-item"));
 
+var _item = _interopRequireDefault(require("./models/item"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 _sourceMapSupport.default.install();
 
-const schemas = [_task.default, _taskItem.default];
+const schemas = [_task.default, _taskItem.default, _item.default];
 
 function createSqlInstance(options) {
   let instance = new _sequelize.default("database", "username", "password", {
@@ -38,6 +40,6 @@ function validateResult(result) {
     console.log("Graphql Error", result.errors); //eslint-disable-line
   }
 
-  (0, _expect.default)((result.data.errors || []).length).toEqual(0);
+  (0, _expect.default)(((result || {}).errors || []).length).toEqual(0);
 }
 //# sourceMappingURL=utils.js.map

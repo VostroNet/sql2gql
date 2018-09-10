@@ -6,26 +6,24 @@ var _bodyParser = _interopRequireDefault(require("body-parser"));
 
 var _apolloServerExpress = require("apollo-server-express");
 
-var _express2 = _interopRequireDefault(require("../express"));
-
 var _utils = require("./utils");
 
 var _index = require("../index");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// import graphqlExpress from "../express";
 const PORT = 3000;
 const app = (0, _express.default)();
 (async () => {
   const instance = await (0, _utils.createSqlInstance)();
   const schema = await (0, _index.createSchema)(instance);
-  app.use("/graphql", _bodyParser.default.json(), (0, _express2.default)({
-    schema: schema,
-    sequelize: instance
-  }));
-  app.get("/graphiql", (0, _apolloServerExpress.graphiqlExpress)({
-    endpointURL: "/graphql"
-  }));
+  const server = new _apolloServerExpress.ApolloServer({
+    schema
+  });
+  server.applyMiddleware({
+    app
+  });
   app.listen(PORT);
 })().then(() => {
   console.log("success");

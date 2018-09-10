@@ -17,11 +17,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 /**
  * @function createModelTypes
- * @param models
- * @param keys
- * @param prefix
- * @param options
- * @param nodeInterface
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {string} prefix
+ * @param {Object} options
+ * @param {Object} nodeInterface
+ * @return {Object}
 */
 async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
   const result = await keys.reduce((promise, modelName) => {
@@ -66,6 +67,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
   if (foreignKeys.length > 0) {
     foreignKeys.forEach(fk => {
+      if (!fields[fk]) {
+        return;
+      }
+
       if (model.fieldRawAttributesMap[fk].allowNull) {
         fields[fk].type = _graphql.GraphQLString;
       } else {

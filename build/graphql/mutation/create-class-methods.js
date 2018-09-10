@@ -11,6 +11,14 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * @function createMutationFunctions
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} options
+ * @returns {Object}
+*/
 async function createMutationFunctions(models, keys, typeCollection, options) {
   let mutationCollection = {};
   await Promise.all(keys.map(async modelName => {

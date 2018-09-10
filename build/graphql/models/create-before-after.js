@@ -14,10 +14,18 @@ var _events = _interopRequireDefault(require("../events"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
+ * @typedef {Object} CreateBeforeAfterOutput
+ * @property {function} before
+ * @property {function} after
+ * @property {function[]} afterList
+*/
+
+/**
  * @function createBeforeAfter
- * @param model
- * @param options
- * @param hooks
+ * @param {Object} model
+ * @param {Object} options
+ * @param {Object} hooks
+ * @returns {CreateBeforeAfterOutput}
 */
 function createBeforeAfter(model, options, hooks = {}) {
   let targetBeforeFuncs = [],
@@ -119,7 +127,17 @@ function createBeforeAfter(model, options, hooks = {}) {
 
     return targetAfterFuncs.reduce((promise, curr) => {
       return promise.then(prev => {
-        return curr(prev, args, context, info);
+        return Promise.resolve(curr(prev, args, context, info)).then(data => {
+          if (!data) {
+            return undefined;
+          }
+
+          if (data.edges) {
+            data.edges = data.edges.filter(x => !!x);
+          }
+
+          return data;
+        });
       });
     }, Promise.resolve(result));
   };

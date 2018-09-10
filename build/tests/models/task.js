@@ -62,7 +62,7 @@ var _default = {
       });
     }
 
-    return req.params;
+    return req;
   },
 
   after(req) {

@@ -9,6 +9,16 @@ var _getModelDef = _interopRequireDefault(require("./utils/get-model-def"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * @function createSubscriptionFunctions
+ * @param {Object} pubsub
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} options
+ * @param {Object} options
+ * @return {Object}
+*/
 async function createSubscriptionFunctions(pubsub, models, keys, typeCollection, options) {
   let subCollection = {};
   await Promise.all(keys.map(async modelName => {

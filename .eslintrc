@@ -16,6 +16,7 @@
   },
 
   "rules": {
+    "linebreak-style": [2, "unix"],
     "no-case-declarations": 2,
     "no-alert": 2,
     "no-array-constructor": 2,

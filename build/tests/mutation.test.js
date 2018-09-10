@@ -483,5 +483,46 @@ describe("mutations", () => {
     });
     (0, _utils.validateResult)(deleteResult);
   });
+  it("create inputs - with no PK defined", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const {
+      TaskItem
+    } = instance.models;
+    const fields = TaskItem.$sqlgql.define;
+    const schema = await (0, _index.createSchema)(instance);
+    const {
+      data: {
+        __type: {
+          inputFields
+        }
+      }
+    } = await (0, _graphql.graphql)(schema, "query {__type(name:\"TaskRequiredInput\") { inputFields {name} }}");
+    const mutationInputFields = inputFields.map(x => x.name);
+    Object.keys(fields).map(field => {
+      (0, _expect.default)(mutationInputFields).toContain(field);
+    });
+  });
+  it("create inputs - with PK defined", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {name: "item1"}) {
+          id, 
+          name
+        }
+      }
+    }`;
+    const itemResult = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(itemResult);
+    const {
+      data: {
+        __type: {
+          inputFields
+        }
+      }
+    } = await (0, _graphql.graphql)(schema, "query {__type(name:\"ItemRequiredInput\") { inputFields {name} }}");
+    (0, _expect.default)(Object.keys(inputFields).filter(x => x.name === "id").length).toBe(0);
+  });
 });
 //# sourceMappingURL=mutation.test.js.map

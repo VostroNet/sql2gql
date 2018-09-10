@@ -58,7 +58,7 @@ export default {
         mutationCheck: "update",
       });
     }
-    return req.params;
+    return req;
   },
   after(req) {
     return req.result;

@@ -13,10 +13,12 @@ function createProxy(func, keyMap) {
   };
 }
 
+function getProperties(obj) {
+  return [].concat(Object.keys(obj), Object.getOwnPropertySymbols(obj));
+}
+
 function replaceIdDeep(obj, keyMap) {
-  // console.log("obj", obj);
-  // return obj;
-  return Object.keys(obj).reduce((m, key) => {
+  return getProperties(obj).reduce((m, key) => {
     if (keyMap.indexOf(key) > -1) {
       if (typeof obj[key] === "function") {
         m[key] = createProxy(obj[key], key);
@@ -25,7 +27,9 @@ function replaceIdDeep(obj, keyMap) {
           m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
         } catch (e) {
           m[key] = obj[key]; //is not a global id
-        }
+        } // } else {
+        //   m[key] = obj[key];
+
       }
     } else {
       if (Array.isArray(obj[key])) {

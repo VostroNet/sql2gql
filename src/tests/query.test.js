@@ -101,6 +101,7 @@ describe("queries", () => {
         } 
       }
     }`, {filterName: "filterMe"});
+
     validateResult(result);
     return expect(result.data.models.Task.edges[0].node.items.edges.length).toEqual(0);
   });

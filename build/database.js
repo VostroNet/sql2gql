@@ -18,11 +18,28 @@ if (global.Promise) {
 }
 
 const log = (0, _logger.default)("sql2gql::database:");
+/**
+ * @function connect
+ * @param {Object[]} schemas
+ * @param {Object} sqlInstance
+ * @param {Object} options
+ * @return {Object}
+*/
 
 function connect(schemas, sqlInstance, options) {
   loadSchemas(schemas, sqlInstance, options);
   return sqlInstance;
 }
+/**
+ * @function createSubscriptionHook
+ * @param {Object} schema
+ * @param {string} hookName
+ * @param {string} subscriptionName
+ * @param {Object} pubsub
+ * @param {Object} schemaOptions
+ * @return {function}
+*/
+
 
 function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, schemaOptions = {}) {
   const {
@@ -85,6 +102,13 @@ function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, sche
   f.schemaName = schema.name;
   return f;
 }
+/**
+ * @function loadSchemas
+ * @param {Object[]} schemas
+ * @param {Object} sqlInstance
+ * @param {Object} options
+*/
+
 
 function loadSchemas(schemas, sqlInstance, options = {}) {
   // const schemas = s.slice(0);

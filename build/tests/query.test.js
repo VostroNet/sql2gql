@@ -2,9 +2,11 @@
 
 var _expect = _interopRequireDefault(require("expect"));
 
-var _utils = require("./utils");
-
 var _graphql = require("graphql");
+
+var _uuid = _interopRequireDefault(require("uuid"));
+
+var _utils = require("./utils");
 
 var _index = require("../index");
 
@@ -224,6 +226,37 @@ describe("queries", () => {
     (0, _expect.default)(enumValues).toContain("updatedAtDesc");
     (0, _expect.default)(enumValues).toContain("idAsc");
     return (0, _expect.default)(enumValues).toContain("idDesc");
+  });
+  it("filter non-null", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: [
+          {name: "item", id: "${(0, _uuid.default)()}"},
+          {name: "item-null", id: "${(0, _uuid.default)()}"}
+        ]) {
+          id,
+          name
+        }
+      }
+    }`;
+    const itemResult = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(itemResult);
+    const queryResult = await (0, _graphql.graphql)(schema, `query {
+      models {
+        Item {
+          edges {
+            node {
+              id
+              name
+            }
+          }
+        }
+      }
+    }`);
+    (0, _utils.validateResult)(queryResult);
+    (0, _expect.default)(queryResult.data.models.Item.edges.length).toBe(1);
   });
 });
 //# sourceMappingURL=query.test.js.map

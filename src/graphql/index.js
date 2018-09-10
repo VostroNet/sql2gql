@@ -9,8 +9,10 @@ import {
 const {sequelizeNodeInterface} = relay;
 
 import getModelDefinition from "./utils/get-model-def";
-import createBasicModels from "./models/create-base";
-import createComplexModels from "./models/create-complex";
+// import createBasicModels from "./models/create-base";
+// import createComplexModels from "./models/create-complex";
+
+import createModels from "./models/create-new";
 
 import createMutation from "./mutation/";
 import createMutationFunctions from "./mutation/create-functions";
@@ -37,10 +39,10 @@ export async function createSchema(sqlInstance, options = {}) {
     }
     return o;
   }, []);
-  let typeCollection = await createBasicModels(sqlInstance.models, validKeys, "", options, nodeInterface);
+  let typeCollection = await createModels(sqlInstance.models, validKeys, "", options, nodeInterface);
   const mutationInputTypes = await createMutationInputs(sqlInstance.models, validKeys, typeCollection, options);
   const mutationFunctions = await createMutationFunctions(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options, () => mutationFunctions);
-  typeCollection = await createComplexModels(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
+  // typeCollection = await createComplexModels(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
   let mutationCollection = await createMutation(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
   let queryRootFields = Object.assign({
     node: nodeField,

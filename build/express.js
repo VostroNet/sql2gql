@@ -9,6 +9,10 @@ var _graphql = require("graphql");
 
 var _apolloServerCore = require("apollo-server-core");
 
+/**
+ * @function graphqlExpress
+ * @param {Object} options
+*/
 function graphqlExpress(options) {
   if (!options) {
     throw new Error("Apollo Server requires options.");

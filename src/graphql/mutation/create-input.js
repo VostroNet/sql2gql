@@ -81,7 +81,8 @@ export default async function createMutationInputs(models, keys, typeCollection,
     if (!typeCollection[modelName]) {
       return o;
     }
-    let {fields} = typeCollection[modelName]._typeConfig; //eslint-disable-line
+    // debugger; //eslint-disable-line
+    let fields = typeCollection[modelName].basicFields(); //eslint-disable-line
     o[modelName] = {
       required: createMutationInput(modelName, models[modelName], fields, "Required"),
       optional: createMutationInput(modelName, models[modelName], fields, "Optional", true),

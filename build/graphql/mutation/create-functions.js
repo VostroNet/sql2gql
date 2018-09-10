@@ -22,6 +22,15 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * @function createFunctions
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} mutationInputTypes
+ * @param {Object} options
+ * @returns {Object}
+*/
 function onCreate(targetModel) {
   const modelDefinition = (0, _getModelDef.default)(targetModel);
   return async (source, args, context, info) => {
@@ -221,17 +230,20 @@ async function createProcessRelationships(model, models) {
           const {
             mutationFunctions
           } = (0, _getModelDef.default)(models[relationship.source]);
+          let createArgs,
+              updateArgs,
+              result,
+              updateVars = {};
 
           switch (relationship.type) {
             case "belongsTo":
               await Promise.all(Object.keys(input[relName]).map(async command => {
                 switch (command) {
                   case "create":
-                    const createArgs = {
+                    createArgs = {
                       input: Object.assign({}, input[relName].create)
                     };
-                    const result = await mutationFunctions.create(source, createArgs, context, info);
-                    let updateVars = {};
+                    result = await mutationFunctions.create(source, createArgs, context, info);
                     updateVars[assoc.foreignKey] = result[assoc.targetKey];
                     source = await source.update(updateVars, context);
                     output.push(result);
@@ -256,7 +268,7 @@ async function createProcessRelationships(model, models) {
                 await Promise.all(Object.keys(item).map(async command => {
                   switch (command) {
                     case "create":
-                      const createArgs = {
+                      createArgs = {
                         input: Object.assign({}, item.create, {
                           [assoc.foreignKey]: source.get(assoc.sourceKey)
                         })
@@ -265,7 +277,7 @@ async function createProcessRelationships(model, models) {
                       break;
 
                     case "update":
-                      const updateArgs = {
+                      updateArgs = {
                         where: {
                           and: [{
                             [assoc.foreignKey]: source.get(assoc.sourceKey)

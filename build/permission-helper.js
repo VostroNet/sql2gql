@@ -33,7 +33,15 @@ function validateSection(permSection, keyName, defaultDeny) {
 
   return validateKey(permSection[keyName], defaultDeny);
 }
-/* 
+/**
+ * @function createRoleBasedPermissions
+ * @param {string} role
+ * @param {Object} rules
+ * @param {Object} options
+ * @return {GraphQLSchema}
+*/
+
+/*
   options = {
     defaultDeny: true
   }
@@ -56,7 +64,7 @@ function validateSection(permSection, keyName, defaultDeny) {
     "admin": {
       "field": {
         "User": "allow",
-      } 
+      }
       "model": "allow",
       "classMethods": {
         "User": {

@@ -25,6 +25,15 @@ const {
   sequelizeConnection
 } = _graphqlSequelize.relay; // import createBaseModel from "./create-base";
 
+/**
+ * @function createComplexModels
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {Object} mutationFunctions
+ * @param {Object} options
+ * @returns {Object}
+*/
 async function createComplexModels(models, keys, typeCollection, mutationFunctions, options = {}) {
   await Promise.all(keys.map(async modelName => {
     if (models[modelName].relationships) {
@@ -33,9 +42,8 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
         return;
       }
 
-      let {
-        fields
-      } = typeCollection[modelName]._typeConfig; //eslint-disable-line
+      let fields = typeCollection[modelName]._fields(); //eslint-disable-line
+
 
       await Promise.all(Object.keys(models[modelName].relationships).map(async relName => {
         let relationship = models[modelName].relationships[relName];
@@ -65,10 +73,79 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
           throw `targetType ${targetType} not defined for relationship`;
         }
 
+        const modelDefinition = (0, _getModelDef.default)(models[targetType.name]);
+        const conn = sequelizeConnection({
+          name: `${modelName}${relName}`,
+          nodeType: targetType,
+          target: relationship.rel,
+          orderBy: new _graphql.GraphQLEnumType({
+            name: `${modelName}${relName}OrderBy`,
+            values: Object.keys(modelDefinition.define).reduce((obj, field) => {
+              return Object.assign({}, obj, {
+                [`${field}Asc`]: {
+                  value: [field, "ASC"]
+                },
+                [`${field}Desc`]: {
+                  value: [field, "DESC"]
+                }
+              });
+            }, {
+              idAsc: {
+                value: ["id", "ASC"]
+              },
+              idDesc: {
+                value: ["id", "DESC"]
+              },
+              createdAtAsc: {
+                value: ["createdAt", "ASC"]
+              },
+              createdAtDesc: {
+                value: ["createdAt", "DESC"]
+              },
+              updatedAtAsc: {
+                value: ["updatedAt", "ASC"]
+              },
+              updatedAtDesc: {
+                value: ["updatedAt", "DESC"]
+              }
+            })
+          }),
+          // edgeFields: def.edgeFields,
+          // connectionFields: def.connectionFields,
+          where: (key, value, currentWhere) => {
+            // for custom args other than connectionArgs return a sequelize where parameter
+            if (key === "where") {
+              return value;
+            }
+
+            return {
+              [key]: value
+            };
+          },
+
+          async before(findOptions, args, context, info) {
+            const options = await before(findOptions, args, context, info);
+            const {
+              source
+            } = info;
+            const model = models[modelName];
+            const assoc = model.associations[relName];
+            options.where = {
+              $and: [{
+                [assoc.foreignKey]: source.get(assoc.sourceKey)
+              }, options.where]
+            };
+            return options;
+          },
+
+          after
+        });
+        let bc;
+
         switch (relationship.type) {
           case "belongsToMany":
             //eslint-disable-line
-            const bc = sequelizeConnection({
+            bc = sequelizeConnection({
               name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
@@ -116,84 +193,14 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
             break;
 
           case "hasMany":
-            // let manyArgs = defaultListArgs();
-            // if (options.version === 3 || options.compat === 3) {
-            //   manyArgs = Object.assign({returnActionResults: {type: GraphQLBoolean}}, manyArgs, (mutationFunction || {}).fields);
-            // }
-            const modelDefinition = (0, _getModelDef.default)(models[targetType.name]);
-            const c = sequelizeConnection({
-              name: `${modelName}${relName}`,
-              nodeType: targetType,
-              target: relationship.rel,
-              orderBy: new _graphql.GraphQLEnumType({
-                name: `${modelName}${relName}OrderBy`,
-                values: Object.keys(modelDefinition.define).reduce((obj, field) => {
-                  return Object.assign({}, obj, {
-                    [`${field}Asc`]: {
-                      value: [field, "ASC"]
-                    },
-                    [`${field}Desc`]: {
-                      value: [field, "DESC"]
-                    }
-                  });
-                }, {
-                  idAsc: {
-                    value: ["id", "ASC"]
-                  },
-                  idDesc: {
-                    value: ["id", "DESC"]
-                  },
-                  createdAtAsc: {
-                    value: ["createdAt", "ASC"]
-                  },
-                  createdAtDesc: {
-                    value: ["createdAt", "DESC"]
-                  },
-                  updatedAtAsc: {
-                    value: ["updatedAt", "ASC"]
-                  },
-                  updatedAtDesc: {
-                    value: ["updatedAt", "DESC"]
-                  }
-                })
-              }),
-              // edgeFields: def.edgeFields,
-              // connectionFields: def.connectionFields,
-              where: (key, value, currentWhere) => {
-                // for custom args other than connectionArgs return a sequelize where parameter
-                if (key === "where") {
-                  return value;
-                }
-
-                return {
-                  [key]: value
-                };
-              },
-
-              before(findOptions, args, context, info) {
-                const {
-                  source
-                } = info;
-                const model = models[modelName];
-                const assoc = model.associations[relName];
-                findOptions.where = {
-                  $and: [{
-                    [assoc.foreignKey]: source.get(assoc.sourceKey)
-                  }]
-                };
-                return before(findOptions, args, context, info);
-              },
-
-              after
-            });
             fields[relName] = {
-              type: c.connectionType,
-              args: _objectSpread({}, c.connectionArgs, {
+              type: conn.connectionType,
+              args: _objectSpread({}, conn.connectionArgs, {
                 where: {
                   type: _graphqlSequelize.JSONType.default
                 }
               }),
-              resolve: c.resolve
+              resolve: conn.resolve
             };
             break;
 
@@ -213,7 +220,9 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
             throw "Unhandled Relationship type";
         }
       }));
-      typeCollection[modelName]._typeConfig.fields = fields; //eslint-disable-line
+
+      typeCollection[modelName]._fields = () => fields; //eslint-disable-line
+
 
       (0, _resetInterfaces.default)(typeCollection[modelName]);
     }
@@ -234,9 +243,8 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
     if (((modelDefinition.expose || {}).instanceMethods || {}).query) {
       const instanceMethods = modelDefinition.expose.instanceMethods.query; // console.log("found instance methods", instanceMethods);
 
-      let {
-        fields
-      } = typeCollection[modelName]._typeConfig; //eslint-disable-line
+      let fields = typeCollection[modelName]._fields(); //eslint-disable-line
+
 
       await Promise.all(Object.keys(instanceMethods).map(async methodName => {
         const methodDefinition = instanceMethods[methodName];
@@ -269,9 +277,10 @@ async function createComplexModels(models, keys, typeCollection, mutationFunctio
           }
         };
       }));
-      typeCollection[modelName]._typeConfig.fields = fields; //eslint-disable-line
 
-      (0, _resetInterfaces.default)(typeCollection[modelName]);
+      typeCollection[modelName].fields = () => fields; //eslint-disable-line
+      // resetInterfaces(typeCollection[modelName]);
+
     }
   }));
   return typeCollection;

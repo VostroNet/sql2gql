@@ -32,7 +32,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
         //target does not exist.. excluded from base types?
         return;
       }
-      let {fields} = typeCollection[modelName]._typeConfig; //eslint-disable-line
+      let fields = typeCollection[modelName]._fields(); //eslint-disable-line
       await Promise.all(Object.keys(models[modelName].relationships).map(async(relName) => {
         let relationship = models[modelName].relationships[relName];
         let targetType = typeCollection[relationship.source];
@@ -94,9 +94,10 @@ export default async function createComplexModels(models, keys, typeCollection, 
             return options;
           }, after,
         });
+        let bc;
         switch (relationship.type) {
           case "belongsToMany": //eslint-disable-line
-            const bc = sequelizeConnection({
+            bc = sequelizeConnection({
               name: `${modelName}${relName}`,
               nodeType: targetType,
               target: relationship.rel,
@@ -161,7 +162,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
             throw "Unhandled Relationship type";
         }
       }));
-      typeCollection[modelName]._typeConfig.fields = fields;//eslint-disable-line
+      typeCollection[modelName]._fields = () => fields;//eslint-disable-line
       resetInterfaces(typeCollection[modelName]);
     }
   }));
@@ -182,7 +183,7 @@ export default async function createComplexModels(models, keys, typeCollection, 
     if (((modelDefinition.expose || {}).instanceMethods || {}).query) {
       const instanceMethods = modelDefinition.expose.instanceMethods.query;
       // console.log("found instance methods", instanceMethods);
-      let {fields} = typeCollection[modelName]._typeConfig; //eslint-disable-line
+      let fields = typeCollection[modelName]._fields(); //eslint-disable-line
       await Promise.all(Object.keys(instanceMethods).map(async(methodName) => {
         const methodDefinition = instanceMethods[methodName];
         const {type, args} = methodDefinition;
@@ -207,8 +208,8 @@ export default async function createComplexModels(models, keys, typeCollection, 
           },
         };
       }));
-      typeCollection[modelName]._typeConfig.fields = fields;//eslint-disable-line
-      resetInterfaces(typeCollection[modelName]);
+      typeCollection[modelName].fields = () => fields;//eslint-disable-line
+      // resetInterfaces(typeCollection[modelName]);
     }
   }));
   return typeCollection;

@@ -5,15 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = resetInterfaces;
 
-function resetInterfaces(impl) {
-  delete impl._interfaces; //eslint-disable-line
-
-  impl.getInterfaces().forEach(type => {
-    if (type._implementations) {
-      //eslint-disable-line
-      type._implementations.push(impl); //eslint-disable-line
-
-    }
-  });
+function resetInterfaces(impl) {// delete impl._interfaces; //eslint-disable-line
+  // impl.getInterfaces().forEach(type => {
+  //   if (type._implementations) { //eslint-disable-line
+  //     type._implementations.push(impl); //eslint-disable-line
+  //   }
+  // });
 }
 //# sourceMappingURL=reset-interfaces.js.map

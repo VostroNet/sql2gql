@@ -13,6 +13,15 @@ var _createBeforeAfter = _interopRequireDefault(require("../models/create-before
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/**
+ * @function createMutationV3
+ * @param {Object} models
+ * @param {string[]} keys
+ * @param {Object} typeCollection
+ * @param {function[]} mutationFunctions
+ * @param {Object} options
+ * @returns {Object}
+*/
 async function createMutationV3(models, keys, typeCollection, mutationFunctions, options) {
   let mutationCollection = {};
   await Promise.all(keys.map(async modelName => {

@@ -41,7 +41,7 @@ var _default = {
       beforeFind(options = {}) {
         const {
           filterName
-        } = options.rootValue || {};
+        } = options.info.rootValue || {};
 
         if (filterName) {
           options.where = {
