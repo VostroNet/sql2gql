@@ -30,7 +30,8 @@ export default {
     classMethods: {},
     hooks: {
       beforeFind(options = {}) {
-        const {filterName} = (options.info.rootValue || {});
+
+        const {filterName} = ((options || {}).rootValue || {});
         if (filterName) {
           options.where = {
             name: {

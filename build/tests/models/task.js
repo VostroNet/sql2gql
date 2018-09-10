@@ -62,7 +62,7 @@ var _default = {
       });
     }
 
-    return req;
+    return req.params;
   },
 
   after(req) {
@@ -259,19 +259,19 @@ var _default = {
     },
     hooks: {
       beforeFind(options) {
-        return undefined;
+        return options;
       },
 
       beforeCreate(instance, options) {
-        return undefined;
+        return instance;
       },
 
       beforeUpdate(instance, options) {
-        return undefined;
+        return instance;
       },
 
       beforeDestroy(instance, options) {
-        return undefined;
+        return instance;
       }
 
     },

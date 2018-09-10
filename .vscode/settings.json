@@ -5,5 +5,7 @@
     "editor.tabSize": 2,
 
     // Insert spaces when pressing Tab.
-    "editor.insertSpaces": true
+    "editor.insertSpaces": true,
+    "files.eol": "\n",
+
 }

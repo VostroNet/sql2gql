@@ -58,7 +58,7 @@ export default {
         mutationCheck: "update",
       });
     }
-    return req;
+    return req.params;
   },
   after(req) {
     return req.result;
@@ -218,16 +218,16 @@ export default {
     },
     hooks: {
       beforeFind(options) {
-        return undefined;
+        return options;
       },
       beforeCreate(instance, options) {
-        return undefined;
+        return instance;
       },
       beforeUpdate(instance, options) {
-        return undefined;
+        return instance;
       },
       beforeDestroy(instance, options) {
-        return undefined;
+        return instance;
       },
     },
     indexes: [
