@@ -233,8 +233,8 @@ describe("queries", () => {
     const mutation = `mutation {
       models {
         Item(create: [
-          {name: "item", id: "${(0, _uuid.default)()}"},
-          {name: "item-null", id: "${(0, _uuid.default)()}"}
+          {name: "item"},
+          {name: "item-null"}
         ]) {
           id,
           name
@@ -257,6 +257,110 @@ describe("queries", () => {
     }`);
     (0, _utils.validateResult)(queryResult);
     (0, _expect.default)(queryResult.data.models.Item.edges.length).toBe(1);
+  });
+  it("test relationships - hasMany", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {
+          name: "item",
+          children: [{
+            create: {
+              name: "item1"
+              children: [{create: {name: "item2"}}]
+            }
+          }]
+        }) {
+          id,
+          name
+        }
+      }
+    }`;
+    const itemResult = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(itemResult);
+    const queryResult = await (0, _graphql.graphql)(schema, `query {
+      models {
+        Item(where: {
+          name: "item1"
+        }) {
+          edges {
+            node {
+              id
+              name
+              parentId
+              children {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+              parent {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }`);
+    (0, _utils.validateResult)(queryResult);
+    (0, _expect.default)(queryResult.data.models.Item.edges.length).toBe(1);
+    (0, _expect.default)(queryResult.data.models.Item.edges[0].node.parent).not.toBeNull();
+    (0, _expect.default)(queryResult.data.models.Item.edges[0].node.children.edges.length).toBe(1);
+  });
+  it("test relationships - belongsTo", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {
+          name: "item",
+          parent: {
+            create: {
+              name: "item1"
+            }
+          }
+        }) {
+          id,
+          name
+        }
+      }
+    }`;
+    const itemResult = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(itemResult);
+    const queryResult = await (0, _graphql.graphql)(schema, `query {
+      models {
+        Item(where: {
+          name: "item"
+        }) {
+          edges {
+            node {
+              id
+              name
+              parentId
+              children {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+              parent {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }`);
+    (0, _utils.validateResult)(queryResult);
+    (0, _expect.default)(queryResult.data.models.Item.edges.length).toBe(1);
+    (0, _expect.default)(queryResult.data.models.Item.edges[0].node.parent).not.toBeNull();
   });
 });
 //# sourceMappingURL=query.test.js.map

@@ -90,6 +90,7 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     return results;
   };
   const targetAfter = (result, args, context, info) => {
+    // console.log("after", {result, args, context, info});
     if (foreignKeys && result) {
       foreignKeys.forEach((fk) => {
         const assoc = Object.keys(model.associations).filter((assocName) => {
@@ -102,12 +103,19 @@ export default function createBeforeAfter(model, options, hooks = {}) {
             // result.set(fk, globalId);
             const globalId = toGlobalId(targetName, e.node.get(fk));
             e.node.set(fk, globalId);
+            if (!e.node.$polluted) {
+              e.node.$polluted = {};
+            }
+            e.node.$polluted[fk] = targetName;
           });
         } else {
           const globalId = toGlobalId(targetName, result.get(fk));
           result.set(fk, globalId);
+          if (!result.$polluted) {
+            result.$polluted = [];
+          }
+          result.$polluted[fk] = targetName;
         }
-
       });
     }
 

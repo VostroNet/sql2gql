@@ -123,6 +123,7 @@ function createBeforeAfter(model, options, hooks = {}) {
   };
 
   const targetAfter = (result, args, context, info) => {
+    // console.log("after", {result, args, context, info});
     if (foreignKeys && result) {
       foreignKeys.forEach(fk => {
         const assoc = Object.keys(model.associations).filter(assocName => {
@@ -136,10 +137,22 @@ function createBeforeAfter(model, options, hooks = {}) {
             // result.set(fk, globalId);
             const globalId = (0, _node.toGlobalId)(targetName, e.node.get(fk));
             e.node.set(fk, globalId);
+
+            if (!e.node.$polluted) {
+              e.node.$polluted = {};
+            }
+
+            e.node.$polluted[fk] = targetName;
           });
         } else {
           const globalId = (0, _node.toGlobalId)(targetName, result.get(fk));
           result.set(fk, globalId);
+
+          if (!result.$polluted) {
+            result.$polluted = [];
+          }
+
+          result.$polluted[fk] = targetName;
         }
       });
     }

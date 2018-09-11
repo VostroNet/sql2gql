@@ -221,8 +221,8 @@ describe("queries", () => {
     const mutation = `mutation {
       models {
         Item(create: [
-          {name: "item", id: "${uuid()}"},
-          {name: "item-null", id: "${uuid()}"}
+          {name: "item"},
+          {name: "item-null"}
         ]) {
           id,
           name
@@ -246,5 +246,112 @@ describe("queries", () => {
     }`);
     validateResult(queryResult);
     expect(queryResult.data.models.Item.edges.length).toBe(1);
+  });
+  it("test relationships - hasMany", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {
+          name: "item",
+          children: [{
+            create: {
+              name: "item1"
+              children: [{create: {name: "item2"}}]
+            }
+          }]
+        }) {
+          id,
+          name
+        }
+      }
+    }`;
+    const itemResult = await graphql(schema, mutation);
+    validateResult(itemResult);
+
+    const queryResult = await graphql(schema, `query {
+      models {
+        Item(where: {
+          name: "item1"
+        }) {
+          edges {
+            node {
+              id
+              name
+              parentId
+              children {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+              parent {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }`);
+    validateResult(queryResult);
+    expect(queryResult.data.models.Item.edges.length).toBe(1);
+    expect(queryResult.data.models.Item.edges[0].node.parent).not.toBeNull();
+    expect(queryResult.data.models.Item.edges[0].node.children.edges.length).toBe(1);
+  });
+  it("test relationships - belongsTo", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {
+          name: "item",
+          parent: {
+            create: {
+              name: "item1"
+            }
+          }
+        }) {
+          id,
+          name
+        }
+      }
+    }`;
+    const itemResult = await graphql(schema, mutation);
+    validateResult(itemResult);
+
+    const queryResult = await graphql(schema, `query {
+      models {
+        Item(where: {
+          name: "item"
+        }) {
+          edges {
+            node {
+              id
+              name
+              parentId
+              children {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+              parent {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }`);
+    validateResult(queryResult);
+    expect(queryResult.data.models.Item.edges.length).toBe(1);
+    expect(queryResult.data.models.Item.edges[0].node.parent).not.toBeNull();
+
   });
 });

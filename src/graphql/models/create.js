@@ -14,7 +14,7 @@ import {
 } from "graphql-sequelize";
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
-import { toGlobalId } from "graphql-relay/lib/node/node";
+import { toGlobalId, fromGlobalId } from "graphql-relay/lib/node/node";
 import processFK from "../utils/process-fk";
 
 const {sequelizeConnection} =  relay;
@@ -43,15 +43,15 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
   const {before, after} = createBeforeAfter(models[modelName], options); //eslint-disable-line
   const modelDefinition = getModelDefinition(model);
-  let resolve;
-  if (modelDefinition.resolver) {
-    resolve = modelDefinition.resolver;
-  } else {
-    resolve = resolver(model, {
-      before,
-      after,
-    });
-  }
+  // let resolve;
+  // if (modelDefinition.resolver) {
+  //   resolve = modelDefinition.resolver;
+  // } else {
+  //   resolve = resolver(model, {
+  //     before,
+  //     after,
+  //   });
+  // }
   function basicFields() {
     if (typeCollection[`${modelName}`].$sql2gql.fields.basic) {
       return typeCollection[`${modelName}`].$sql2gql.fields.basic;
@@ -177,8 +177,14 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               const {source} = info;
               const model = models[modelName];
               const assoc = model.associations[relName];
+              let fk = source.get(assoc.sourceKey);
+              if (source.$polluted) {
+                if (source.$polluted[assoc.sourceKey]) {
+                  fk = fromGlobalId(fk).id;
+                }
+              }
               options.where = {
-                $and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, options.where],
+                $and: [{[assoc.foreignKey]: fk}, options.where],
               };
               return options;
             },
@@ -246,8 +252,23 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               fieldDefinitions[relName] = {
                 type: targetType,
                 resolve: resolver(relationship.rel, {
-                  before,
-                  after,
+                  before(findOptions, args, context, info) {
+                    if (info.source.$polluted) {
+                      Object.keys(info.source.$polluted).forEach((key) => {
+                        info.source.set(key, fromGlobalId(info.source.get(key)).id);
+                      });
+                    }
+                    // console.log("before");
+                    return before(findOptions, args, context, info);
+                  },
+                  after(result, args, context, info) {
+                    if (info.source.$polluted) {
+                      Object.keys(info.source.$polluted).forEach((key) => {
+                        info.source.set(key, toGlobalId(info.source.$polluted[key], info.source.get(key)));
+                      });
+                    }
+                    return after(result, args, context, info);
+                  },
                 }),
               };
               break;
@@ -299,7 +320,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       // };
       return Object.assign({}, basicFields(), complexFields());
     },
-    resolve,
+    // resolve() {
+    //   console.log("args", arguments);
+    //   // return resolve.apply(undefined, args);
+    // },
     interfaces: [nodeInterface],
   });
   obj.$sql2gql = {

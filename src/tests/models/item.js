@@ -7,20 +7,9 @@ export default {
   tableName: "items",
   define: {
     id: {type: Sequelize.UUID, allowNull: false, unique: true, primaryKey: true,
-      defaultValue: Sequelize.literal("(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))"),
+      defaultValue: Sequelize.UUIDV4// Sequelize.literal("(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))"),
     },
     name: {type: Sequelize.STRING, allowNull: false},
-  },
-  override: {
-    id: {
-      type: GraphQLID,
-      output(result, args, context, info) {
-        return toGlobalId("Item", result.id);
-      },
-      input(field, args, context, info) {
-        return field;
-      },
-    },
   },
   relationships: [
     {type: "hasMany", model: "Item", name: "children", options: {as: "children", foreignKey: "parentId", sourceKey: "id"}},

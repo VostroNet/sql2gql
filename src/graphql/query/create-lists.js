@@ -65,7 +65,9 @@ export default async function createModelLists(models, modelNames, typeCollectio
             type: JSONType.default,
           }
         },
-        resolve: c.resolve,
+        async resolve(source, args, context, info) {
+          return c.resolve(source, args, context, info);
+        },
       };
     }
   }));

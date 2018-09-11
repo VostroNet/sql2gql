@@ -84,7 +84,11 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
             type: _graphqlSequelize.JSONType.default
           }
         }),
-        resolve: c.resolve
+
+        async resolve(source, args, context, info) {
+          return c.resolve(source, args, context, info);
+        }
+
       };
     }
   }));

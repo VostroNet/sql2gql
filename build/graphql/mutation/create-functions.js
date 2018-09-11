@@ -20,6 +20,8 @@ var _events = _interopRequireDefault(require("../events"));
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
+var _node = require("graphql-relay/lib/node/node");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -269,7 +271,7 @@ async function createProcessRelationships(model, models) {
                     case "create":
                       createArgs = {
                         input: Object.assign({}, item.create, {
-                          [assoc.foreignKey]: source.get(assoc.sourceKey)
+                          [assoc.foreignKey]: (0, _node.toGlobalId)(source.name, source.get(assoc.sourceKey))
                         })
                       };
                       await modelDefinition.mutationFunctions.create(source, createArgs, context, info); // result = await modelDefinition.events.after(result, createArgs, context, info);

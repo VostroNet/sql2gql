@@ -283,6 +283,9 @@ describe("relay", () => {
       getTaskItemsArray {
         id
         taskId
+        task {
+          id
+        }
       }
     }
   }

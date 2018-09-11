@@ -11,6 +11,7 @@ import {fromGlobalId} from "graphql-relay";
 import createBeforeAfter from "../models/create-before-after";
 import events from "../events";
 import getModelDefinition from "../utils/get-model-def";
+import { toGlobalId } from "graphql-relay/lib/node/node";
 
 /**
  * @function createFunctions
@@ -189,7 +190,7 @@ async function createProcessRelationships(model, models) {
                     case "create":
                       createArgs = {
                         input: Object.assign({}, item.create, {
-                          [assoc.foreignKey]: source.get(assoc.sourceKey)
+                          [assoc.foreignKey]: toGlobalId(source.name, source.get(assoc.sourceKey))
                         }),
                       };
                       await modelDefinition.mutationFunctions.create(source, createArgs, context, info);

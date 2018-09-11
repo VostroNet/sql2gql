@@ -22,25 +22,12 @@ var _default = {
       allowNull: false,
       unique: true,
       primaryKey: true,
-      defaultValue: _sequelize.default.literal("(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))")
+      defaultValue: _sequelize.default.UUIDV4 // Sequelize.literal("(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))"),
+
     },
     name: {
       type: _sequelize.default.STRING,
       allowNull: false
-    }
-  },
-  override: {
-    id: {
-      type: _graphql.GraphQLID,
-
-      output(result, args, context, info) {
-        return (0, _node.toGlobalId)("Item", result.id);
-      },
-
-      input(field, args, context, info) {
-        return field;
-      }
-
     }
   },
   relationships: [{
