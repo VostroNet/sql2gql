@@ -99,22 +99,10 @@ export default function createBeforeAfter(model, options, hooks = {}) {
         const targetName = model.associations[assoc].target.name;
         if (result.edges) {
           result.edges.forEach((e) => {
-            // const globalId = toGlobalId(targetName, result.get(fk));
-            // result.set(fk, globalId);
-            const globalId = toGlobalId(targetName, e.node.get(fk));
-            e.node.set(fk, globalId);
-            if (!e.node.$polluted) {
-              e.node.$polluted = {};
-            }
-            e.node.$polluted[fk] = targetName;
+            createPollution(e.node, fk, targetName);
           });
         } else {
-          const globalId = toGlobalId(targetName, result.get(fk));
-          result.set(fk, globalId);
-          if (!result.$polluted) {
-            result.$polluted = [];
-          }
-          result.$polluted[fk] = targetName;
+          createPollution(result, fk, targetName);
         }
       });
     }
@@ -153,4 +141,18 @@ export default function createBeforeAfter(model, options, hooks = {}) {
   modelDefinition.events = events;
 
   return events;
+}
+
+
+function createPollution(result, fk, targetName) {
+  const val = result.get(fk);
+  if (val) {
+    const globalId = toGlobalId(targetName, result.get(fk));
+    result.set(fk, globalId);
+    if (!result.$polluted) {
+      result.$polluted = [];
+    }
+    result.$polluted[fk] = targetName;
+  }
+  return result;
 }
