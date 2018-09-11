@@ -2,6 +2,12 @@ import Sequelize from "sequelize";
 if (global.Promise) {
   Sequelize.Promise = global.Promise;
 }
+
+// import {
+//   relay,
+// } from "graphql-sequelize";
+
+// const {sequelizeNodeInterface} = relay;
 import logger from "./utils/logger";
 
 const log = logger("sql2gql::database:");
@@ -88,6 +94,7 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
       subscriptions: {
         pubsub,
       },
+      // node: sequelizeNodeInterface(sqlInstance),
     });
   }
 

@@ -25,9 +25,60 @@ export default {
       foreignKey: "taskId",
     },
   }],
+  expose: {
+    instanceMethods: {
+      query: {
+        testInstanceMethodArray: {
+          type: "TaskItem[]",
+          args: {},
+        },
+        testInstanceMethodSingle: {
+          type: "TaskItem",
+          args: {},
+        },
+      },
+    },
+    classMethods: {
+      query: {
+        getTaskItemsArray: {
+          type: "TaskItem[]",
+          args: {},
+        },
+        getTaskItemsSingle: {
+          type: "TaskItem",
+          args: {},
+        },
+      },
+      mutations: {
+        getTaskItemsArray: {
+          type: "TaskItem[]",
+          args: {},
+        },
+        getTaskItemsSingle: {
+          type: "TaskItem",
+          args: {},
+        },
+      },
+    },
+  },
   options: {
     tableName: "task-items",
-    classMethods: {},
+    instanceMethods: {
+      testInstanceMethodArray(args, {instance}) {
+        return instance.models.TaskItem.findAll();
+      },
+      testInstanceMethodSingle(args, {instance}) {
+        return instance.models.TaskItem.findOne({where: {id: 1}});
+      },
+    },
+    classMethods: {
+      getTaskItemsArray(args, {instance}) {
+        return instance.models.TaskItem.findAll();
+      },
+      getTaskItemsSingle(args, {instance}) {
+        return instance.models.TaskItem.findOne({where: {id: 1}});
+      },
+    },
     hooks: {
       beforeFind(options = {}) {
 
@@ -54,6 +105,5 @@ export default {
     indexes: [
       {unique: true, fields: ["name"]},
     ],
-    instanceMethods: {}, //TODO: figure out a way to expose this on graphql
   },
 };

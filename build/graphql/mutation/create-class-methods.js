@@ -9,6 +9,10 @@ var _graphql = require("graphql");
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
+var _definition = require("graphql/type/definition");
+
+var _processFk = _interopRequireDefault(require("../utils/process-fk"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -54,7 +58,7 @@ async function createMutationFunctions(models, keys, typeCollection, options) {
           args,
 
           resolve(item, args, context, gql) {
-            return models[modelName][methodName].apply(models[modelName], [args, context]);
+            return (0, _processFk.default)(outputType, models[modelName][methodName], models[modelName], args, context, gql);
           }
 
         };

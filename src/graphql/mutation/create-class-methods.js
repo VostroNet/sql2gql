@@ -2,6 +2,9 @@ import {
   GraphQLObjectType,
 } from "graphql";
 import getModelDefinition from "../utils/get-model-def";
+import { GraphQLList } from "graphql/type/definition";
+import { GraphQLNonNull } from "graphql/type/definition";
+import processFK from "../utils/process-fk";
 
 /**
  * @function createMutationFunctions
@@ -36,7 +39,7 @@ export default async function createMutationFunctions(models, keys, typeCollecti
           type: outputType,
           args,
           resolve(item, args, context, gql) {
-            return models[modelName][methodName].apply(models[modelName], [args, context]);
+            return processFK(outputType, models[modelName][methodName], models[modelName], args, context, gql);
           },
         };
       }));

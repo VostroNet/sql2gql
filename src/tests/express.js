@@ -12,7 +12,9 @@ const app = express();
 (async() => {
   const instance = await createSqlInstance();
   const schema = await createSchema(instance);
-  const server = new ApolloServer({schema});
+  const server = new ApolloServer({schema, context: () => {
+    return {instance};
+  }});
   server.applyMiddleware({app});
   app.listen(PORT);
 })().then(() => {

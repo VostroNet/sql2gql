@@ -168,7 +168,6 @@ describe("permissions", () => {
     return expect(args.filter((a) => a.name === "create").length).toEqual(1);
   });
   it("mutation model - classMethods", async() => {
-    // return expect(false).toEqual(true);
     const schema = await createSchema(instance, {
       permission: {
         mutationClassMethods(modelName, methodName) {

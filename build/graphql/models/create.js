@@ -15,6 +15,8 @@ var _createBeforeAfter = _interopRequireDefault(require("./create-before-after")
 
 var _node = require("graphql-relay/lib/node/node");
 
+var _processFk = _interopRequireDefault(require("../utils/process-fk"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -48,16 +50,17 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
   }
 
   const model = models[modelName];
+  const {
+    before,
+    after
+  } = (0, _createBeforeAfter.default)(models[modelName], options); //eslint-disable-line
+
   const modelDefinition = (0, _getModelDef.default)(model);
   let resolve;
 
   if (modelDefinition.resolver) {
     resolve = modelDefinition.resolver;
   } else {
-    const {
-      before,
-      after
-    } = (0, _createBeforeAfter.default)(model, options);
     resolve = (0, _graphqlSequelize.resolver)(model, {
       before,
       after
@@ -65,6 +68,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
   }
 
   function basicFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.basic) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.basic;
+    }
+
     let exclude = Object.keys(modelDefinition.override || {}).concat(modelDefinition.ignoreFields || []);
 
     if (options.permission) {
@@ -132,10 +139,15 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       });
     }
 
+    typeCollection[`${modelName}`].$sql2gql.fields.basic = fieldDefinitions;
     return fieldDefinitions;
   }
 
   function complexFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.complex) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.complex;
+    }
+
     let fieldDefinitions = {};
 
     if (models[modelName].relationships) {
@@ -157,12 +169,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               }
             }
           }
-
-          const {
-            before,
-            after,
-            afterList
-          } = (0, _createBeforeAfter.default)(models[modelName], options); //eslint-disable-line
 
           if (!targetType) {
             throw `targetType ${targetType} not defined for relationship`;
@@ -352,12 +358,13 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
           type: targetType,
           args,
           resolve: (source, args, context, info) => {
-            return source[methodName].apply(source, [args, context, info]);
+            return (0, _processFk.default)(targetType, source[methodName], source, args, context, info); // return source[methodName].apply(source, [args, context, info]);
           }
         };
       });
     }
 
+    typeCollection[`${modelName}`].$sql2gql.fields.complex = fieldDefinitions;
     return fieldDefinitions;
   }
 
@@ -366,14 +373,25 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     description: "",
 
     fields() {
+      // typeCollection[`${modelName}`].$sql2gql.fields = {
+      //   basic: basicFields(),
+      //   complex: complexFields(),
+      // };
       return Object.assign({}, basicFields(), complexFields());
     },
 
     resolve,
     interfaces: [nodeInterface]
   });
-  obj.basicFields = basicFields;
-  obj.complexFields = complexFields;
+  obj.$sql2gql = {
+    basicFields: basicFields,
+    complexFields: complexFields,
+    fields: {},
+    events: {
+      before,
+      after
+    }
+  };
   typeCollection[`${modelName}[]`] = new _graphql.GraphQLList(obj);
   return obj;
 }

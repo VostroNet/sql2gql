@@ -21,6 +21,9 @@ function createMutationInput(modelName, model, gqlFields, prefix, allOptional = 
   const modelDefinition = getModelDefinition(model);
   let fields = {};
   Object.keys(gqlFields).forEach((fieldName) => {
+    // if (gqlFields[fieldName].resolve) { // unable to set fields with resolve set; TODO: create new type to allow input?
+    //   return;
+    // }
     const sqlFields = model.fieldRawAttributesMap;
     if (sqlFields[fieldName]) {
       // if (!sqlFields[fieldName].primaryKey) {
@@ -64,7 +67,11 @@ function createMutationInput(modelName, model, gqlFields, prefix, allOptional = 
             }
           }
         }
-        fields[fieldName] = gqlField;
+        if (gqlField.type instanceof GraphQLNonNull) {
+          fields[fieldName] = {type: new GraphQLNonNull(gqlField.type.ofType)};
+        } else {
+          fields[fieldName] = {type: gqlField.type};
+        }
       }
       // }
     }
@@ -82,7 +89,7 @@ export default async function createMutationInputs(models, keys, typeCollection,
       return o;
     }
     // debugger; //eslint-disable-line
-    let fields = typeCollection[modelName].basicFields(); //eslint-disable-line
+    let fields = typeCollection[modelName].$sql2gql.basicFields(); //eslint-disable-line
     o[modelName] = {
       required: createMutationInput(modelName, models[modelName], fields, "Required"),
       optional: createMutationInput(modelName, models[modelName], fields, "Optional", true),

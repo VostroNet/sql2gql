@@ -19,7 +19,12 @@ const app = (0, _express.default)();
   const instance = await (0, _utils.createSqlInstance)();
   const schema = await (0, _index.createSchema)(instance);
   const server = new _apolloServerExpress.ApolloServer({
-    schema
+    schema,
+    context: () => {
+      return {
+        instance
+      };
+    }
   });
   server.applyMiddleware({
     app

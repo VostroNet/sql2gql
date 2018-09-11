@@ -15,7 +15,11 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 if (global.Promise) {
   _sequelize.default.Promise = global.Promise;
-}
+} // import {
+//   relay,
+// } from "graphql-sequelize";
+// const {sequelizeNodeInterface} = relay;
+
 
 const log = (0, _logger.default)("sql2gql::database:");
 /**
@@ -130,7 +134,8 @@ function loadSchemas(schemas, sqlInstance, options = {}) {
     sqlInstance.$sqlgql = Object.assign(sqlInstance.$sqlgql, {
       subscriptions: {
         pubsub
-      }
+      } // node: sequelizeNodeInterface(sqlInstance),
+
     });
   }
 

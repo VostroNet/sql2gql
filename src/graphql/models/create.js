@@ -15,6 +15,7 @@ import {
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
 import { toGlobalId } from "graphql-relay/lib/node/node";
+import processFK from "../utils/process-fk";
 
 const {sequelizeConnection} =  relay;
 
@@ -39,21 +40,22 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     }
   }
   const model = models[modelName];
+
+  const {before, after} = createBeforeAfter(models[modelName], options); //eslint-disable-line
   const modelDefinition = getModelDefinition(model);
   let resolve;
   if (modelDefinition.resolver) {
     resolve = modelDefinition.resolver;
   } else {
-    const {
-      before,
-      after,
-    } = createBeforeAfter(model, options);
     resolve = resolver(model, {
       before,
       after,
     });
   }
   function basicFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.basic) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.basic;
+    }
     let exclude = Object.keys(modelDefinition.override || {})
       .concat(modelDefinition.ignoreFields || []);
     if (options.permission) {
@@ -111,9 +113,13 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         };
       });
     }
+    typeCollection[`${modelName}`].$sql2gql.fields.basic = fieldDefinitions;
     return fieldDefinitions;
   }
   function complexFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.complex) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.complex;
+    }
     let fieldDefinitions = {};
     if (models[modelName].relationships) {
       if (typeCollection[modelName]) {
@@ -132,7 +138,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               }
             }
           }
-          const {before, after, afterList} = createBeforeAfter(models[modelName], options); //eslint-disable-line
           if (!targetType) {
             throw `targetType ${targetType} not defined for relationship`;
           }
@@ -274,24 +279,36 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
           type: targetType,
           args,
           resolve: (source, args, context, info) => {
-            return source[methodName].apply(source, [args, context, info]);
+            return processFK(targetType, source[methodName], source, args, context, info);
+            // return source[methodName].apply(source, [args, context, info]);
           },
         };
       });
     }
+    typeCollection[`${modelName}`].$sql2gql.fields.complex = fieldDefinitions;
     return fieldDefinitions;
   }
   const obj = new GraphQLObjectType({
     name: `${prefix}${modelName}`,
     description: "",
     fields() {
+
+      // typeCollection[`${modelName}`].$sql2gql.fields = {
+      //   basic: basicFields(),
+      //   complex: complexFields(),
+      // };
       return Object.assign({}, basicFields(), complexFields());
     },
     resolve,
     interfaces: [nodeInterface],
   });
-  obj.basicFields = basicFields;
-  obj.complexFields = complexFields;
+  obj.$sql2gql = {
+    basicFields: basicFields,
+    complexFields: complexFields,
+    fields: {},
+    events: {before, after}
+  };
+
   typeCollection[`${modelName}[]`] = new GraphQLList(obj);
   return obj;
 }

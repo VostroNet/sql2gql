@@ -1,7 +1,8 @@
 import {
-  GraphQLObjectType,
+  GraphQLObjectType, GraphQLList, GraphQLNonNull,
 } from "graphql";
 import getModelDefinition from "../utils/get-model-def";
+import processFK from "../utils/process-fk";
 
 /**
  * @function createQueryFunctions
@@ -35,8 +36,8 @@ export default async function createQueryFunctions(models, keys, typeCollection,
         queryFields[methodName] = {
           type: outputType,
           args,
-          resolve(item, args, context, gql) {
-            return models[modelName][methodName].apply(models[modelName], [args, context]);
+          async resolve(item, args, context, gql) {
+            return processFK(outputType, models[modelName][methodName], models[modelName], args, context, gql);
           },
         };
       }));

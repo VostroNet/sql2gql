@@ -9,6 +9,8 @@ var _graphql = require("graphql");
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
+var _processFk = _interopRequireDefault(require("../utils/process-fk"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -53,8 +55,8 @@ async function createQueryFunctions(models, keys, typeCollection, options) {
           type: outputType,
           args,
 
-          resolve(item, args, context, gql) {
-            return models[modelName][methodName].apply(models[modelName], [args, context]);
+          async resolve(item, args, context, gql) {
+            return (0, _processFk.default)(outputType, models[modelName][methodName], models[modelName], args, context, gql);
           }
 
         };

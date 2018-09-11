@@ -15,7 +15,7 @@ var _graphqlRelay = require("graphql-relay");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 describe("relay", () => {
-  it("validate foreign key global conversion", async () => {
+  it("validate foreign key global id conversion - models", async () => {
     const instance = await (0, _utils.createSqlInstance)();
     const schema = await (0, _index.createSchema)(instance);
     const mutation = `mutation {
@@ -55,6 +55,263 @@ describe("relay", () => {
     (0, _utils.validateResult)(queryResults);
     (0, _expect.default)(queryResults.data.models.TaskItem.edges.length).toEqual(1);
     const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.models.TaskItem.edges[0].node.taskId).id;
+    (0, _expect.default)(taskId).toEqual("1");
+  });
+  it("validate foreign key global id conversion - query instanceMethod - single", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: { create: { name: "testitem" } } }) {
+      id
+      items {
+        edges {
+          node {
+            id
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const mutationResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResults);
+    (0, _expect.default)(mutationResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(mutationResults.data.models.Task[0].items.edges.length).toEqual(1);
+    const mutationTaskId = (0, _graphqlRelay.fromGlobalId)(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    (0, _expect.default)(mutationTaskId).toEqual("1");
+    const query = `query {
+  models {
+    TaskItem {
+      edges {
+        node {
+          testInstanceMethodSingle {
+            id,
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, query, undefined, {
+      instance
+    });
+    (0, _utils.validateResult)(queryResults);
+    const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.models.TaskItem.edges[0].node.testInstanceMethodSingle.taskId).id;
+    (0, _expect.default)(taskId).toEqual("1");
+  });
+  it("validate foreign key global id conversion - query instanceMethod - array", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: [{ create: { name: "testitem" } }, {create: { name: "testitem2" } }] }) {
+      id
+      items {
+        edges {
+          node {
+            id
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const mutationResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResults);
+    (0, _expect.default)(mutationResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(mutationResults.data.models.Task[0].items.edges.length).toEqual(2);
+    const mutationTaskId = (0, _graphqlRelay.fromGlobalId)(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    (0, _expect.default)(mutationTaskId).toEqual("1");
+    const query = `query {
+      models {
+        TaskItem {
+          edges {
+            node {
+              testInstanceMethodArray {
+                id,
+                taskId
+              }
+            }
+          }
+        }
+      }
+    }`;
+    const queryResults = await (0, _graphql.graphql)(schema, query, undefined, {
+      instance
+    });
+    (0, _utils.validateResult)(queryResults);
+    (0, _expect.default)(queryResults.data.models.TaskItem.edges[0].node.testInstanceMethodArray.length).toEqual(2);
+    const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.models.TaskItem.edges[0].node.testInstanceMethodArray[0].taskId).id;
+    (0, _expect.default)(taskId).toEqual("1");
+  });
+  it("validate foreign key global id conversion - query classMethods - single", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: { create: { name: "testitem" } } }) {
+      id
+      items {
+        edges {
+          node {
+            id
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const mutationResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResults);
+    (0, _expect.default)(mutationResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(mutationResults.data.models.Task[0].items.edges.length).toEqual(1);
+    const mutationTaskId = (0, _graphqlRelay.fromGlobalId)(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    (0, _expect.default)(mutationTaskId).toEqual("1");
+    const query = `query {
+  classMethods {
+    TaskItem {
+      getTaskItemsSingle {
+        id
+        taskId
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, query, undefined, {
+      instance
+    });
+    (0, _utils.validateResult)(queryResults);
+    const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.classMethods.TaskItem.getTaskItemsSingle.taskId).id;
+    (0, _expect.default)(taskId).toEqual("1");
+  });
+  it("validate foreign key global id conversion - mutation classMethods - single", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: { create: { name: "testitem" } } }) {
+      id
+      items {
+        edges {
+          node {
+            id
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const mutationResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResults);
+    (0, _expect.default)(mutationResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(mutationResults.data.models.Task[0].items.edges.length).toEqual(1);
+    const mutationTaskId = (0, _graphqlRelay.fromGlobalId)(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    (0, _expect.default)(mutationTaskId).toEqual("1");
+    const query = `mutation {
+  classMethods {
+    TaskItem {
+      getTaskItemsSingle {
+        id
+        taskId
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, query, undefined, {
+      instance
+    });
+    (0, _utils.validateResult)(queryResults);
+    const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.classMethods.TaskItem.getTaskItemsSingle.taskId).id;
+    (0, _expect.default)(taskId).toEqual("1");
+  });
+  it("validate foreign key global id conversion - query classMethods - array", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: { name: "test", items: [{ create: { name: "testitem" } }, {create: { name: "testitem2" } }] }) {
+      id
+      items {
+        edges {
+          node {
+            id
+            taskId
+          }
+        }
+      }
+    }
+  }
+}`;
+    const mutationResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResults);
+    (0, _expect.default)(mutationResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(mutationResults.data.models.Task[0].items.edges.length).toEqual(2);
+    const mutationTaskId = (0, _graphqlRelay.fromGlobalId)(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    (0, _expect.default)(mutationTaskId).toEqual("1");
+    const query = `query {
+  classMethods {
+    TaskItem {
+      getTaskItemsArray {
+        id
+        taskId
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, query, undefined, {
+      instance
+    });
+    (0, _utils.validateResult)(queryResults);
+    (0, _expect.default)(queryResults.data.classMethods.TaskItem.getTaskItemsArray.length).toEqual(2);
+    const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.classMethods.TaskItem.getTaskItemsArray[0].taskId).id;
+    (0, _expect.default)(taskId).toEqual("1");
+  });
+  it("validate foreign key global id conversion - mutation classMethods - array", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+      models {
+        Task(create: { name: "test", items: [{ create: { name: "testitem" } }, {create: { name: "testitem2" } }] }) {
+          id
+          items {
+            edges {
+              node {
+                id
+                taskId
+              }
+            }
+          }
+        }
+      }
+    }`;
+    const mutationResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(mutationResults);
+    (0, _expect.default)(mutationResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(mutationResults.data.models.Task[0].items.edges.length).toEqual(2);
+    const mutationTaskId = (0, _graphqlRelay.fromGlobalId)(mutationResults.data.models.Task[0].items.edges[0].node.taskId).id;
+    (0, _expect.default)(mutationTaskId).toEqual("1");
+    const query = `mutation {
+  classMethods {
+    TaskItem {
+      getTaskItemsArray {
+        id
+        taskId
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, query, undefined, {
+      instance
+    });
+    (0, _utils.validateResult)(queryResults);
+    (0, _expect.default)(queryResults.data.classMethods.TaskItem.getTaskItemsArray.length).toEqual(2);
+    const taskId = (0, _graphqlRelay.fromGlobalId)(queryResults.data.classMethods.TaskItem.getTaskItemsArray[0].taskId).id;
     (0, _expect.default)(taskId).toEqual("1");
   });
   it("node id validation", async () => {

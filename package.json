@@ -14,9 +14,8 @@
     "url": "https://github.com/VostroNet/sql2gql/issues"
   },
   "files": [
-    "build/graphql/models/create-base.js",
+    "build/graphql/models/create.js",
     "build/graphql/models/create-before-after.js",
-    "build/graphql/models/create-complex.js",
     "build/graphql/mutation/create-class-methods.js",
     "build/graphql/mutation/create-functions.js",
     "build/graphql/mutation/create-input.js",
