@@ -25,6 +25,7 @@
     "build/graphql/utils/get-model-def.js",
     "build/graphql/utils/reset-interfaces.js",
     "build/graphql/utils/replace-id-deep.js",
+    "build/graphql/utils/process-fk.js",
     "build/graphql/events.js",
     "build/graphql/index.js",
     "build/graphql/subscriptions.js",
