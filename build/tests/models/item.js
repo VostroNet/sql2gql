@@ -48,6 +48,15 @@ var _default = {
       foreignKey: "parentId",
       sourceKey: "id"
     }
+  }, {
+    type: "belongsTo",
+    model: "Task",
+    name: "task",
+    options: {
+      as: "task",
+      foreignKey: "taskId",
+      sourceKey: "id"
+    }
   }],
   options: {
     tableName: "items",

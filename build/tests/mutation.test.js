@@ -546,5 +546,37 @@ describe("mutations", () => {
     (0, _expect.default)(queryResults.data.models.Task.length).toEqual(1);
     (0, _expect.default)(queryResults.data.models.Task[0].items.edges.length).toEqual(1);
   });
+  it("create complex object - hasOne", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: {
+      name: "test",
+      item: { 
+        create: { 
+          name: "testitem"
+        }
+      }
+    }) {
+      id
+      item {
+        name
+      }
+      items {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  }
+}`;
+    const queryResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(queryResults);
+    (0, _expect.default)(queryResults.data.models.Task.length).toEqual(1);
+    (0, _expect.default)(queryResults.data.models.Task[0].item.name).toBeDefined();
+  });
 });
 //# sourceMappingURL=mutation.test.js.map

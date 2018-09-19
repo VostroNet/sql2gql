@@ -509,4 +509,37 @@ describe("mutations", () => {
     expect(queryResults.data.models.Task.length).toEqual(1);
     expect(queryResults.data.models.Task[0].items.edges.length).toEqual(1);
   });
+  it("create complex object - hasOne", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+  models {
+    Task(create: {
+      name: "test",
+      item: { 
+        create: { 
+          name: "testitem"
+        }
+      }
+    }) {
+      id
+      item {
+        name
+      }
+      items {
+        edges {
+          node {
+            id
+          }
+        }
+      }
+    }
+  }
+}`;
+    const queryResults = await graphql(schema, mutation);
+    validateResult(queryResults);
+    expect(queryResults.data.models.Task.length).toEqual(1);
+    expect(queryResults.data.models.Task[0].item.name).toBeDefined();
+  });
+
 });

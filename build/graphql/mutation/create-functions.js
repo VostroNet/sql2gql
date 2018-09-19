@@ -258,7 +258,25 @@ async function createProcessRelationships(model, models) {
 
             case "hasOne":
               //eslint-disable-line
-              throw new Error("hasOne - Needs to be implemented properly");
+              await Promise.all(Object.keys(input[relName]).map(async command => {
+                switch (command) {
+                  case "create":
+                    createArgs = {
+                      input: Object.assign({}, input[relName].create)
+                    };
+                    createArgs.input[assoc.foreignKey] = (0, _node.toGlobalId)(relationship.source, source[assoc.sourceKey]);
+                    result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info); // updateVars[assoc.foreignKey] = result[assoc.targetKey];
+                    // source = await source.update(updateVars, context);
+                    // result = await modelDefinition.events.after(result, createArgs, context, info);
+
+                    output.push(result);
+                    break;
+
+                  case "update":
+                    throw new Error("hasOne update - Needs to be implemented properly");
+                }
+              }));
+              break;
 
             case "belongsToMany":
               //eslint-disable-line

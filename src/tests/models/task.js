@@ -103,6 +103,13 @@ export default {
     options: {
       foreignKey: "taskId",
     },
+  }, {
+    type: "hasOne",
+    model: "Item",
+    name: "item",
+    options: {
+      foreignKey: "taskId",
+    },
   }],
   expose: {
     instanceMethods: {

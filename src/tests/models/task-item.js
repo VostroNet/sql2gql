@@ -81,7 +81,6 @@ export default {
     },
     hooks: {
       beforeFind(options = {}) {
-
         const {filterName} = ((options || {}).rootValue || {});
         if (filterName) {
           options.where = {
