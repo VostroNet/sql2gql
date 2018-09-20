@@ -17,6 +17,8 @@ var _node = require("graphql-relay/lib/node/node");
 
 var _processFk = _interopRequireDefault(require("../utils/process-fk"));
 
+var _pollution = require("../utils/pollution");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -230,14 +232,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               } = info;
               const model = models[modelName];
               const assoc = model.associations[relName];
-              let fk = source.get(assoc.sourceKey);
-
-              if (source.$polluted) {
-                if (source.$polluted[assoc.sourceKey]) {
-                  fk = (0, _node.fromGlobalId)(fk).id;
-                }
-              }
-
+              const fk = (0, _pollution.getPollutedVar)(source, assoc.sourceKey, source.get(assoc.sourceKey));
               options.where = {
                 $and: [{
                   [assoc.foreignKey]: fk
@@ -323,23 +318,12 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 type: targetType,
                 resolve: (0, _graphqlSequelize.resolver)(relationship.rel, {
                   before(findOptions, args, context, info) {
-                    if (info.source.$polluted) {
-                      Object.keys(info.source.$polluted).forEach(key => {
-                        info.source.set(key, (0, _node.fromGlobalId)(info.source.get(key)).id);
-                      });
-                    } // console.log("before");
-
-
+                    (0, _pollution.toForeignKeys)(info.source);
                     return before(findOptions, args, context, info);
                   },
 
                   after(result, args, context, info) {
-                    if (info.source.$polluted) {
-                      Object.keys(info.source.$polluted).forEach(key => {
-                        info.source.set(key, (0, _node.toGlobalId)(info.source.$polluted[key], info.source.get(key)));
-                      });
-                    }
-
+                    (0, _pollution.toGlobalIds)(info.source);
                     return after(result, args, context, info);
                   }
 
@@ -382,9 +366,14 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         fieldDefinitions[methodName] = {
           type: targetType,
           args,
-          resolve: (source, args, context, info) => {
-            return (0, _processFk.default)(targetType, source[methodName], source, args, context, info); // return source[methodName].apply(source, [args, context, info]);
+
+          async resolve(source, args, context, info) {
+            (0, _pollution.toForeignKeys)(source);
+            const result = await (0, _processFk.default)(targetType, source[methodName], source, args, context, info);
+            (0, _pollution.toGlobalIds)(source);
+            return result; // return source[methodName].apply(source, [args, context, info]);
           }
+
         };
       });
     }

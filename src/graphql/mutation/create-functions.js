@@ -12,6 +12,7 @@ import createBeforeAfter from "../models/create-before-after";
 import events from "../events";
 import getModelDefinition from "../utils/get-model-def";
 import { toGlobalId } from "graphql-relay/lib/node/node";
+import { toForeignKeys } from "../utils/pollution";
 
 /**
  * @function createFunctions
@@ -103,6 +104,8 @@ export function onUpdate(targetModel) {
       });
     }
     model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
+    delete model.$polluted;
+    delete model.$pollutedState;
     if (modelDefinition.after) {
       return modelDefinition.after({
         result: model, args, context, info,
@@ -269,7 +272,6 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
     funcs.create = async(o, args, context, info) => {
       const source = await createFunc(model, args, context, info);
       await processRelationships(source, args, context, info);
-
       return source;
     };
   }

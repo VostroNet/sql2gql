@@ -22,6 +22,8 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _node = require("graphql-relay/lib/node/node");
 
+var _pollution = require("../utils/pollution");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -149,6 +151,8 @@ function onUpdate(targetModel) {
       }),
       transaction: (context || {}).transaction
     });
+    delete model.$polluted;
+    delete model.$pollutedState;
 
     if (modelDefinition.after) {
       return modelDefinition.after({

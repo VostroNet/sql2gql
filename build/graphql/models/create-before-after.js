@@ -13,6 +13,8 @@ var _events = _interopRequireDefault(require("../events"));
 
 var _node = require("graphql-relay/lib/node/node");
 
+var _pollution = require("../utils/pollution");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -133,10 +135,10 @@ function createBeforeAfter(model, options, hooks = {}) {
 
         if (result.edges) {
           result.edges.forEach(e => {
-            createPollution(e.node, fk, targetName);
+            (0, _pollution.createPollution)(e.node, fk, targetName);
           });
         } else {
-          createPollution(result, fk, targetName);
+          (0, _pollution.createPollution)(result, fk, targetName);
         }
       });
     }
@@ -179,22 +181,5 @@ function createBeforeAfter(model, options, hooks = {}) {
   };
   modelDefinition.events = events;
   return events;
-}
-
-function createPollution(result, fk, targetName) {
-  const val = result.get(fk);
-
-  if (val) {
-    const globalId = (0, _node.toGlobalId)(targetName, result.get(fk));
-    result.set(fk, globalId);
-
-    if (!result.$polluted) {
-      result.$polluted = [];
-    }
-
-    result.$polluted[fk] = targetName;
-  }
-
-  return result;
 }
 //# sourceMappingURL=create-before-after.js.map

@@ -1,4 +1,5 @@
 import { GraphQLList, GraphQLNonNull } from "graphql";
+import { toGlobalId, fromGlobalId } from "graphql-relay/lib/node/node";
 
 export default async function processFK(outputType, method, model, args, context, gql) {
   const result = await method.apply(model, [args, context]);

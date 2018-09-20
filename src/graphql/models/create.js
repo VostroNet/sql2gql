@@ -17,6 +17,9 @@ import createBeforeAfter from "./create-before-after";
 import { toGlobalId, fromGlobalId } from "graphql-relay/lib/node/node";
 import processFK from "../utils/process-fk";
 
+import {toGlobalIds, toForeignKeys, getPollutedVar} from "../utils/pollution";
+
+
 const {sequelizeConnection} =  relay;
 
 export default async function createModelTypes(models, keys, prefix = "", options, nodeInterface) {
@@ -177,12 +180,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               const {source} = info;
               const model = models[modelName];
               const assoc = model.associations[relName];
-              let fk = source.get(assoc.sourceKey);
-              if (source.$polluted) {
-                if (source.$polluted[assoc.sourceKey]) {
-                  fk = fromGlobalId(fk).id;
-                }
-              }
+              const fk = getPollutedVar(source, assoc.sourceKey, source.get(assoc.sourceKey));
               options.where = {
                 $and: [{[assoc.foreignKey]: fk}, options.where],
               };
@@ -253,20 +251,11 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 type: targetType,
                 resolve: resolver(relationship.rel, {
                   before(findOptions, args, context, info) {
-                    if (info.source.$polluted) {
-                      Object.keys(info.source.$polluted).forEach((key) => {
-                        info.source.set(key, fromGlobalId(info.source.get(key)).id);
-                      });
-                    }
-                    // console.log("before");
+                    toForeignKeys(info.source);
                     return before(findOptions, args, context, info);
                   },
                   after(result, args, context, info) {
-                    if (info.source.$polluted) {
-                      Object.keys(info.source.$polluted).forEach((key) => {
-                        info.source.set(key, toGlobalId(info.source.$polluted[key], info.source.get(key)));
-                      });
-                    }
+                    // toGlobalIds(info.source);
                     return after(result, args, context, info);
                   },
                 }),
@@ -299,8 +288,11 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         fieldDefinitions[methodName] = {
           type: targetType,
           args,
-          resolve: (source, args, context, info) => {
-            return processFK(targetType, source[methodName], source, args, context, info);
+          async resolve(source, args, context, info) {
+            toForeignKeys(source);
+            const result = await processFK(targetType, source[methodName], source, args, context, info);
+            toGlobalIds(source);
+            return result;
             // return source[methodName].apply(source, [args, context, info]);
           },
         };

@@ -7,6 +7,8 @@ exports.default = processFK;
 
 var _graphql = require("graphql");
 
+var _node = require("graphql-relay/lib/node/node");
+
 async function processFK(outputType, method, model, args, context, gql) {
   const result = await method.apply(model, [args, context]);
 

@@ -2,7 +2,7 @@ import getModelDefinition from "../utils/get-model-def";
 import replaceIdDeep from "../utils/replace-id-deep";
 import events from "../events";
 import { toGlobalId } from "graphql-relay/lib/node/node";
-
+import {createPollution} from "../utils/pollution";
 /**
  * @typedef {Object} CreateBeforeAfterOutput
  * @property {function} before
@@ -144,15 +144,3 @@ export default function createBeforeAfter(model, options, hooks = {}) {
 }
 
 
-function createPollution(result, fk, targetName) {
-  const val = result.get(fk);
-  if (val) {
-    const globalId = toGlobalId(targetName, result.get(fk));
-    result.set(fk, globalId);
-    if (!result.$polluted) {
-      result.$polluted = [];
-    }
-    result.$polluted[fk] = targetName;
-  }
-  return result;
-}
