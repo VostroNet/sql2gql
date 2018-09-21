@@ -74,6 +74,7 @@ export async function createSchema(sqlInstance, options = {}) {
     mutationRootFields.models = {
       type: new GraphQLObjectType({name: "MutationModels", fields: mutationCollection}),
       resolve() {
+        console.log("mutation resolution", arguments);
         return {};
       },
     };

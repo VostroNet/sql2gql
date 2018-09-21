@@ -12,8 +12,6 @@ var _graphql = require("graphql");
 
 var _graphqlSequelize = require("graphql-sequelize");
 
-var _graphqlRelay = require("graphql-relay");
-
 var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 
 var _events = _interopRequireDefault(require("../events"));
@@ -25,6 +23,8 @@ var _node = require("graphql-relay/lib/node/node");
 var _pollution = require("../utils/pollution");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// import {fromGlobalId} from "graphql-relay";
 
 /**
  * @function createFunctions
@@ -61,18 +61,7 @@ function onCreate(targetModel) {
       });
     }
 
-    const foreignKeys = Object.keys(targetModel.fieldRawAttributesMap).filter(k => {
-      return !!targetModel.fieldRawAttributesMap[k].references;
-    });
-
-    if (foreignKeys.length > 0) {
-      foreignKeys.forEach(fk => {
-        if (input[fk] && typeof input[fk] === "string") {
-          input[fk] = (0, _graphqlRelay.fromGlobalId)(input[fk]).id;
-        }
-      });
-    }
-
+    (0, _pollution.convertInputForModelToKeys)(input, targetModel);
     let model = await targetModel.create(input, {
       context,
       rootValue: Object.assign({}, info.rootValue, {
@@ -80,6 +69,7 @@ function onCreate(targetModel) {
       }),
       transaction: (context || {}).transaction
     });
+    (0, _pollution.toGlobalIds)(model);
 
     if (modelDefinition.after) {
       return modelDefinition.after({
@@ -132,18 +122,7 @@ function onUpdate(targetModel) {
       });
     }
 
-    const foreignKeys = Object.keys(targetModel.fieldRawAttributesMap).filter(k => {
-      return !!targetModel.fieldRawAttributesMap[k].references;
-    });
-
-    if (foreignKeys.length > 0) {
-      foreignKeys.forEach(fk => {
-        if (input[fk] && typeof input[fk] === "string") {
-          input[fk] = (0, _graphqlRelay.fromGlobalId)(input[fk]).id;
-        }
-      });
-    }
-
+    (0, _pollution.convertInputForModelToKeys)(input, targetModel);
     model = await model.update(input, {
       context,
       rootValue: Object.assign({}, info.rootValue, {
@@ -151,8 +130,8 @@ function onUpdate(targetModel) {
       }),
       transaction: (context || {}).transaction
     });
-    delete model.$polluted;
-    delete model.$pollutedState;
+    (0, _pollution.toForeignKeys)(model); // delete model.$polluted;
+    // delete model.$pollutedState;
 
     if (modelDefinition.after) {
       return modelDefinition.after({
@@ -228,6 +207,10 @@ async function createProcessRelationships(model, models) {
     } = args;
 
     if (model.relationships) {
+      if (source) {
+        (0, _pollution.toForeignKeys)(source);
+      }
+
       await Promise.all(Object.keys(model.relationships).map(async relName => {
         if (input[relName]) {
           const output = [];
@@ -321,6 +304,10 @@ async function createProcessRelationships(model, models) {
           }
         }
       }));
+
+      if (source) {
+        (0, _pollution.toGlobalIds)(source);
+      }
     }
 
     return source;
@@ -377,7 +364,11 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
 
     funcs.create = async (o, args, context, info) => {
       const source = await createFunc(model, args, context, info);
-      await processRelationships(source, args, context, info);
+
+      if (source) {
+        await processRelationships(source, args, context, info); // toGlobalIds(source);
+      }
+
       return source;
     };
   }
@@ -399,7 +390,10 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       }))
     };
     funcs.update = (0, _graphqlSequelize.resolver)(models[modelName], {
-      before,
+      before(source, args, context, info) {
+        return before(source, args, context, info);
+      },
+
       after: afterUpdateList
     });
   }
@@ -417,7 +411,10 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       }))
     };
     funcs.delete = (0, _graphqlSequelize.resolver)(models[modelName], {
-      before,
+      before(source, args, context, info) {
+        return before(source, args, context, info);
+      },
+
       after: afterDeleteList
     });
   }

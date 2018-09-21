@@ -14,7 +14,7 @@ import {
 } from "graphql-sequelize";
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
-import { toGlobalId, fromGlobalId } from "graphql-relay/lib/node/node";
+// import { toGlobalId, fromGlobalId } from "graphql-relay/lib/node/node";
 import processFK from "../utils/process-fk";
 
 import {toGlobalIds, toForeignKeys, getPollutedVar} from "../utils/pollution";
@@ -176,6 +176,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               return {[key]: value};
             },
             async before(findOptions, args, context, info) {
+              // toForeignKeys(info.source);
               const options = await before(findOptions, args, context, info);
               const {source} = info;
               const model = models[modelName];
@@ -188,9 +189,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             },
             after(result, args, context, info) {
               result.edges.forEach((e) => {
-                const fk = relationship.rel.foreignKeyField;
-                const globalId = toGlobalId(relationship.target, e.node.get(fk));
-                e.node.set(fk, globalId);
+                toGlobalIds(e.node);
               });
               return after(result, args, context, info);
             },
@@ -255,7 +254,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                     return before(findOptions, args, context, info);
                   },
                   after(result, args, context, info) {
-                    // toGlobalIds(info.source);
+                    toGlobalIds(info.source);
                     return after(result, args, context, info);
                   },
                 }),
@@ -305,11 +304,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     name: `${prefix}${modelName}`,
     description: "",
     fields() {
-
-      // typeCollection[`${modelName}`].$sql2gql.fields = {
-      //   basic: basicFields(),
-      //   complex: complexFields(),
-      // };
       return Object.assign({}, basicFields(), complexFields());
     },
     // resolve() {

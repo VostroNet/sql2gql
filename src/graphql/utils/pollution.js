@@ -1,35 +1,19 @@
 import { toGlobalId, fromGlobalId } from "graphql-relay/lib/node/node";
+import {getForeignKeysForModel, getForeignKeyAssociation} from "./models";
 
 
-
-// export function switchState(model) {
-//   if (model.$polluted) {
-//     if (model.$polluted.state === "global") {
-//       Object.keys(model.$polluted).forEach((key) => {
-//         model.set(key, fromGlobalId(model.get(key)).id);
-//       });
-//       model.$polluted.state = "key";
-//     } else {
-//       Object.keys(model.$polluted).forEach((key) => {
-//         model.set(key, toGlobalId(model.$polluted[key], model.get(key)));
-//       });
-//       model.$polluted.state = "key";
-//     }
-//   }
-// }
-
-export function createPollution(result, fk, targetName) {
-  const val = result.get(fk);
+export function createPollution(model, fk, targetName) {
+  const val = model.get(fk);
   if (val) {
-    const globalId = toGlobalId(targetName, result.get(fk));
-    result.set(fk, globalId);
-    if (!result.$polluted) {
-      result.$polluted = {};
-      result.$pollutedState = "global";
+    const globalId = toGlobalId(targetName, model.get(fk));
+    model.set(fk, globalId);
+    if (!model.$polluted) {
+      model.$polluted = {};
+      model.$pollutedState = "global";
     }
-    result.$polluted[fk] = targetName;
+    model.$polluted[fk] = targetName;
   }
-  return result;
+  return model;
 }
 
 export function getPollutedVar(model, targetKey, value) {
@@ -51,6 +35,13 @@ export function toGlobalIds(model) {
         model.set(key, toGlobalId(model.$polluted[key], model.get(key)));
       });
     }
+  } else {
+    const foreignKeys = getForeignKeysForModel(model);
+    foreignKeys.forEach((fk) => {
+      const assoc = getForeignKeyAssociation(model, fk);
+      const targetName = assoc.target.name;
+      return createPollution(model, fk, targetName);
+    });
   }
 }
 export function toForeignKeys(model) {
@@ -62,4 +53,17 @@ export function toForeignKeys(model) {
       model.$pollutedState = "key";
     }
   }
+}
+
+
+export function convertInputForModelToKeys(input, targetModel) {
+  const foreignKeys = getForeignKeysForModel(targetModel);
+  if (foreignKeys.length > 0) {
+    foreignKeys.forEach((fk) => {
+      if (input[fk] && typeof input[fk] === "string") {
+        input[fk] = fromGlobalId(input[fk]).id;
+      }
+    });
+  }
+  return input;
 }

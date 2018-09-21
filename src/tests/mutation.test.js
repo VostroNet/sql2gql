@@ -513,33 +513,58 @@ describe("mutations", () => {
     const instance = await createSqlInstance();
     const schema = await createSchema(instance);
     const mutation = `mutation {
-  models {
-    Task(create: {
-      name: "test",
-      item: { 
-        create: { 
-          name: "testitem"
-        }
-      }
-    }) {
-      id
-      item {
-        name
-      }
-      items {
-        edges {
-          node {
+      models {
+        Item(create: {
+          name: "test",
+          hasOne: {
+            create: { 
+              name: "testitem"
+            }
+          }
+        }) {
+          id
+          hasOne {
             id
+            name
+            relateId
           }
         }
       }
-    }
-  }
-}`;
+    }`;
     const queryResults = await graphql(schema, mutation);
     validateResult(queryResults);
-    expect(queryResults.data.models.Task.length).toEqual(1);
-    expect(queryResults.data.models.Task[0].item.name).toBeDefined();
+    expect(queryResults.data.models.Item.length).toEqual(1);
+    const item = queryResults.data.models.Item[0];
+    const {hasOne} = item;
+    expect(item.id).toEqual(hasOne.id);
   });
-
+  it("create complex object - belongsTo", async() => {
+    const instance = await createSqlInstance();
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {
+          name: "test",
+          belongsTo:{
+            create: { 
+              name: "testitem2"
+            }
+          }
+        }) {
+          id
+          belongsTo {
+            id
+            name
+          }
+          relateId
+        }
+      }
+    }`;
+    const queryResults = await graphql(schema, mutation);
+    validateResult(queryResults);
+    expect(queryResults.data.models.Item.length).toEqual(1);
+    const item = queryResults.data.models.Item[0];
+    const {belongsTo} = item;
+    expect(item.relateId).toEqual(belongsTo.id);
+  });
 });

@@ -15,6 +15,8 @@ var _node = require("graphql-relay/lib/node/node");
 
 var _pollution = require("../utils/pollution");
 
+var _sequelize = require("sequelize");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -125,23 +127,33 @@ function createBeforeAfter(model, options, hooks = {}) {
   };
 
   const targetAfter = (result, args, context, info) => {
-    // console.log("after", {result, args, context, info});
-    if (foreignKeys && result) {
-      foreignKeys.forEach(fk => {
-        const assoc = Object.keys(model.associations).filter(assocName => {
-          return model.associations[assocName].foreignKey === fk;
-        })[0];
-        const targetName = model.associations[assoc].target.name;
+    if (result) {
+      if (result instanceof _sequelize.Model) {
+        (0, _pollution.toGlobalIds)(result);
+      } else if (result.edges) {
+        // is a relationship response
+        //{ source, args, where, edges, pageInfo, fullCount }
+        result.edges.forEach(r => (0, _pollution.toGlobalIds)(r.node));
+      } else {
+        console.log("OTHER", result);
+      }
+    } // console.log("after", {result, args, context, info});
+    // if (foreignKeys && result) {
+    //   foreignKeys.forEach((fk) => {
+    //     const assoc = Object.keys(model.associations).filter((assocName) => {
+    //       return model.associations[assocName].foreignKey === fk;
+    //     })[0];
+    //     const targetName = model.associations[assoc].target.name;
+    //     if (result.edges) {
+    //       result.edges.forEach((e) => {
+    //         createPollution(e.node, fk, targetName);
+    //       });
+    //     } else {
+    //       createPollution(result, fk, targetName);
+    //     }
+    //   });
+    // }
 
-        if (result.edges) {
-          result.edges.forEach(e => {
-            (0, _pollution.createPollution)(e.node, fk, targetName);
-          });
-        } else {
-          (0, _pollution.createPollution)(result, fk, targetName);
-        }
-      });
-    }
 
     if (targetAfterFuncs.length === 0) {
       return result;

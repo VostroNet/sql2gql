@@ -184,6 +184,7 @@ function loadSchemas(schemas, sqlInstance, options = {}) {
 
     sqlInstance.define(schema.name, Object.assign({}, defaultAttr, schema.define), schemaOptions);
     sqlInstance.models[schema.name].$sqlgql = schema;
+    sqlInstance.models[schema.name].prototype.getOriginalModel = createBind(sqlInstance.models, schema.name);
 
     if (/^4/.test(_sequelize.default.version)) {
       // v4 compatibilty
@@ -253,5 +254,9 @@ function createRelationship(sqlInstance, targetModel, sourceModel, name, type, o
   }
 
   sqlInstance.models[targetModel] = model;
+}
+
+function createBind(o, k) {
+  return () => o[k];
 }
 //# sourceMappingURL=database.js.map

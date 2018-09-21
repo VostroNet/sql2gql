@@ -7,40 +7,28 @@ exports.createPollution = createPollution;
 exports.getPollutedVar = getPollutedVar;
 exports.toGlobalIds = toGlobalIds;
 exports.toForeignKeys = toForeignKeys;
+exports.convertInputForModelToKeys = convertInputForModelToKeys;
 
 var _node = require("graphql-relay/lib/node/node");
 
-// export function switchState(model) {
-//   if (model.$polluted) {
-//     if (model.$polluted.state === "global") {
-//       Object.keys(model.$polluted).forEach((key) => {
-//         model.set(key, fromGlobalId(model.get(key)).id);
-//       });
-//       model.$polluted.state = "key";
-//     } else {
-//       Object.keys(model.$polluted).forEach((key) => {
-//         model.set(key, toGlobalId(model.$polluted[key], model.get(key)));
-//       });
-//       model.$polluted.state = "key";
-//     }
-//   }
-// }
-function createPollution(result, fk, targetName) {
-  const val = result.get(fk);
+var _models = require("./models");
+
+function createPollution(model, fk, targetName) {
+  const val = model.get(fk);
 
   if (val) {
-    const globalId = (0, _node.toGlobalId)(targetName, result.get(fk));
-    result.set(fk, globalId);
+    const globalId = (0, _node.toGlobalId)(targetName, model.get(fk));
+    model.set(fk, globalId);
 
-    if (!result.$polluted) {
-      result.$polluted = {};
-      result.$pollutedState = "global";
+    if (!model.$polluted) {
+      model.$polluted = {};
+      model.$pollutedState = "global";
     }
 
-    result.$polluted[fk] = targetName;
+    model.$polluted[fk] = targetName;
   }
 
-  return result;
+  return model;
 }
 
 function getPollutedVar(model, targetKey, value) {
@@ -62,6 +50,13 @@ function toGlobalIds(model) {
         model.set(key, (0, _node.toGlobalId)(model.$polluted[key], model.get(key)));
       });
     }
+  } else {
+    const foreignKeys = (0, _models.getForeignKeysForModel)(model);
+    foreignKeys.forEach(fk => {
+      const assoc = (0, _models.getForeignKeyAssociation)(model, fk);
+      const targetName = assoc.target.name;
+      return createPollution(model, fk, targetName);
+    });
   }
 }
 
@@ -74,5 +69,19 @@ function toForeignKeys(model) {
       model.$pollutedState = "key";
     }
   }
+}
+
+function convertInputForModelToKeys(input, targetModel) {
+  const foreignKeys = (0, _models.getForeignKeysForModel)(targetModel);
+
+  if (foreignKeys.length > 0) {
+    foreignKeys.forEach(fk => {
+      if (input[fk] && typeof input[fk] === "string") {
+        input[fk] = (0, _node.fromGlobalId)(input[fk]).id;
+      }
+    });
+  }
+
+  return input;
 }
 //# sourceMappingURL=pollution.js.map

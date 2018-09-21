@@ -550,33 +550,63 @@ describe("mutations", () => {
     const instance = await (0, _utils.createSqlInstance)();
     const schema = await (0, _index.createSchema)(instance);
     const mutation = `mutation {
-  models {
-    Task(create: {
-      name: "test",
-      item: { 
-        create: { 
-          name: "testitem"
-        }
-      }
-    }) {
-      id
-      item {
-        name
-      }
-      items {
-        edges {
-          node {
+      models {
+        Item(create: {
+          name: "test",
+          hasOne: {
+            create: { 
+              name: "testitem"
+            }
+          }
+        }) {
+          id
+          hasOne {
             id
+            name
+            relateId
           }
         }
       }
-    }
-  }
-}`;
+    }`;
     const queryResults = await (0, _graphql.graphql)(schema, mutation);
     (0, _utils.validateResult)(queryResults);
-    (0, _expect.default)(queryResults.data.models.Task.length).toEqual(1);
-    (0, _expect.default)(queryResults.data.models.Task[0].item.name).toBeDefined();
+    (0, _expect.default)(queryResults.data.models.Item.length).toEqual(1);
+    const item = queryResults.data.models.Item[0];
+    const {
+      hasOne
+    } = item;
+    (0, _expect.default)(item.id).toEqual(hasOne.id);
+  });
+  it("create complex object - belongsTo", async () => {
+    const instance = await (0, _utils.createSqlInstance)();
+    const schema = await (0, _index.createSchema)(instance);
+    const mutation = `mutation {
+      models {
+        Item(create: {
+          name: "test",
+          belongsTo:{
+            create: { 
+              name: "testitem2"
+            }
+          }
+        }) {
+          id
+          belongsTo {
+            id
+            name
+          }
+          relateId
+        }
+      }
+    }`;
+    const queryResults = await (0, _graphql.graphql)(schema, mutation);
+    (0, _utils.validateResult)(queryResults);
+    (0, _expect.default)(queryResults.data.models.Item.length).toEqual(1);
+    const item = queryResults.data.models.Item[0];
+    const {
+      belongsTo
+    } = item;
+    (0, _expect.default)(item.relateId).toEqual(belongsTo.id);
   });
 });
 //# sourceMappingURL=mutation.test.js.map

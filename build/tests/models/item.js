@@ -31,6 +31,24 @@ var _default = {
     }
   },
   relationships: [{
+    type: "hasOne",
+    model: "Item",
+    name: "hasOne",
+    options: {
+      as: "hasOne",
+      foreignKey: "relateId",
+      sourceKey: "id"
+    }
+  }, {
+    type: "belongsTo",
+    model: "Item",
+    name: "belongsTo",
+    options: {
+      as: "belongsTo",
+      foreignKey: "relateId",
+      sourceKey: "id"
+    }
+  }, {
     type: "hasMany",
     model: "Item",
     name: "children",

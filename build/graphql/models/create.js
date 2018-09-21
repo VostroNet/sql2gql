@@ -13,8 +13,6 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _createBeforeAfter = _interopRequireDefault(require("./create-before-after"));
 
-var _node = require("graphql-relay/lib/node/node");
-
 var _processFk = _interopRequireDefault(require("../utils/process-fk"));
 
 var _pollution = require("../utils/pollution");
@@ -226,6 +224,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             },
 
             async before(findOptions, args, context, info) {
+              // toForeignKeys(info.source);
               const options = await before(findOptions, args, context, info);
               const {
                 source
@@ -243,9 +242,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
             after(result, args, context, info) {
               result.edges.forEach(e => {
-                const fk = relationship.rel.foreignKeyField;
-                const globalId = (0, _node.toGlobalId)(relationship.target, e.node.get(fk));
-                e.node.set(fk, globalId);
+                (0, _pollution.toGlobalIds)(e.node);
               });
               return after(result, args, context, info);
             }
@@ -387,10 +384,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     description: "",
 
     fields() {
-      // typeCollection[`${modelName}`].$sql2gql.fields = {
-      //   basic: basicFields(),
-      //   complex: complexFields(),
-      // };
       return Object.assign({}, basicFields(), complexFields());
     },
 

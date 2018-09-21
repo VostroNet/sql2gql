@@ -115,6 +115,7 @@ async function createSchema(sqlInstance, options = {}) {
       }),
 
       resolve() {
+        console.log("mutation resolution", arguments);
         return {};
       }
 
