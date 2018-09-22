@@ -12,8 +12,8 @@ export default {
     name: {type: Sequelize.STRING, allowNull: false},
   },
   relationships: [
-    {type: "hasOne", model: "Item", name: "hasOne", options: {as: "hasOne", foreignKey: "relateId", sourceKey: "id"}},
-    {type: "belongsTo", model: "Item", name: "belongsTo", options: {as: "belongsTo", foreignKey: "relateId", sourceKey: "id"}},
+    {type: "hasOne", model: "Item", name: "hasOne", options: {as: "hasOne", foreignKey: "hasOneId", sourceKey: "id"}},
+    {type: "belongsTo", model: "Item", name: "belongsTo", options: {as: "belongsTo", foreignKey: "belongsToId", sourceKey: "id"}},
     {type: "hasMany", model: "Item", name: "children", options: {as: "children", foreignKey: "parentId", sourceKey: "id"}},
     {type: "belongsTo", model: "Item", name: "parent", options: {as: "parent", foreignKey: "parentId", sourceKey: "id"}},
     {type: "belongsTo", model: "Task", name: "task", options: {as: "task", foreignKey: "taskId", sourceKey: "id"}},

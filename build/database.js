@@ -15,11 +15,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 if (global.Promise) {
   _sequelize.default.Promise = global.Promise;
-} // import {
-//   relay,
-// } from "graphql-sequelize";
-// const {sequelizeNodeInterface} = relay;
-
+}
 
 const log = (0, _logger.default)("sql2gql::database:");
 /**
@@ -86,8 +82,7 @@ function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, sche
         instance,
         options,
         hookName
-      }; // console.log("OUT", output);
-
+      };
       return pubsub.publish(subscriptionName, output);
     } catch (err) {
       log.error("error attempting to pubsub", {
@@ -115,8 +110,6 @@ function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, sche
 
 
 function loadSchemas(schemas, sqlInstance, options = {}) {
-  // const schemas = s.slice(0);
-  // console.log("calling loadSchemas");
   sqlInstance.$sqlgql = {};
   const {
     defaultAttr,

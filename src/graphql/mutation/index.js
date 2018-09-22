@@ -32,7 +32,8 @@ export default async function createMutationV3(models, keys, typeCollection, mut
           let results = [];
           if (args.create) {
             results = results.concat(await Promise.all(args.create.map(async(arg) => {
-              return funcs.create(source, {input: arg}, context, info);
+              const createResult = await funcs.create(source, {input: arg}, context, info);
+              return createResult;
             })));
           }
           if (args.update) {

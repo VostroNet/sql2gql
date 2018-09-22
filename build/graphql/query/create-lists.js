@@ -41,8 +41,7 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
             return;
           }
         }
-      } // let targetOpts = options[modelName];
-
+      }
 
       const {
         before,
@@ -68,15 +67,7 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
         },
         before,
         after
-      }); // fields[modelName] = {
-      //   type: new GraphQLList(typeCollection[modelName]),
-      //   args: defaultListArgs(),
-      //   resolve: resolver(models[modelName], {
-      //     before,
-      //     after,
-      //   }),
-      // };
-
+      });
       fields[modelName] = {
         type: c.connectionType,
         args: _objectSpread({}, c.connectionArgs, {

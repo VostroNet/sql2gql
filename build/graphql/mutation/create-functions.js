@@ -7,6 +7,7 @@ exports.onCreate = onCreate;
 exports.onUpdate = onUpdate;
 exports.onDelete = onDelete;
 exports.default = createFunctions;
+exports.convertInputForModelToKeys = convertInputForModelToKeys;
 
 var _graphql = require("graphql");
 
@@ -20,11 +21,9 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _node = require("graphql-relay/lib/node/node");
 
-var _pollution = require("../utils/pollution");
+var _models = require("../utils/models");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-// import {fromGlobalId} from "graphql-relay";
 
 /**
  * @function createFunctions
@@ -61,7 +60,7 @@ function onCreate(targetModel) {
       });
     }
 
-    (0, _pollution.convertInputForModelToKeys)(input, targetModel);
+    convertInputForModelToKeys(input, targetModel);
     let model = await targetModel.create(input, {
       context,
       rootValue: Object.assign({}, info.rootValue, {
@@ -69,7 +68,6 @@ function onCreate(targetModel) {
       }),
       transaction: (context || {}).transaction
     });
-    (0, _pollution.toGlobalIds)(model);
 
     if (modelDefinition.after) {
       return modelDefinition.after({
@@ -89,7 +87,6 @@ function onCreate(targetModel) {
 function onUpdate(targetModel) {
   const modelDefinition = (0, _getModelDef.default)(targetModel);
   return async (model, args, context, info) => {
-    // console.log("onUpdate - args", args, model);
     let input = args.input;
 
     if (!input) {
@@ -122,7 +119,7 @@ function onUpdate(targetModel) {
       });
     }
 
-    (0, _pollution.convertInputForModelToKeys)(input, targetModel);
+    convertInputForModelToKeys(input, targetModel);
     model = await model.update(input, {
       context,
       rootValue: Object.assign({}, info.rootValue, {
@@ -130,8 +127,6 @@ function onUpdate(targetModel) {
       }),
       transaction: (context || {}).transaction
     });
-    (0, _pollution.toForeignKeys)(model); // delete model.$polluted;
-    // delete model.$pollutedState;
 
     if (modelDefinition.after) {
       return modelDefinition.after({
@@ -207,13 +202,8 @@ async function createProcessRelationships(model, models) {
     } = args;
 
     if (model.relationships) {
-      if (source) {
-        (0, _pollution.toForeignKeys)(source);
-      }
-
       await Promise.all(Object.keys(model.relationships).map(async relName => {
         if (input[relName]) {
-          const output = [];
           const relationship = model.relationships[relName];
           const assoc = model.associations[relName];
           const modelDefinition = (0, _getModelDef.default)(models[relationship.source]);
@@ -233,8 +223,7 @@ async function createProcessRelationships(model, models) {
                     result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                     updateVars[assoc.foreignKey] = result[assoc.targetKey];
                     source = await source.update(updateVars, context);
-                    result = await modelDefinition.events.after(result, createArgs, context, info);
-                    output.push(result);
+                    await modelDefinition.events.after(result, createArgs, context, info);
                     break;
 
                   case "update":
@@ -244,7 +233,6 @@ async function createProcessRelationships(model, models) {
               break;
 
             case "hasOne":
-              //eslint-disable-line
               await Promise.all(Object.keys(input[relName]).map(async command => {
                 switch (command) {
                   case "create":
@@ -252,11 +240,7 @@ async function createProcessRelationships(model, models) {
                       input: Object.assign({}, input[relName].create)
                     };
                     createArgs.input[assoc.foreignKey] = (0, _node.toGlobalId)(relationship.source, source[assoc.sourceKey]);
-                    result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info); // updateVars[assoc.foreignKey] = result[assoc.targetKey];
-                    // source = await source.update(updateVars, context);
-                    // result = await modelDefinition.events.after(result, createArgs, context, info);
-
-                    output.push(result);
+                    await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                     break;
 
                   case "update":
@@ -279,9 +263,7 @@ async function createProcessRelationships(model, models) {
                           [assoc.foreignKey]: (0, _node.toGlobalId)(source.name, source.get(assoc.sourceKey))
                         })
                       };
-                      await modelDefinition.mutationFunctions.create(source, createArgs, context, info); // result = await modelDefinition.events.after(result, createArgs, context, info);
-                      // output.push(result);
-
+                      await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                       break;
 
                     case "update":
@@ -293,9 +275,7 @@ async function createProcessRelationships(model, models) {
                         },
                         input: item.update.input
                       };
-                      await modelDefinition.mutationFunctions.update(source, updateArgs, context, info); // result = await modelDefinition.events.after(result, createArgs, context, info);
-                      // output.push(result);
-
+                      await modelDefinition.mutationFunctions.update(source, updateArgs, context, info);
                       break;
                   }
                 }));
@@ -304,10 +284,6 @@ async function createProcessRelationships(model, models) {
           }
         }
       }));
-
-      if (source) {
-        (0, _pollution.toGlobalIds)(source);
-      }
     }
 
     return source;
@@ -366,7 +342,7 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       const source = await createFunc(model, args, context, info);
 
       if (source) {
-        await processRelationships(source, args, context, info); // toGlobalIds(source);
+        await processRelationships(source, args, context, info);
       }
 
       return source;
@@ -428,5 +404,19 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
   }
 
   return undefined;
+}
+
+function convertInputForModelToKeys(input, targetModel) {
+  const foreignKeys = (0, _models.getForeignKeysForModel)(targetModel);
+
+  if (foreignKeys.length > 0) {
+    foreignKeys.forEach(fk => {
+      if (input[fk] && typeof input[fk] === "string") {
+        input[fk] = (0, _node.fromGlobalId)(input[fk]).id;
+      }
+    });
+  }
+
+  return input;
 }
 //# sourceMappingURL=create-functions.js.map

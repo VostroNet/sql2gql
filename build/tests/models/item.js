@@ -36,7 +36,7 @@ var _default = {
     name: "hasOne",
     options: {
       as: "hasOne",
-      foreignKey: "relateId",
+      foreignKey: "hasOneId",
       sourceKey: "id"
     }
   }, {
@@ -45,7 +45,7 @@ var _default = {
     name: "belongsTo",
     options: {
       as: "belongsTo",
-      foreignKey: "relateId",
+      foreignKey: "belongsToId",
       sourceKey: "id"
     }
   }, {

@@ -28,7 +28,6 @@ export default async function createModelLists(models, modelNames, typeCollectio
           }
         }
       }
-      // let targetOpts = options[modelName];
       const {before, after} = createBeforeAfter(models[modelName], options);
       const def = getModelDefinition(models[modelName]);
       const c = sequelizeConnection({
@@ -47,16 +46,6 @@ export default async function createModelLists(models, modelNames, typeCollectio
         },
         before, after,
       });
-
-
-      // fields[modelName] = {
-      //   type: new GraphQLList(typeCollection[modelName]),
-      //   args: defaultListArgs(),
-      //   resolve: resolver(models[modelName], {
-      //     before,
-      //     after,
-      //   }),
-      // };
       fields[modelName] = {
         type: c.connectionType,
         args: {

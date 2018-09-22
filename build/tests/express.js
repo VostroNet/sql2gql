@@ -2,8 +2,6 @@
 
 var _express = _interopRequireDefault(require("express"));
 
-var _bodyParser = _interopRequireDefault(require("body-parser"));
-
 var _apolloServerExpress = require("apollo-server-express");
 
 var _utils = require("./utils");
@@ -12,7 +10,6 @@ var _index = require("../index");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// import graphqlExpress from "../express";
 const PORT = 3000;
 const app = (0, _express.default)();
 (async () => {

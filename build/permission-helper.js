@@ -10,7 +10,6 @@ var _deepmerge = _interopRequireDefault(require("deepmerge"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function validateKey(key, defaultDeny) {
-  // console.log("DEFAULT", !defaultDeny, key);
   if (key === "deny") {
     return false;
   }

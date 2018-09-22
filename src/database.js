@@ -3,11 +3,6 @@ if (global.Promise) {
   Sequelize.Promise = global.Promise;
 }
 
-// import {
-//   relay,
-// } from "graphql-sequelize";
-
-// const {sequelizeNodeInterface} = relay;
 import logger from "./utils/logger";
 
 const log = logger("sql2gql::database:");
@@ -59,7 +54,6 @@ export function createSubscriptionHook(schema, hookName, subscriptionName, pubsu
         }
       }
       output[subscriptionName] = {instance, options, hookName};
-      // console.log("OUT", output);
       return pubsub.publish(subscriptionName, output);
     } catch (err) {
       log.error("error attempting to pubsub", {err, subscriptionName, output});
@@ -79,8 +73,6 @@ export function createSubscriptionHook(schema, hookName, subscriptionName, pubsu
  * @param {Object} options
 */
 export function loadSchemas(schemas, sqlInstance, options = {}) {
-  // const schemas = s.slice(0);
-  // console.log("calling loadSchemas");
   sqlInstance.$sqlgql = {};
   const {defaultAttr, defaultModel} = options;
   let pubsub, subscriptionHooks;

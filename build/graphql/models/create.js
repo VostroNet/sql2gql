@@ -15,7 +15,9 @@ var _createBeforeAfter = _interopRequireDefault(require("./create-before-after")
 
 var _processFk = _interopRequireDefault(require("../utils/process-fk"));
 
-var _pollution = require("../utils/pollution");
+var _node = require("graphql-relay/lib/node/node");
+
+var _models = require("../utils/models");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -43,7 +45,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       const result = await options.permission.model(modelName);
 
       if (!result) {
-        // console.log("exluding", modelName);
         return undefined;
       }
     }
@@ -55,15 +56,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     after
   } = (0, _createBeforeAfter.default)(models[modelName], options); //eslint-disable-line
 
-  const modelDefinition = (0, _getModelDef.default)(model); // let resolve;
-  // if (modelDefinition.resolver) {
-  //   resolve = modelDefinition.resolver;
-  // } else {
-  //   resolve = resolver(model, {
-  //     before,
-  //     after,
-  //   });
-  // }
+  const modelDefinition = (0, _getModelDef.default)(model);
 
   function basicFields() {
     if (typeCollection[`${modelName}`].$sql2gql.fields.basic) {
@@ -83,9 +76,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       globalId: true //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
 
     });
-    const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
-      return !!model.fieldRawAttributesMap[k].references;
-    });
+    const foreignKeys = (0, _models.getForeignKeysForModel)(model);
 
     if (foreignKeys.length > 0) {
       foreignKeys.forEach(fk => {
@@ -93,11 +84,12 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
           return;
         }
 
-        if (model.fieldRawAttributesMap[fk].allowNull) {
-          fieldDefinitions[fk].type = _graphql.GraphQLString;
-        } else {
-          fieldDefinitions[fk].type = new _graphql.GraphQLNonNull(_graphql.GraphQLString);
-        }
+        const attr = model.fieldRawAttributesMap[fk];
+        fieldDefinitions[fk] = {
+          // description: 'The ID of an object',
+          type: attr.allowNull ? _graphql.GraphQLID : new _graphql.GraphQLNonNull(_graphql.GraphQLID),
+          resolve: createForeignKeyResolver(attr.Model.name, fk)
+        };
       });
     }
 
@@ -152,7 +144,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       if (typeCollection[modelName]) {
         Object.keys(models[modelName].relationships).forEach(relName => {
           let relationship = models[modelName].relationships[relName];
-          let targetType = typeCollection[relationship.source]; // let mutationFunction = mutationFunctions[relationship.source];
+          let targetType = typeCollection[relationship.source];
 
           if (!targetType) {
             return;
@@ -210,8 +202,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               name: `${modelName}${relName}OrderBy`,
               values: orderByValues
             }),
-            // edgeFields: def.edgeFields,
-            // connectionFields: def.connectionFields,
             where: (key, value, currentWhere) => {
               // for custom args other than connectionArgs return a sequelize where parameter
               if (key === "where") {
@@ -224,14 +214,13 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             },
 
             async before(findOptions, args, context, info) {
-              // toForeignKeys(info.source);
               const options = await before(findOptions, args, context, info);
               const {
                 source
               } = info;
               const model = models[modelName];
               const assoc = model.associations[relName];
-              const fk = (0, _pollution.getPollutedVar)(source, assoc.sourceKey, source.get(assoc.sourceKey));
+              const fk = source.get(assoc.sourceKey);
               options.where = {
                 $and: [{
                   [assoc.foreignKey]: fk
@@ -240,13 +229,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               return options;
             },
 
-            after(result, args, context, info) {
-              result.edges.forEach(e => {
-                (0, _pollution.toGlobalIds)(e.node);
-              });
-              return after(result, args, context, info);
-            }
-
+            after
           });
           let bc;
 
@@ -268,7 +251,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 },
 
                 before(findOptions, args, context, info) {
-                  // const {source} = info;
                   const model = models[modelName];
                   const assoc = model.associations[relName];
 
@@ -314,16 +296,8 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               fieldDefinitions[relName] = {
                 type: targetType,
                 resolve: (0, _graphqlSequelize.resolver)(relationship.rel, {
-                  before(findOptions, args, context, info) {
-                    (0, _pollution.toForeignKeys)(info.source);
-                    return before(findOptions, args, context, info);
-                  },
-
-                  after(result, args, context, info) {
-                    (0, _pollution.toGlobalIds)(info.source);
-                    return after(result, args, context, info);
-                  }
-
+                  before,
+                  after
                 })
               };
               break;
@@ -341,8 +315,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         const {
           type,
           args
-        } = instanceMethods[methodName]; // const {type, args} = instanceMethod;
-
+        } = instanceMethods[methodName];
         let targetType = type instanceof String || typeof type === "string" ? typeCollection[type] : type;
 
         if (!targetType) {
@@ -365,10 +338,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
           args,
 
           async resolve(source, args, context, info) {
-            (0, _pollution.toForeignKeys)(source);
-            const result = await (0, _processFk.default)(targetType, source[methodName], source, args, context, info);
-            (0, _pollution.toGlobalIds)(source);
-            return result; // return source[methodName].apply(source, [args, context, info]);
+            return (0, _processFk.default)(targetType, source[methodName], source, args, context, info);
           }
 
         };
@@ -387,10 +357,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       return Object.assign({}, basicFields(), complexFields());
     },
 
-    // resolve() {
-    //   console.log("args", arguments);
-    //   // return resolve.apply(undefined, args);
-    // },
     interfaces: [nodeInterface]
   });
   obj.$sql2gql = {
@@ -404,5 +370,15 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
   };
   typeCollection[`${modelName}[]`] = new _graphql.GraphQLList(obj);
   return obj;
+}
+
+function createForeignKeyResolver(name, primaryKeyAttribute) {
+  return function resolve(instance, args, context, info) {
+    if (instance[primaryKeyAttribute]) {
+      return (0, _node.toGlobalId)(name, instance[primaryKeyAttribute]);
+    }
+
+    return instance[primaryKeyAttribute];
+  };
 }
 //# sourceMappingURL=create.js.map

@@ -1,8 +1,5 @@
 import getModelDefinition from "../utils/get-model-def";
 import replaceIdDeep from "../utils/replace-id-deep";
-import events from "../events";
-import { toGlobalId } from "graphql-relay/lib/node/node";
-import {createPollution, toGlobalIds} from "../utils/pollution";
 import {Model} from "sequelize";
 
 /**
@@ -32,9 +29,6 @@ export default function createBeforeAfter(model, options, hooks = {}) {
   const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
     return !(!model.fieldRawAttributesMap[k].references);
   });
-  // targetBeforeFuncs.push(function(params, args, context, info) {
-
-  // });
 
   if (options.before) {
     targetBeforeFuncs.push(function(params, args, context, info) {
@@ -92,41 +86,6 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     return results;
   };
   const targetAfter = (result, args, context, info) => {
-    if (result) {
-      if (result instanceof Model) {
-        toGlobalIds(result);
-      } else if (result.edges) {
-        // is a relationship response
-        //{ source, args, where, edges, pageInfo, fullCount }
-        result.edges.forEach((r) => toGlobalIds(r.node));
-      }
-      else {
-        console.log("OTHER", result);
-      }
-    }
-
-
-
-
-    // console.log("after", {result, args, context, info});
-
-    // if (foreignKeys && result) {
-    //   foreignKeys.forEach((fk) => {
-    //     const assoc = Object.keys(model.associations).filter((assocName) => {
-    //       return model.associations[assocName].foreignKey === fk;
-    //     })[0];
-    //     const targetName = model.associations[assoc].target.name;
-    //     if (result.edges) {
-    //       result.edges.forEach((e) => {
-    //         createPollution(e.node, fk, targetName);
-    //       });
-    //     } else {
-    //       createPollution(result, fk, targetName);
-    //     }
-    //   });
-    // }
-
-
     if (targetAfterFuncs.length === 0) {
       return result;
     }

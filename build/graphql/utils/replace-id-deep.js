@@ -27,9 +27,7 @@ function replaceIdDeep(obj, keyMap) {
           m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
         } catch (e) {
           m[key] = obj[key]; //is not a global id
-        } // } else {
-        //   m[key] = obj[key];
-
+        }
       }
     } else {
       if (Array.isArray(obj[key])) {

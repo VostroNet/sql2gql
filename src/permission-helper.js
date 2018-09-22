@@ -1,10 +1,7 @@
 
 import deepmerge from "deepmerge";
 
-
-
 function validateKey(key, defaultDeny) {
-  // console.log("DEFAULT", !defaultDeny, key);
   if (key === "deny") {
     return false;
   }

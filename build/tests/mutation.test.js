@@ -247,12 +247,10 @@ describe("mutations", () => {
           }
         }
       }
-    }`); // console.log("queryResults", queryResults.data.models.Task);
-
+    }`);
     (0, _expect.default)(queryResults.data.models.Task.edges.length).toEqual(1);
   });
   it("classMethod", async () => {
-    // return expect(false).toEqual(true);
     const instance = await (0, _utils.createSqlInstance)();
     const {
       Task
@@ -563,7 +561,7 @@ describe("mutations", () => {
           hasOne {
             id
             name
-            relateId
+            hasOneId
           }
         }
       }
@@ -575,7 +573,7 @@ describe("mutations", () => {
     const {
       hasOne
     } = item;
-    (0, _expect.default)(item.id).toEqual(hasOne.id);
+    (0, _expect.default)(item.id).toEqual(hasOne.hasOneId);
   });
   it("create complex object - belongsTo", async () => {
     const instance = await (0, _utils.createSqlInstance)();
@@ -584,7 +582,7 @@ describe("mutations", () => {
       models {
         Item(create: {
           name: "test",
-          belongsTo:{
+          belongsTo: {
             create: { 
               name: "testitem2"
             }
@@ -595,7 +593,7 @@ describe("mutations", () => {
             id
             name
           }
-          relateId
+          belongsToId
         }
       }
     }`;
@@ -606,7 +604,7 @@ describe("mutations", () => {
     const {
       belongsTo
     } = item;
-    (0, _expect.default)(item.relateId).toEqual(belongsTo.id);
+    (0, _expect.default)(item.belongsToId).toEqual(belongsTo.id);
   });
 });
 //# sourceMappingURL=mutation.test.js.map

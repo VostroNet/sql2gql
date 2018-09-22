@@ -7,12 +7,12 @@ import {
   resolver,
   defaultListArgs,
 } from "graphql-sequelize";
-// import {fromGlobalId} from "graphql-relay";
+
 import createBeforeAfter from "../models/create-before-after";
 import events from "../events";
 import getModelDefinition from "../utils/get-model-def";
-import { toGlobalId } from "graphql-relay/lib/node/node";
-import { toForeignKeys, toGlobalIds, convertInputForModelToKeys } from "../utils/pollution";
+import {fromGlobalId, toGlobalId} from "graphql-relay/lib/node/node";
+import { getForeignKeysForModel } from "../utils/models";
 
 /**
  * @function createFunctions
@@ -46,7 +46,6 @@ export function onCreate(targetModel) {
     convertInputForModelToKeys(input, targetModel);
 
     let model = await targetModel.create(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
-    toGlobalIds(model);
     if (modelDefinition.after) {
       return modelDefinition.after({
         result: model, args, context, info,
@@ -61,7 +60,6 @@ export function onUpdate(targetModel) {
 
   const modelDefinition = getModelDefinition(targetModel);
   return async(model, args, context, info) => {
-    // console.log("onUpdate - args", args, model);
     let input = args.input;
     if (!input) {
       throw new Error("Unable to update field as no input was provided");
@@ -86,9 +84,6 @@ export function onUpdate(targetModel) {
     }
     convertInputForModelToKeys(input, targetModel);
     model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
-    toForeignKeys(model);
-    // delete model.$polluted;
-    // delete model.$pollutedState;
     if (modelDefinition.after) {
       return modelDefinition.after({
         result: model, args, context, info,
@@ -138,12 +133,8 @@ async function createProcessRelationships(model, models) {
   return async(source, args, context, info) => {
     const {input} = args;
     if (model.relationships) {
-      if (source) {
-        toForeignKeys(source);
-      }
       await Promise.all(Object.keys(model.relationships).map(async(relName) => {
         if (input[relName]) {
-          const output = [];
           const relationship = model.relationships[relName];
           const assoc = model.associations[relName];
           const modelDefinition = getModelDefinition(models[relationship.source]);
@@ -160,15 +151,14 @@ async function createProcessRelationships(model, models) {
                     result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                     updateVars[assoc.foreignKey] = result[assoc.targetKey];
                     source = await source.update(updateVars, context);
-                    result = await modelDefinition.events.after(result, createArgs, context, info);
-                    output.push(result);
+                    await modelDefinition.events.after(result, createArgs, context, info);
                     break;
                   case "update":
                     throw new Error("belongsTo update - Needs to be implemented properly");
                 }
               }));
               break;
-            case "hasOne": //eslint-disable-line
+            case "hasOne":
               await Promise.all(Object.keys(input[relName]).map(async command => {
                 switch (command) {
                   case "create":
@@ -176,11 +166,7 @@ async function createProcessRelationships(model, models) {
                       input: Object.assign({}, input[relName].create),
                     };
                     createArgs.input[assoc.foreignKey] = toGlobalId(relationship.source, source[assoc.sourceKey]);
-                    result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
-                    // updateVars[assoc.foreignKey] = result[assoc.targetKey];
-                    // source = await source.update(updateVars, context);
-                    // result = await modelDefinition.events.after(result, createArgs, context, info);
-                    output.push(result);
+                    await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                     break;
                   case "update":
                     throw new Error("hasOne update - Needs to be implemented properly");
@@ -196,12 +182,10 @@ async function createProcessRelationships(model, models) {
                     case "create":
                       createArgs = {
                         input: Object.assign({}, item.create, {
-                          [assoc.foreignKey]: toGlobalId(source.name, source.get(assoc.sourceKey))
+                          [assoc.foreignKey]: toGlobalId(source.name, source.get(assoc.sourceKey)),
                         }),
                       };
                       await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
-                      // result = await modelDefinition.events.after(result, createArgs, context, info);
-                      // output.push(result);
                       break;
                     case "update":
                       updateArgs = {
@@ -209,8 +193,6 @@ async function createProcessRelationships(model, models) {
                         input: item.update.input,
                       };
                       await modelDefinition.mutationFunctions.update(source, updateArgs, context, info);
-                      // result = await modelDefinition.events.after(result, createArgs, context, info);
-                      // output.push(result);
                       break;
                   }
                 }));
@@ -219,9 +201,6 @@ async function createProcessRelationships(model, models) {
           }
         }
       }));
-      if (source) {
-        toGlobalIds(source);
-      }
     }
     return source;
   };
@@ -262,7 +241,6 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       const source = await createFunc(model, args, context, info);
       if (source) {
         await processRelationships(source, args, context, info);
-        // toGlobalIds(source);
       }
       return source;
     };
@@ -307,4 +285,17 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
     return {funcs, fields};
   }
   return undefined;
+}
+
+
+export function convertInputForModelToKeys(input, targetModel) {
+  const foreignKeys = getForeignKeysForModel(targetModel);
+  if (foreignKeys.length > 0) {
+    foreignKeys.forEach((fk) => {
+      if (input[fk] && typeof input[fk] === "string") {
+        input[fk] = fromGlobalId(input[fk]).id;
+      }
+    });
+  }
+  return input;
 }

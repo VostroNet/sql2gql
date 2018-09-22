@@ -243,11 +243,9 @@ describe("mutations", () => {
         }
       }
     }`);
-    // console.log("queryResults", queryResults.data.models.Task);
     expect(queryResults.data.models.Task.edges.length).toEqual(1);
   });
   it("classMethod", async() => {
-    // return expect(false).toEqual(true);
     const instance = await createSqlInstance();
     const {Task} = instance.models;
     await Task.create({
@@ -526,7 +524,7 @@ describe("mutations", () => {
           hasOne {
             id
             name
-            relateId
+            hasOneId
           }
         }
       }
@@ -536,7 +534,7 @@ describe("mutations", () => {
     expect(queryResults.data.models.Item.length).toEqual(1);
     const item = queryResults.data.models.Item[0];
     const {hasOne} = item;
-    expect(item.id).toEqual(hasOne.id);
+    expect(item.id).toEqual(hasOne.hasOneId);
   });
   it("create complex object - belongsTo", async() => {
     const instance = await createSqlInstance();
@@ -545,7 +543,7 @@ describe("mutations", () => {
       models {
         Item(create: {
           name: "test",
-          belongsTo:{
+          belongsTo: {
             create: { 
               name: "testitem2"
             }
@@ -556,7 +554,7 @@ describe("mutations", () => {
             id
             name
           }
-          relateId
+          belongsToId
         }
       }
     }`;
@@ -565,6 +563,6 @@ describe("mutations", () => {
     expect(queryResults.data.models.Item.length).toEqual(1);
     const item = queryResults.data.models.Item[0];
     const {belongsTo} = item;
-    expect(item.relateId).toEqual(belongsTo.id);
+    expect(item.belongsToId).toEqual(belongsTo.id);
   });
 });

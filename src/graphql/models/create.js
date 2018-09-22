@@ -5,6 +5,7 @@ import {
   GraphQLNonNull,
   GraphQLString,
   GraphQLList,
+  GraphQLID,
 } from "graphql";
 import {
   resolver,
@@ -14,10 +15,9 @@ import {
 } from "graphql-sequelize";
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "./create-before-after";
-// import { toGlobalId, fromGlobalId } from "graphql-relay/lib/node/node";
 import processFK from "../utils/process-fk";
-
-import {toGlobalIds, toForeignKeys, getPollutedVar} from "../utils/pollution";
+import {toGlobalId} from "graphql-relay/lib/node/node";
+import {getForeignKeysForModel} from "../utils/models";
 
 
 const {sequelizeConnection} =  relay;
@@ -37,7 +37,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     if (options.permission.model) {
       const result = await options.permission.model(modelName);
       if (!result) {
-        // console.log("exluding", modelName);
         return undefined;
       }
     }
@@ -46,15 +45,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
   const {before, after} = createBeforeAfter(models[modelName], options); //eslint-disable-line
   const modelDefinition = getModelDefinition(model);
-  // let resolve;
-  // if (modelDefinition.resolver) {
-  //   resolve = modelDefinition.resolver;
-  // } else {
-  //   resolve = resolver(model, {
-  //     before,
-  //     after,
-  //   });
-  // }
+
   function basicFields() {
     if (typeCollection[`${modelName}`].$sql2gql.fields.basic) {
       return typeCollection[`${modelName}`].$sql2gql.fields.basic;
@@ -70,19 +61,18 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       exclude,
       globalId: true, //TODO: need to add check for primaryKey field as exclude ignores it if this is true.
     });
-    const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
-      return !(!model.fieldRawAttributesMap[k].references);
-    });
+    const foreignKeys = getForeignKeysForModel(model);
     if (foreignKeys.length > 0) {
       foreignKeys.forEach((fk) => {
         if (!fieldDefinitions[fk]) {
           return;
         }
-        if (model.fieldRawAttributesMap[fk].allowNull) {
-          fieldDefinitions[fk].type = GraphQLString;
-        } else {
-          fieldDefinitions[fk].type = new GraphQLNonNull(GraphQLString);
-        }
+        const attr = model.fieldRawAttributesMap[fk];
+        fieldDefinitions[fk] = {
+          // description: 'The ID of an object',
+          type: attr.allowNull ? GraphQLID : new GraphQLNonNull(GraphQLID),
+          resolve: createForeignKeyResolver(attr.Model.name, fk),
+        };
       });
     }
     if (modelDefinition.override) {
@@ -129,7 +119,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         Object.keys(models[modelName].relationships).forEach((relName) => {
           let relationship = models[modelName].relationships[relName];
           let targetType = typeCollection[relationship.source];
-          // let mutationFunction = mutationFunctions[relationship.source];
           if (!targetType) {
             return;
           }
@@ -166,8 +155,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               name: `${modelName}${relName}OrderBy`,
               values: orderByValues,
             }),
-            // edgeFields: def.edgeFields,
-            // connectionFields: def.connectionFields,
             where: (key, value, currentWhere) => {
               // for custom args other than connectionArgs return a sequelize where parameter
               if (key === "where") {
@@ -176,23 +163,17 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               return {[key]: value};
             },
             async before(findOptions, args, context, info) {
-              // toForeignKeys(info.source);
               const options = await before(findOptions, args, context, info);
               const {source} = info;
               const model = models[modelName];
               const assoc = model.associations[relName];
-              const fk = getPollutedVar(source, assoc.sourceKey, source.get(assoc.sourceKey));
+              const fk = source.get(assoc.sourceKey);
               options.where = {
                 $and: [{[assoc.foreignKey]: fk}, options.where],
               };
               return options;
             },
-            after(result, args, context, info) {
-              result.edges.forEach((e) => {
-                toGlobalIds(e.node);
-              });
-              return after(result, args, context, info);
-            },
+            after,
           });
           let bc;
           switch (relationship.type) {
@@ -208,7 +189,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   return {[key]: value};
                 },
                 before(findOptions, args, context, info) {
-                  // const {source} = info;
                   const model = models[modelName];
                   const assoc = model.associations[relName];
                   if (!findOptions.include) {
@@ -249,14 +229,8 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               fieldDefinitions[relName] = {
                 type: targetType,
                 resolve: resolver(relationship.rel, {
-                  before(findOptions, args, context, info) {
-                    toForeignKeys(info.source);
-                    return before(findOptions, args, context, info);
-                  },
-                  after(result, args, context, info) {
-                    toGlobalIds(info.source);
-                    return after(result, args, context, info);
-                  },
+                  before,
+                  after,
                 }),
               };
               break;
@@ -270,7 +244,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
       const instanceMethods = modelDefinition.expose.instanceMethods.query;
       Object.keys(instanceMethods).forEach((methodName) => {
         const {type, args} = instanceMethods[methodName];
-        // const {type, args} = instanceMethod;
         let targetType = (type instanceof String || typeof type === "string") ? typeCollection[type] : type;
         if (!targetType) {
           //target does not exist.. excluded from base types?
@@ -288,11 +261,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
           type: targetType,
           args,
           async resolve(source, args, context, info) {
-            toForeignKeys(source);
-            const result = await processFK(targetType, source[methodName], source, args, context, info);
-            toGlobalIds(source);
-            return result;
-            // return source[methodName].apply(source, [args, context, info]);
+            return processFK(targetType, source[methodName], source, args, context, info);
           },
         };
       });
@@ -306,10 +275,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     fields() {
       return Object.assign({}, basicFields(), complexFields());
     },
-    // resolve() {
-    //   console.log("args", arguments);
-    //   // return resolve.apply(undefined, args);
-    // },
     interfaces: [nodeInterface],
   });
   obj.$sql2gql = {
@@ -321,4 +286,13 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
   typeCollection[`${modelName}[]`] = new GraphQLList(obj);
   return obj;
+}
+
+function createForeignKeyResolver(name, primaryKeyAttribute) {
+  return function resolve(instance, args, context, info) {
+    if (instance[primaryKeyAttribute]) {
+      return toGlobalId(name, instance[primaryKeyAttribute]);
+    }
+    return instance[primaryKeyAttribute];
+  };
 }

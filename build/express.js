@@ -58,8 +58,7 @@ function graphqlExpress(options) {
 
       res.statusCode = error.statusCode;
       res.write(error.message);
-    } // console.log("writing end");
-
+    }
 
     if (!rollback) {
       await t.commit();
