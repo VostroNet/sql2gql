@@ -11,6 +11,8 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 
+var _graphql = require("graphql");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -54,7 +56,22 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
         target: models[modelName],
         orderBy: def.orderBy,
         edgeFields: def.edgeFields,
-        connectionFields: def.connectionFields,
+        connectionFields: Object.assign({}, {
+          total: {
+            type: _graphql.GraphQLInt,
+
+            resolve({
+              source
+            }) {
+              if (source) {
+                return (source.edges || []).length;
+              }
+
+              return 0;
+            }
+
+          }
+        }, def.connectionFields),
         where: (key, value, currentWhere) => {
           // for custom args other than connectionArgs return a sequelize where parameter
           if (key === "where") {

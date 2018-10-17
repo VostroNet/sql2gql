@@ -101,6 +101,35 @@ function createSubscriptionHook(schema, hookName, subscriptionName, pubsub, sche
   f.schemaName = schema.name;
   return f;
 }
+
+function createHookQueue(hookName, hooks, schemaName) {
+  return function (init, options, error) {
+    return hooks.reduce((promise, targetHooks) => {
+      return promise.then(async val => {
+        if (targetHooks[hookName]) {
+          const result = await targetHooks[hookName](val, options, error, schemaName, hookName);
+
+          if (result) {
+            return result;
+          }
+        }
+
+        return val;
+      });
+    }, Promise.resolve(init));
+  };
+}
+
+function generateHooks(hooks = [], schemaName) {
+  return hooks.reduce((o, h) => {
+    Object.keys(h).forEach(hookName => {
+      if (!o[hookName]) {
+        o[hookName] = createHookQueue(hookName, hooks, schemaName);
+      }
+    });
+    return o;
+  }, {});
+}
 /**
  * @function loadSchemas
  * @param {Object[]} schemas
@@ -140,6 +169,7 @@ function loadSchemas(schemas, sqlInstance, options = {}) {
       })
     });
     let schemaOptions = Object.assign({}, defaultModel, schema.options);
+    const hooks = [options.hooks || {}, schemaOptions.hooks || {}];
 
     if (pubsub) {
       //TODO Restrict or Enable hooks per model
@@ -152,13 +182,13 @@ function loadSchemas(schemas, sqlInstance, options = {}) {
       }, {
         names: {},
         hooks: {}
-      }); //TODO: //chain events rather then overwrite
-
-      schemaOptions = Object.assign(schemaOptions, {
-        hooks: Object.assign(schemaOptions.hooks || {}, schema.$subscriptions.hooks)
       });
+      hooks.push(schema.$subscriptions.hooks);
     }
 
+    schemaOptions = Object.assign(schemaOptions, {
+      hooks: generateHooks(hooks, schema.name)
+    });
     let {
       classMethods,
       instanceMethods

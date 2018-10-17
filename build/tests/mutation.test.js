@@ -443,13 +443,13 @@ describe("mutations", () => {
           },
 
           beforeUpdate(instance, options) {
-            (0, _expect.default)(false).toEqual(true, "beforeUpdate");
+            (0, _expect.default)(false).toEqual(true, "beforeUpdate"); // return instance;
           },
 
           beforeDestroy(instance, options) {
             (0, _expect.default)(options.rootValue).toBeDefined();
             (0, _expect.default)(options.rootValue.req).toEqual("exists", `beforeDestroy: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
-            return undefined;
+            return instance;
           }
 
         }

@@ -425,11 +425,12 @@ describe("mutations", () => {
           },
           beforeUpdate(instance, options) {
             expect(false).toEqual(true, "beforeUpdate");
+            // return instance;
           },
           beforeDestroy(instance, options) {
             expect(options.rootValue).toBeDefined();
             expect(options.rootValue.req).toEqual("exists", `beforeDestroy: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
-            return undefined;
+            return instance;
           },
         },
       },

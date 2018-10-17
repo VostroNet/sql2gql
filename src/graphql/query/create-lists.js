@@ -5,6 +5,9 @@ import {
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "../models/create-before-after";
 
+
+import {GraphQLInt} from "graphql";
+
 /**
  * @function createModelLists
  * @param {Object} models
@@ -36,7 +39,17 @@ export default async function createModelLists(models, modelNames, typeCollectio
         target: models[modelName],
         orderBy: def.orderBy,
         edgeFields: def.edgeFields,
-        connectionFields: def.connectionFields,
+        connectionFields: Object.assign({}, {
+          total: {
+            type: GraphQLInt,
+            resolve({source}) {
+              if (source) {
+                return (source.edges || []).length;
+              }
+              return 0;
+            }
+          }
+        }, def.connectionFields),
         where: (key, value, currentWhere) => {
           // for custom args other than connectionArgs return a sequelize where parameter
           if (key === "where") {
