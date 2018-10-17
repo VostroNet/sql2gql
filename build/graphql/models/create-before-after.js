@@ -9,8 +9,6 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _replaceIdDeep = _interopRequireDefault(require("../utils/replace-id-deep"));
 
-var _sequelize = require("sequelize");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**

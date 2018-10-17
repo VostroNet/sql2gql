@@ -1,5 +1,5 @@
 import {
-  GraphQLObjectType, GraphQLList, GraphQLNonNull,
+  GraphQLObjectType,
 } from "graphql";
 import getModelDefinition from "../utils/get-model-def";
 import processFK from "../utils/process-fk";

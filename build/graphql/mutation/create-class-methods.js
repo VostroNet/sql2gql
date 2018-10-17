@@ -9,11 +9,12 @@ var _graphql = require("graphql");
 
 var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
-var _definition = require("graphql/type/definition");
-
 var _processFk = _interopRequireDefault(require("../utils/process-fk"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// import { GraphQLList } from "graphql/type/definition";
+// import { GraphQLNonNull } from "graphql/type/definition";
 
 /**
  * @function createMutationFunctions

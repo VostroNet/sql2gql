@@ -1,6 +1,5 @@
 import expect from "expect";
 import {graphql} from "graphql";
-import uuid from "uuid";
 import {createSqlInstance, validateResult} from "./utils";
 import {createSchema} from "../index";
 

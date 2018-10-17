@@ -1,6 +1,5 @@
 import getModelDefinition from "../utils/get-model-def";
 import replaceIdDeep from "../utils/replace-id-deep";
-import {Model} from "sequelize";
 
 /**
  * @typedef {Object} CreateBeforeAfterOutput

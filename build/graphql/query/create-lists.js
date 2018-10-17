@@ -50,24 +50,46 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
         after
       } = (0, _createBeforeAfter.default)(models[modelName], options);
       const def = (0, _getModelDef.default)(models[modelName]);
+      const {
+        basic
+      } = typeCollection[modelName].$sql2gql.fields;
+      const values = Object.keys(basic).reduce((o, key) => {
+        o[`${key}ASC`] = {
+          value: [key, "ASC"]
+        };
+        o[`${key}DESC`] = {
+          value: [key, "DESC"]
+        };
+        return o;
+      }, {});
+      const orderBy = new _graphql.GraphQLEnumType({
+        name: `${modelName}OrderBy`,
+        values: Object.assign({}, values, def.orderBy)
+      });
       const c = sequelizeConnection({
         name: `${modelName}`,
         nodeType: typeCollection[modelName],
         target: models[modelName],
-        orderBy: def.orderBy,
+        orderBy: orderBy,
         edgeFields: def.edgeFields,
         connectionFields: Object.assign({}, {
           total: {
             type: _graphql.GraphQLInt,
 
-            resolve({
-              source
-            }) {
-              if (source) {
-                return (source.edges || []).length;
+            async resolve(source, a, context, info) {
+              const {
+                args
+              } = source;
+
+              if (args.first || args.last) {
+                return models[modelName].count({
+                  where: args.where,
+                  context,
+                  info
+                });
               }
 
-              return 0;
+              return (source.edges || []).length;
             }
 
           }

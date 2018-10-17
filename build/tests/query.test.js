@@ -4,8 +4,6 @@ var _expect = _interopRequireDefault(require("expect"));
 
 var _graphql = require("graphql");
 
-var _uuid = _interopRequireDefault(require("uuid"));
-
 var _utils = require("./utils");
 
 var _index = require("../index");

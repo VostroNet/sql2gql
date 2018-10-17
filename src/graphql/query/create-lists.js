@@ -6,7 +6,7 @@ import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "../models/create-before-after";
 
 
-import {GraphQLInt} from "graphql";
+import {GraphQLInt, GraphQLEnumType} from "graphql";
 
 /**
  * @function createModelLists
@@ -33,22 +33,39 @@ export default async function createModelLists(models, modelNames, typeCollectio
       }
       const {before, after} = createBeforeAfter(models[modelName], options);
       const def = getModelDefinition(models[modelName]);
+      const {basic} = typeCollection[modelName].$sql2gql.fields;
+
+      const values = Object.keys(basic).reduce((o, key) => {
+        o[`${key}ASC`] = {
+          value: [key, "ASC"],
+        };
+        o[`${key}DESC`] = {
+          value: [key, "DESC"],
+        };
+        return o;
+      }, {});
+      const orderBy = new GraphQLEnumType({
+        name: `${modelName}OrderBy`,
+        values: Object.assign({}, values, def.orderBy),
+      });
+
       const c = sequelizeConnection({
         name: `${modelName}`,
         nodeType: typeCollection[modelName],
         target: models[modelName],
-        orderBy: def.orderBy,
+        orderBy: orderBy,
         edgeFields: def.edgeFields,
         connectionFields: Object.assign({}, {
           total: {
             type: GraphQLInt,
-            resolve({source}) {
-              if (source) {
-                return (source.edges || []).length;
+            async resolve(source, a, context, info) {
+              const {args} = source;
+              if (args.first || args.last) {
+                return models[modelName].count({where: args.where, context, info});
               }
-              return 0;
-            }
-          }
+              return (source.edges || []).length;
+            },
+          },
         }, def.connectionFields),
         where: (key, value, currentWhere) => {
           // for custom args other than connectionArgs return a sequelize where parameter

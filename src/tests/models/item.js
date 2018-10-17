@@ -1,13 +1,13 @@
 import Sequelize from "sequelize";
-import {GraphQLID} from "graphql";
-import {toGlobalId} from "graphql-relay/lib/node/node";
+// import {GraphQLID} from "graphql";
+// import {toGlobalId} from "graphql-relay/lib/node/node";
 
 export default {
   name: "Item",
   tableName: "items",
   define: {
     id: {type: Sequelize.UUID, allowNull: false, unique: true, primaryKey: true,
-      defaultValue: Sequelize.UUIDV4// Sequelize.literal("(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))"),
+      defaultValue: Sequelize.UUIDV4, // Sequelize.literal("(lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6))))"),
     },
     name: {type: Sequelize.STRING, allowNull: false},
   },

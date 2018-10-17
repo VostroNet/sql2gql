@@ -2,8 +2,8 @@ import {
   GraphQLObjectType,
 } from "graphql";
 import getModelDefinition from "../utils/get-model-def";
-import { GraphQLList } from "graphql/type/definition";
-import { GraphQLNonNull } from "graphql/type/definition";
+// import { GraphQLList } from "graphql/type/definition";
+// import { GraphQLNonNull } from "graphql/type/definition";
 import processFK from "../utils/process-fk";
 
 /**

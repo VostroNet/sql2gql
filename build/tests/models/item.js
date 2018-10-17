@@ -7,12 +7,10 @@ exports.default = void 0;
 
 var _sequelize = _interopRequireDefault(require("sequelize"));
 
-var _graphql = require("graphql");
-
-var _node = require("graphql-relay/lib/node/node");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// import {GraphQLID} from "graphql";
+// import {toGlobalId} from "graphql-relay/lib/node/node";
 var _default = {
   name: "Item",
   tableName: "items",
