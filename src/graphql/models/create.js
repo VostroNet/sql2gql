@@ -5,6 +5,7 @@ import {
   GraphQLNonNull,
   GraphQLList,
   GraphQLID,
+  GraphQLInt,
 } from "graphql";
 import {
   resolver,
@@ -118,6 +119,8 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         Object.keys(models[modelName].relationships).forEach((relName) => {
           let relationship = models[modelName].relationships[relName];
           let targetType = typeCollection[relationship.source];
+          const model = models[modelName];
+          const assoc = model.associations[relName];
           if (!targetType) {
             return;
           }
@@ -133,6 +136,8 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             throw `targetType ${targetType} not defined for relationship`;
           }
           const modelDefinition = getModelDefinition(models[targetType.name]);
+
+          //TODO change this to read the complex and basic fields, this goes around permissions
           const orderByValues = Object.keys(modelDefinition.define).reduce((obj, field) => {
             return Object.assign({}, obj, {
               [`${field}Asc`]: {value: [field, "ASC"]},
@@ -164,8 +169,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             async before(findOptions, args, context, info) {
               const options = await before(findOptions, args, context, info);
               const {source} = info;
-              const model = models[modelName];
-              const assoc = model.associations[relName];
+
               const fk = source.get(assoc.sourceKey);
               options.where = {
                 $and: [{[assoc.foreignKey]: fk}, options.where],
@@ -181,6 +185,14 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 name: `${modelName}${relName}`,
                 nodeType: targetType,
                 target: relationship.rel,
+                connectionFields: {
+                  total: {
+                    type: GraphQLInt,
+                    async resolve({source}, args, context, info) {
+                      return source[assoc.accessors.count].apply(source, [{where: args.where, context, info}]);
+                    },
+                  },
+                },
                 where: (key, value, currentWhere) => {
                   if (key === "where") {
                     return value;

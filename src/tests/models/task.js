@@ -110,6 +110,14 @@ export default {
     options: {
       foreignKey: "taskId",
     },
+  }, {
+    type: "belongsToMany",
+    model: "Item",
+    name: "btmItems",
+    options: {
+      through: "btm-tasks",
+      foreignKey: "taskId",
+    },
   }],
   expose: {
     instanceMethods: {

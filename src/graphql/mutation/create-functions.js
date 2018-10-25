@@ -8,6 +8,8 @@ import {
   defaultListArgs,
 } from "graphql-sequelize";
 
+import waterfall from "../utils/waterfall";
+
 import createBeforeAfter from "../models/create-before-after";
 import events from "../events";
 import getModelDefinition from "../utils/get-model-def";
@@ -60,38 +62,43 @@ export function onUpdate(targetModel) {
 
   const modelDefinition = getModelDefinition(targetModel);
   return async(model, args, context, info) => {
-    let input = args.input;
-    if (!input) {
-      throw new Error("Unable to update field as no input was provided");
-    }
-    if (modelDefinition.override) {
-      input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
-        if (modelDefinition.override[fieldName].input) {
-          const testField = modelDefinition.override[fieldName].input(data[fieldName], args, context, info, model);
-          if (testField !== undefined) {
-            data[fieldName] = testField;
+    try {
+      let input = args.input;
+      if (!input) {
+        throw new Error("Unable to update field as no input was provided");
+      }
+      if (modelDefinition.override) {
+        input = Object.keys(modelDefinition.override).reduce((data, fieldName) => {
+          if (modelDefinition.override[fieldName].input) {
+            const testField = modelDefinition.override[fieldName].input(data[fieldName], args, context, info, model);
+            if (testField !== undefined) {
+              data[fieldName] = testField;
+            }
           }
-        }
-        return data;
-      }, input);
+          return data;
+        }, input);
+      }
+      if (modelDefinition.before) {
+        input = await modelDefinition.before({
+          params: input, args, context, info,
+          model, modelDefinition,
+          type: events.MUTATION_UPDATE,
+        });
+      }
+      convertInputForModelToKeys(input, targetModel);
+      model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
+      if (modelDefinition.after) {
+        return modelDefinition.after({
+          result: model, args, context, info,
+          modelDefinition,
+          type: events.MUTATION_UPDATE,
+        });
+      }
+      return model;
+    } catch(err) {
+      console.log("err", err, err.stack);
     }
-    if (modelDefinition.before) {
-      input = await modelDefinition.before({
-        params: input, args, context, info,
-        model, modelDefinition,
-        type: events.MUTATION_UPDATE,
-      });
-    }
-    convertInputForModelToKeys(input, targetModel);
-    model = await model.update(input, {context, rootValue: Object.assign({}, info.rootValue, {args}), transaction: (context || {}).transaction});
-    if (modelDefinition.after) {
-      return modelDefinition.after({
-        result: model, args, context, info,
-        modelDefinition,
-        type: events.MUTATION_UPDATE,
-      });
-    }
-    return model;
+    return undefined;
   };
 }
 export function onDelete(targetModel) {
@@ -133,7 +140,7 @@ async function createProcessRelationships(model, models) {
   return async(source, args, context, info) => {
     const {input} = args;
     if (model.relationships) {
-      await Promise.all(Object.keys(model.relationships).map(async(relName) => {
+      await waterfall(Object.keys(model.relationships), async(relName) => {
         if (input[relName]) {
           const relationship = model.relationships[relName];
           const assoc = model.associations[relName];
@@ -142,7 +149,7 @@ async function createProcessRelationships(model, models) {
 
           switch (relationship.type) {
             case "belongsTo":
-              await Promise.all(Object.keys(input[relName]).map(async command => {
+              await waterfall(Object.keys(input[relName]), async(command) => {
                 switch (command) {
                   case "create":
                     createArgs = {
@@ -156,10 +163,10 @@ async function createProcessRelationships(model, models) {
                   case "update":
                     throw new Error("belongsTo update - Needs to be implemented properly");
                 }
-              }));
+              });
               break;
             case "hasOne":
-              await Promise.all(Object.keys(input[relName]).map(async command => {
+              await waterfall(Object.keys(input[relName]), async(command) => {
                 switch (command) {
                   case "create":
                     createArgs = {
@@ -171,36 +178,68 @@ async function createProcessRelationships(model, models) {
                   case "update":
                     throw new Error("hasOne update - Needs to be implemented properly");
                 }
-              }));
+              });
               break;
             case "belongsToMany": //eslint-disable-line
-              throw new Error("belongsToMany - Needs to be implemented properly");
-            case "hasMany":
-              await Promise.all(input[relName].map(async(item) => {
-                await Promise.all(Object.keys(item).map(async(command) => {
+              await waterfall(input[relName], (commands) => {
+                return waterfall(Object.keys(commands), (command) => {
                   switch (command) {
                     case "create":
-                      createArgs = {
-                        input: Object.assign({}, item.create, {
-                          [assoc.foreignKey]: toGlobalId(source.name, source.get(assoc.sourceKey)),
-                        }),
-                      };
-                      await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
-                      break;
+                      return waterfall(commands.create, async(action) => {
+                        const createArgs = {
+                          input: Object.assign({}, action),
+                        };
+                        let models = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
+                        return source[assoc.accessors.add].apply(source, [
+                          models,
+                          {context},
+                        ]);
+
+                      });
                     case "update":
-                      updateArgs = {
-                        where: {and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, item.update.where]},
-                        input: item.update.input,
-                      };
-                      await modelDefinition.mutationFunctions.update(source, updateArgs, context, info);
-                      break;
+                      return waterfall(commands.update, async(action) => {
+                        const models = await source[assoc.accessors.get]({
+                          where: action.where, context,
+                        });
+                        return waterfall(models, (model) => {
+                          return modelDefinition.mutationFunctions.updateSingle(model, {
+                            input: action.input,
+                          }, context, info);
+                        });
+                      });
                   }
-                }));
-              }));
+                  return undefined;
+                });
+              });
+              break;
+            case "hasMany":
+              await waterfall(input[relName], (commands) => {
+                return waterfall(Object.keys(commands), (command) => {
+                  return waterfall(commands[command], async(action) => {
+                    switch (command) {
+                      case "create":
+                        createArgs = {
+                          input: Object.assign({}, action, {
+                            [assoc.foreignKey]: toGlobalId(source.name, source.get(assoc.sourceKey)),
+                          }),
+                        };
+                        await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
+                        break;
+                      case "update":
+                        updateArgs = {
+                          where: {and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, action.where]},
+                          input: action.input,
+                        };
+                        await modelDefinition.mutationFunctions.update(source, updateArgs, context, info);
+                        break;
+                    }
+                  });
+                });
+              });
               break;
           }
         }
-      }));
+      });
     }
     return source;
   };
@@ -263,6 +302,10 @@ async function createFunctionForModel(modelName, models, mutationInputTypes, opt
       },
       after: afterUpdateList,
     });
+    funcs.updateSingle = async(source, args, context, info) => {
+      const arr = await before([source], args, context, info);
+      return afterUpdateList(arr, args, context, info);
+    };
   }
 
   if (deleteResult) {

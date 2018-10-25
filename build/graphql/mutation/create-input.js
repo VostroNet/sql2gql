@@ -151,30 +151,47 @@ async function createMutationInputs(models, keys, typeCollection, options) {
           }
 
           if (targetType) {
+            let createType, updateType;
+            const createInput = new _graphql.GraphQLInputObjectType({
+              name: `${sourceType.required.name}${relName}Create`,
+              fields: targetType.required.fields
+            });
+            const updateInput = new _graphql.GraphQLInputObjectType({
+              name: `${sourceType.optional.name}${relName}Update`,
+              fields: {
+                where: {
+                  type: _jsonType.default
+                },
+                input: {
+                  type: new _graphql.GraphQLInputObjectType({
+                    name: `${sourceType.optional.name}${relName}UpdateInput`,
+                    fields: targetType.optional.fields
+                  })
+                }
+              }
+            });
+
+            switch (relationship.type) {
+              case "hasMany":
+              case "belongsToMany":
+                createType = new _graphql.GraphQLList(createInput);
+                updateType = new _graphql.GraphQLList(updateInput);
+                break;
+
+              default:
+                createType = createInput;
+                updateType = updateInput;
+                break;
+            }
+
             const input = new _graphql.GraphQLInputObjectType({
               name: `${sourceType.required.name}${relName}`,
               fields: {
                 create: {
-                  type: new _graphql.GraphQLInputObjectType({
-                    name: `${sourceType.required.name}${relName}Create`,
-                    fields: targetType.required.fields
-                  })
+                  type: createType
                 },
                 update: {
-                  type: new _graphql.GraphQLInputObjectType({
-                    name: `${sourceType.optional.name}${relName}Update`,
-                    fields: {
-                      where: {
-                        type: _jsonType.default
-                      },
-                      input: {
-                        type: new _graphql.GraphQLInputObjectType({
-                          name: `${sourceType.optional.name}${relName}UpdateInput`,
-                          fields: targetType.optional.fields
-                        })
-                      }
-                    }
-                  })
+                  type: updateType
                 }
               }
             });

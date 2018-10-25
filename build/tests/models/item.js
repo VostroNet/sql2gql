@@ -73,6 +73,14 @@ var _default = {
       foreignKey: "taskId",
       sourceKey: "id"
     }
+  }, {
+    type: "belongsToMany",
+    model: "Task",
+    name: "btmTasks",
+    options: {
+      through: "btm-tasks",
+      foreignKey: "itemId"
+    }
   }],
   options: {
     tableName: "items",

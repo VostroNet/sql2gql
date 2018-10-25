@@ -1,6 +1,6 @@
 {
   "name": "sql2gql",
-  "version": "3.0.0-alpha9",
+  "version": "3.0.0-alpha10",
   "description": "Two way Sequelize to GraphQL bridge, extending out graphql-sequelize",
   "main": "build/index.js",
   "scripts": {
@@ -26,6 +26,7 @@
     "build/graphql/utils/replace-id-deep.js",
     "build/graphql/utils/process-fk.js",
     "build/graphql/utils/models.js",
+    "build/graphql/utils/waterfall.js",
     "build/graphql/events.js",
     "build/graphql/index.js",
     "build/graphql/subscriptions.js",

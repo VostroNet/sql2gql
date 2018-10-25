@@ -17,6 +17,15 @@ export default {
     {type: "hasMany", model: "Item", name: "children", options: {as: "children", foreignKey: "parentId", sourceKey: "id"}},
     {type: "belongsTo", model: "Item", name: "parent", options: {as: "parent", foreignKey: "parentId", sourceKey: "id"}},
     {type: "belongsTo", model: "Task", name: "task", options: {as: "task", foreignKey: "taskId", sourceKey: "id"}},
+    {
+      type: "belongsToMany",
+      model: "Task",
+      name: "btmTasks",
+      options: {
+        through: "btm-tasks",
+        foreignKey: "itemId",
+      },
+    }
   ],
   options: {
     tableName: "items",
