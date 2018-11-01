@@ -38,7 +38,7 @@ export default async function createModelLists(models, modelNames, typeCollectio
       const {before, after} = createBeforeAfter(models[modelName], options);
       const def = getModelDefinition(models[modelName]);
       const basicFields = typeCollection[modelName].$sql2gql.basicFields();
-      const relationMap = def.relationships.reduce((o, r) => {
+      const relationMap = (def.relationships || []).reduce((o, r) => {
         o[r.name] = r.model;
         return o;
       }, {});
@@ -133,12 +133,14 @@ export default async function createModelLists(models, modelNames, typeCollectio
           where: {
             type: JSONType.default,
           },
-          include: (include) ? {type: include} : undefined,
         },
         async resolve(source, args, context, info) {
           return c.resolve(source, args, context, info);
         },
       };
+      if (include) {
+        fields[modelName].args.include = {type: include};
+      }
     }
   }));
   return fields;

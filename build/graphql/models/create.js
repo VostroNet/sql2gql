@@ -373,10 +373,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 args: _objectSpread({}, bc.connectionArgs, {
                   where: {
                     type: _graphqlSequelize.JSONType.default
-                  },
-                  include: include ? {
-                    type: include
-                  } : undefined
+                  }
                 }),
                 resolve: bc.resolve
               };
@@ -388,10 +385,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 args: _objectSpread({}, conn.connectionArgs, {
                   where: {
                     type: _graphqlSequelize.JSONType.default
-                  },
-                  include: include ? {
-                    type: include
-                  } : undefined
+                  }
                 }),
                 resolve: conn.resolve
               };
@@ -411,6 +405,12 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
 
             default:
               throw "Unhandled Relationship type";
+          }
+
+          if (include && fieldDefinitions[relName].args) {
+            fieldDefinitions[relName].args.include = {
+              type: include
+            };
           }
         });
       }

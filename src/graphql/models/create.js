@@ -299,7 +299,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   where: {
                     type: JSONType.default,
                   },
-                  include: (include) ? {type: include} : undefined,
                 },
                 resolve: bc.resolve,
               };
@@ -312,7 +311,6 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   where: {
                     type: JSONType.default,
                   },
-                  include: (include) ? {type: include} : undefined,
                 },
                 resolve: conn.resolve,
               };
@@ -329,6 +327,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               break;
             default:
               throw "Unhandled Relationship type";
+          }
+
+          if (include && fieldDefinitions[relName].args) {
+            fieldDefinitions[relName].args.include = {type: include};
           }
         });
       }

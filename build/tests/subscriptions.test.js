@@ -164,6 +164,7 @@ describe("subscriptions", () => {
       (0, _expect.default)((0, _graphqlRelay.fromGlobalId)(gqlResult.afterCreateTask.id).id).toEqual("1");
     } catch (er) {
       console.log("BUGFIX#12 - err", er);
+      throw er;
     }
   });
 });

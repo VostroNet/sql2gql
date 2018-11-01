@@ -53,7 +53,7 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
       } = (0, _createBeforeAfter.default)(models[modelName], options);
       const def = (0, _getModelDef.default)(models[modelName]);
       const basicFields = typeCollection[modelName].$sql2gql.basicFields();
-      const relationMap = def.relationships.reduce((o, r) => {
+      const relationMap = (def.relationships || []).reduce((o, r) => {
         o[r.name] = r.model;
         return o;
       }, {});
@@ -169,10 +169,7 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
         args: _objectSpread({}, c.connectionArgs, {
           where: {
             type: _graphqlSequelize.JSONType.default
-          },
-          include: include ? {
-            type: include
-          } : undefined
+          }
         }),
 
         async resolve(source, args, context, info) {
@@ -180,6 +177,12 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
         }
 
       };
+
+      if (include) {
+        fields[modelName].args.include = {
+          type: include
+        };
+      }
     }
   }));
   return fields;

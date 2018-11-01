@@ -127,6 +127,7 @@ describe("subscriptions", () => {
 
     } catch (er) {
       console.log("BUGFIX#12 - err", er);
+      throw er;
     }
   });
 });

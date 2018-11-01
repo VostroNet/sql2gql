@@ -162,7 +162,7 @@ describe("queries", () => {
       }),
     ]);
     const schema = await createSchema(instance);
-    const result = await graphql(schema, "query { models { Task { edges { node { id, name, items(orderBy: idAsc) {edges {node{id, name}}} } } } } }");
+    const result = await graphql(schema, "query { models { Task { edges { node { id, name, items(orderBy: idASC) {edges {node{id, name}}} } } } } }");
     validateResult(result);
     expect(result.data.models.Task.edges[0].node.name).toEqual("task1");
     expect(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
@@ -189,7 +189,7 @@ describe("queries", () => {
       }),
     ]);
     const schema = await createSchema(instance);
-    const result = await graphql(schema, "query { models { Task { edges { node { id, name, items(orderBy: idDesc) {edges {node{id, name}}} } } } } }");
+    const result = await graphql(schema, "query { models { Task { edges { node { id, name, items(orderBy: idDESC) {edges {node{id, name}}} } } } } }");
     validateResult(result);
     expect(result.data.models.Task.edges[0].node.name).toEqual("task1");
     expect(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
@@ -204,15 +204,15 @@ describe("queries", () => {
     const enumValues = result.data.__type.enumValues.map(x => x.name);// eslint-disable-line
 
     Object.keys(fields).map((field) => {
-      expect(enumValues).toContain(`${field}Asc`);
-      expect(enumValues).toContain(`${field}Desc`);
+      expect(enumValues).toContain(`${field}ASC`);
+      expect(enumValues).toContain(`${field}DESC`);
     });
-    expect(enumValues).toContain("createdAtAsc");
-    expect(enumValues).toContain("createdAtDesc");
-    expect(enumValues).toContain("updatedAtAsc");
-    expect(enumValues).toContain("updatedAtDesc");
-    expect(enumValues).toContain("idAsc");
-    return expect(enumValues).toContain("idDesc");
+    expect(enumValues).toContain("createdAtASC");
+    expect(enumValues).toContain("createdAtDESC");
+    expect(enumValues).toContain("updatedAtASC");
+    expect(enumValues).toContain("updatedAtDESC");
+    expect(enumValues).toContain("idASC");
+    return expect(enumValues).toContain("idDESC");
   });
   it("filter non-null", async() => {
     const instance = await createSqlInstance();

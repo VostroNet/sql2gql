@@ -170,7 +170,7 @@ describe("queries", () => {
       taskId: model.get("id")
     })]);
     const schema = await (0, _index.createSchema)(instance);
-    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name, items(orderBy: idAsc) {edges {node{id, name}}} } } } } }");
+    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name, items(orderBy: idASC) {edges {node{id, name}}} } } } } }");
     (0, _utils.validateResult)(result);
     (0, _expect.default)(result.data.models.Task.edges[0].node.name).toEqual("task1");
     (0, _expect.default)(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
@@ -196,7 +196,7 @@ describe("queries", () => {
       taskId: model.get("id")
     })]);
     const schema = await (0, _index.createSchema)(instance);
-    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name, items(orderBy: idDesc) {edges {node{id, name}}} } } } } }");
+    const result = await (0, _graphql.graphql)(schema, "query { models { Task { edges { node { id, name, items(orderBy: idDESC) {edges {node{id, name}}} } } } } }");
     (0, _utils.validateResult)(result);
     (0, _expect.default)(result.data.models.Task.edges[0].node.name).toEqual("task1");
     (0, _expect.default)(result.data.models.Task.edges[0].node.items.edges.length).toEqual(3);
@@ -215,15 +215,15 @@ describe("queries", () => {
 
 
     Object.keys(fields).map(field => {
-      (0, _expect.default)(enumValues).toContain(`${field}Asc`);
-      (0, _expect.default)(enumValues).toContain(`${field}Desc`);
+      (0, _expect.default)(enumValues).toContain(`${field}ASC`);
+      (0, _expect.default)(enumValues).toContain(`${field}DESC`);
     });
-    (0, _expect.default)(enumValues).toContain("createdAtAsc");
-    (0, _expect.default)(enumValues).toContain("createdAtDesc");
-    (0, _expect.default)(enumValues).toContain("updatedAtAsc");
-    (0, _expect.default)(enumValues).toContain("updatedAtDesc");
-    (0, _expect.default)(enumValues).toContain("idAsc");
-    return (0, _expect.default)(enumValues).toContain("idDesc");
+    (0, _expect.default)(enumValues).toContain("createdAtASC");
+    (0, _expect.default)(enumValues).toContain("createdAtDESC");
+    (0, _expect.default)(enumValues).toContain("updatedAtASC");
+    (0, _expect.default)(enumValues).toContain("updatedAtDESC");
+    (0, _expect.default)(enumValues).toContain("idASC");
+    return (0, _expect.default)(enumValues).toContain("idDESC");
   });
   it("filter non-null", async () => {
     const instance = await (0, _utils.createSqlInstance)();
