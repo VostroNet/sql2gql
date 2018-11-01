@@ -19,6 +19,8 @@ var _node = require("graphql-relay/lib/node/node");
 
 var _models = require("../utils/models");
 
+var _replaceWhereOperators = require("graphql-sequelize/lib/replaceWhereOperators");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -133,9 +135,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     return fieldDefinitions;
   }
 
-  function complexFields() {
-    if (typeCollection[`${modelName}`].$sql2gql.fields.complex) {
-      return typeCollection[`${modelName}`].$sql2gql.fields.complex;
+  function relatedFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.related) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.related;
     }
 
     let fieldDefinitions = {};
@@ -197,6 +199,48 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               value: ["updatedAt", "DESC"]
             }
           });
+          const relationMap = modelDefinition.relationships.reduce((o, r) => {
+            o[r.name] = r.model;
+            return o;
+          }, {});
+          let include;
+
+          if (modelDefinition.relationships.length > 0) {
+            include = new _graphql.GraphQLList(new _graphql.GraphQLInputObjectType({
+              name: `${modelName}${relName}Include`,
+
+              fields() {
+                const relatedFields = typeCollection[targetType.name].$sql2gql.relatedFields();
+                const complexKeys = Object.keys(relatedFields);
+
+                if (complexKeys.length === 0) {
+                  return undefined;
+                }
+
+                return {
+                  relName: {
+                    type: new _graphql.GraphQLEnumType({
+                      name: `${modelName}${relName}IncludeEnum`,
+                      values: Object.keys(relatedFields).reduce((o, k) => {
+                        o[k] = {
+                          value: k
+                        };
+                        return o;
+                      }, {})
+                    })
+                  },
+                  where: {
+                    type: _graphqlSequelize.JSONType.default
+                  },
+                  required: {
+                    type: _graphql.GraphQLBoolean
+                  }
+                };
+              }
+
+            }));
+          }
+
           let conn = sequelizeConnection({
             name: `${modelName}${relName}`,
             nodeType: targetType,
@@ -207,6 +251,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             }),
             where: (key, value, currentWhere) => {
               // for custom args other than connectionArgs return a sequelize where parameter
+              if (key === "include") {
+                return currentWhere;
+              }
+
               if (key === "where") {
                 return value;
               }
@@ -227,6 +275,23 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   [assoc.foreignKey]: fk
                 }, options.where]
               };
+
+              if (args.include) {
+                options.include = args.include.map(i => {
+                  const {
+                    relName,
+                    where,
+                    required
+                  } = i;
+                  return {
+                    as: relName,
+                    model: models[relationMap[relName]],
+                    where: where ? (0, _replaceWhereOperators.replaceWhereOperators)(where) : undefined,
+                    required
+                  };
+                });
+              }
+
               return options;
             },
 
@@ -258,6 +323,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   }
                 },
                 where: (key, value, currentWhere) => {
+                  if (key === "include") {
+                    return currentWhere;
+                  }
+
                   if (key === "where") {
                     return value;
                   }
@@ -275,9 +344,28 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                     findOptions.include = [];
                   }
 
+                  let inc;
+
+                  if (args.include) {
+                    inc = args.include.map(i => {
+                      const {
+                        relName,
+                        where,
+                        required
+                      } = i;
+                      return {
+                        as: relName,
+                        model: models[relationMap[relName]],
+                        where: where ? (0, _replaceWhereOperators.replaceWhereOperators)(where) : undefined,
+                        required
+                      };
+                    });
+                  }
+
                   findOptions.include.push({
                     model: assoc.source,
-                    as: assoc.paired.as
+                    as: assoc.paired.as,
+                    include: [inc]
                   });
                   return before(findOptions, args, context, info);
                 },
@@ -289,7 +377,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 args: _objectSpread({}, bc.connectionArgs, {
                   where: {
                     type: _graphqlSequelize.JSONType.default
-                  }
+                  },
+                  include: include ? {
+                    type: include
+                  } : undefined
                 }),
                 resolve: bc.resolve
               };
@@ -301,7 +392,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 args: _objectSpread({}, conn.connectionArgs, {
                   where: {
                     type: _graphqlSequelize.JSONType.default
-                  }
+                  },
+                  include: include ? {
+                    type: include
+                  } : undefined
                 }),
                 resolve: conn.resolve
               };
@@ -325,6 +419,16 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         });
       }
     }
+
+    return fieldDefinitions;
+  }
+
+  function complexFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.complex) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.complex;
+    }
+
+    let fieldDefinitions = {};
 
     if (((modelDefinition.expose || {}).instanceMethods || {}).query) {
       const instanceMethods = modelDefinition.expose.instanceMethods.query;
@@ -371,7 +475,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     description: "",
 
     fields() {
-      return Object.assign({}, basicFields(), complexFields());
+      return Object.assign({}, basicFields(), relatedFields(), complexFields());
     },
 
     interfaces: [nodeInterface]
@@ -379,6 +483,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
   obj.$sql2gql = {
     basicFields: basicFields,
     complexFields: complexFields,
+    relatedFields: relatedFields,
     fields: {},
     events: {
       before,

@@ -10,7 +10,7 @@ var _index = require("../index");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const PORT = 3000;
+const PORT = 3005;
 const app = (0, _express.default)();
 (async () => {
   const instance = await (0, _utils.createSqlInstance)();

@@ -6,6 +6,8 @@ import {
   GraphQLList,
   GraphQLID,
   GraphQLInt,
+  GraphQLInputObjectType,
+  GraphQLBoolean,
 } from "graphql";
 import {
   resolver,
@@ -18,7 +20,7 @@ import createBeforeAfter from "./create-before-after";
 import processFK from "../utils/process-fk";
 import {toGlobalId} from "graphql-relay/lib/node/node";
 import {getForeignKeysForModel} from "../utils/models";
-
+import {replaceWhereOperators} from "graphql-sequelize/lib/replaceWhereOperators";
 
 const {sequelizeConnection} =  relay;
 
@@ -109,9 +111,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     typeCollection[`${modelName}`].$sql2gql.fields.basic = fieldDefinitions;
     return fieldDefinitions;
   }
-  function complexFields() {
-    if (typeCollection[`${modelName}`].$sql2gql.fields.complex) {
-      return typeCollection[`${modelName}`].$sql2gql.fields.complex;
+  function relatedFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.related) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.related;
     }
     let fieldDefinitions = {};
     if (models[modelName].relationships) {
@@ -151,6 +153,41 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             updatedAtAsc: {value: ["updatedAt", "ASC"]},
             updatedAtDesc: {value: ["updatedAt", "DESC"]},
           });
+          const relationMap = modelDefinition.relationships.reduce((o, r) => {
+            o[r.name] = r.model;
+            return o;
+          }, {});
+          let include;
+          if (modelDefinition.relationships.length > 0) {
+            include = new GraphQLList(new GraphQLInputObjectType({
+              name: `${modelName}${relName}Include`,
+              fields() {
+                const relatedFields = typeCollection[targetType.name].$sql2gql.relatedFields();
+                const complexKeys = Object.keys(relatedFields);
+                if (complexKeys.length === 0) {
+                  return undefined;
+                }
+                return {
+                  relName: {
+                    type: new GraphQLEnumType({
+                      name: `${modelName}${relName}IncludeEnum`,
+                      values: Object.keys(relatedFields).reduce((o, k) => {
+                        o[k] = {value: k};
+                        return o;
+                      }, {}),
+                    }),
+                  },
+                  where: {
+                    type: JSONType.default,
+                  },
+                  required: {
+                    type: GraphQLBoolean,
+                  }
+                };
+              },
+            }));
+          }
+
           let conn = sequelizeConnection({
             name: `${modelName}${relName}`,
             nodeType: targetType,
@@ -161,6 +198,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             }),
             where: (key, value, currentWhere) => {
               // for custom args other than connectionArgs return a sequelize where parameter
+              if (key === "include") {
+                return currentWhere;
+              }
               if (key === "where") {
                 return value;
               }
@@ -174,6 +214,17 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               options.where = {
                 $and: [{[assoc.foreignKey]: fk}, options.where],
               };
+              if (args.include) {
+                options.include = args.include.map((i) => {
+                  const {relName, where, required} = i;
+                  return {
+                    as: relName,
+                    model: models[relationMap[relName]],
+                    where: (where) ? replaceWhereOperators(where) : undefined,
+                    required,
+                  };
+                });
+              }
               return options;
             },
             after,
@@ -194,6 +245,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   },
                 },
                 where: (key, value, currentWhere) => {
+                  if (key === "include") {
+                    return currentWhere;
+                  }
                   if (key === "where") {
                     return value;
                   }
@@ -205,9 +259,23 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   if (!findOptions.include) {
                     findOptions.include = [];
                   }
+                  let inc;
+                  if (args.include) {
+                    inc = args.include.map((i) => {
+                      const {relName, where, required} = i;
+                      return {
+                        as: relName,
+                        model: models[relationMap[relName]],
+                        where: (where) ? replaceWhereOperators(where) : undefined,
+                        required,
+                      };
+                    });
+                  }
+
                   findOptions.include.push({
                     model: assoc.source,
                     as: assoc.paired.as,
+                    include: [inc],
                   });
                   return before(findOptions, args, context, info);
                 }, after,
@@ -219,6 +287,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   where: {
                     type: JSONType.default,
                   },
+                  include: (include) ? {type: include} : undefined,
                 },
                 resolve: bc.resolve,
               };
@@ -231,6 +300,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   where: {
                     type: JSONType.default,
                   },
+                  include: (include) ? {type: include} : undefined,
                 },
                 resolve: conn.resolve,
               };
@@ -251,6 +321,13 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
         });
       }
     }
+    return fieldDefinitions;
+  }
+  function complexFields() {
+    if (typeCollection[`${modelName}`].$sql2gql.fields.complex) {
+      return typeCollection[`${modelName}`].$sql2gql.fields.complex;
+    }
+    let fieldDefinitions = {};
     if (((modelDefinition.expose || {}).instanceMethods || {}).query) {
       const instanceMethods = modelDefinition.expose.instanceMethods.query;
       Object.keys(instanceMethods).forEach((methodName) => {
@@ -284,13 +361,14 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
     name: `${prefix}${modelName}`,
     description: "",
     fields() {
-      return Object.assign({}, basicFields(), complexFields());
+      return Object.assign({}, basicFields(), relatedFields(), complexFields());
     },
     interfaces: [nodeInterface],
   });
   obj.$sql2gql = {
     basicFields: basicFields,
     complexFields: complexFields,
+    relatedFields: relatedFields,
     fields: {},
     events: {before, after}
   };

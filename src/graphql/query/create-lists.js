@@ -2,11 +2,15 @@ import {
   JSONType,
   relay,
 } from "graphql-sequelize";
+import {replaceWhereOperators} from "graphql-sequelize/lib/replaceWhereOperators";
 import getModelDefinition from "../utils/get-model-def";
 import createBeforeAfter from "../models/create-before-after";
 
 
-import {GraphQLInt, GraphQLEnumType} from "graphql";
+import {
+  GraphQLInt, GraphQLEnumType, GraphQLInputObjectType, GraphQLList,
+  GraphQLBoolean,
+} from "graphql";
 
 /**
  * @function createModelLists
@@ -33,9 +37,13 @@ export default async function createModelLists(models, modelNames, typeCollectio
       }
       const {before, after} = createBeforeAfter(models[modelName], options);
       const def = getModelDefinition(models[modelName]);
-      const {basic} = typeCollection[modelName].$sql2gql.fields;
+      const basicFields = typeCollection[modelName].$sql2gql.basicFields();
+      const relationMap = def.relationships.reduce((o, r) => {
+        o[r.name] = r.model;
+        return o;
+      }, {});
 
-      const values = Object.keys(basic).reduce((o, key) => {
+      const values = Object.keys(basicFields).reduce((o, key) => {
         o[`${key}ASC`] = {
           value: [key, "ASC"],
         };
@@ -69,20 +77,63 @@ export default async function createModelLists(models, modelNames, typeCollectio
         }, def.connectionFields),
         where: (key, value, currentWhere) => {
           // for custom args other than connectionArgs return a sequelize where parameter
+          if (key === "include") {
+            return currentWhere;
+          }
           if (key === "where") {
             return value;
           }
           return {[key]: value};
         },
-        before, after,
+        before(options, args, context, info) {
+          if (args.include) {
+            options.include = args.include.map((i) => {
+              const {relName, where, required} = i;
+              return {
+                as: relName,
+                model: models[relationMap[relName]],
+                where: (where) ? replaceWhereOperators(where) : undefined,
+                required,
+              };
+            });
+          }
+
+          return before(options, args, context, info);
+        }, after,
       });
+      const relatedFields = typeCollection[modelName].$sql2gql.relatedFields();
+      const complexKeys = Object.keys(relatedFields);
+      let include;
+      if (complexKeys.length > 0) {
+        include = new GraphQLList(new GraphQLInputObjectType({
+          name: `${modelName}Include`,
+          fields: {
+            relName: {
+              type: new GraphQLEnumType({
+                name: `${modelName}IncludeEnum`,
+                values: Object.keys(relatedFields).reduce((o, k) => {
+                  o[k] = {value: k};
+                  return o;
+                }, {}),
+              }),
+            },
+            where: {
+              type: JSONType.default,
+            },
+            required: {
+              type: GraphQLBoolean,
+            }
+          },
+        }));
+      }
       fields[modelName] = {
         type: c.connectionType,
         args: {
           ...c.connectionArgs,
           where: {
             type: JSONType.default,
-          }
+          },
+          include: (include) ? {type: include} : undefined,
         },
         async resolve(source, args, context, info) {
           return c.resolve(source, args, context, info);

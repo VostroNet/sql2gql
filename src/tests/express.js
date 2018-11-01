@@ -4,7 +4,7 @@ import { ApolloServer } from "apollo-server-express";
 import {createSqlInstance} from "./utils";
 import {createSchema} from "../index";
 
-const PORT = 3000;
+const PORT = 3005;
 const app = express();
 (async() => {
   const instance = await createSqlInstance();
