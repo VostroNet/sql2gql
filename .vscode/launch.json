@@ -61,14 +61,13 @@
     "name": "Launch Express Debug",
     "type": "node",
     "request": "launch",
-    "args": ["${workspaceRoot}/build/tests/express.js"],
-    "cwd": "${workspaceRoot}",
+    "args": ["./build/tests/express.js"],
     "env": {
-      "NODE_ENV": "development",
+      "NODE_ENV": "dev6elopment",
       "DEBUG": "*"
     },
-    "console": "integratedTerminal",
+    "console": "externalTerminal",
     "sourceMaps": true,
-    "outFiles": ["${workspaceRoot}/build/**/*.js"]
+    "outFiles": ["./build/**/*.js"],
   }]
 }

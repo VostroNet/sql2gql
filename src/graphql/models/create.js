@@ -140,19 +140,31 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
           const modelDefinition = getModelDefinition(models[targetType.name]);
 
           //TODO change this to read the complex and basic fields, this goes around permissions
-          const orderByValues = Object.keys(modelDefinition.define).reduce((obj, field) => {
-            return Object.assign({}, obj, {
-              [`${field}Asc`]: {value: [field, "ASC"]},
-              [`${field}Desc`]: {value: [field, "DESC"]},
-            });
-          }, {
-            idAsc: {value: ["id", "ASC"]},
-            idDesc: {value: ["id", "DESC"]},
-            createdAtAsc: {value: ["createdAt", "ASC"]},
-            createdAtDesc: {value: ["createdAt", "DESC"]},
-            updatedAtAsc: {value: ["updatedAt", "ASC"]},
-            updatedAtDesc: {value: ["updatedAt", "DESC"]},
-          });
+          // const orderByValues = Object.keys(modelDefinition.define).reduce((obj, field) => {
+          //   return Object.assign({}, obj, {
+          //     [`${field}Asc`]: {value: [field, "ASC"]},
+          //     [`${field}Desc`]: {value: [field, "DESC"]},
+          //   });
+          // }, {
+          //   idAsc: {value: ["id", "ASC"]},
+          //   idDesc: {value: ["id", "DESC"]},
+          //   createdAtAsc: {value: ["createdAt", "ASC"]},
+          //   createdAtDesc: {value: ["createdAt", "DESC"]},
+          //   updatedAtAsc: {value: ["updatedAt", "ASC"]},
+          //   updatedAtDesc: {value: ["updatedAt", "DESC"]},
+          // });
+          const {basic} = typeCollection[modelName].$sql2gql.fields;
+
+          const values = Object.keys(basic).reduce((o, key) => {
+            o[`${key}ASC`] = {
+              value: [key, "ASC"],
+            };
+            o[`${key}DESC`] = {
+              value: [key, "DESC"],
+            };
+            return o;
+          }, {});
+
           const relationMap = modelDefinition.relationships.reduce((o, r) => {
             o[r.name] = r.model;
             return o;
@@ -194,7 +206,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             target: relationship.rel,
             orderBy: new GraphQLEnumType({
               name: `${modelName}${relName}OrderBy`,
-              values: orderByValues,
+              values: Object.assign({}, values, modelDefinition.orderBy),
             }),
             where: (key, value, currentWhere) => {
               // for custom args other than connectionArgs return a sequelize where parameter
