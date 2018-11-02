@@ -56,7 +56,31 @@ export default async function createModelLists(models, modelNames, typeCollectio
         name: `${modelName}OrderBy`,
         values: Object.assign({}, values, def.orderBy),
       });
-
+      const relatedFields = typeCollection[modelName].$sql2gql.relatedFields();
+      const complexKeys = Object.keys(relatedFields);
+      let include;
+      if (complexKeys.length > 0) {
+        include = new GraphQLList(new GraphQLInputObjectType({
+          name: `${modelName}Include`,
+          fields: {
+            relName: {
+              type: new GraphQLEnumType({
+                name: `${modelName}IncludeEnum`,
+                values: Object.keys(relatedFields).reduce((o, k) => {
+                  o[k] = {value: k};
+                  return o;
+                }, {}),
+              }),
+            },
+            where: {
+              type: JSONType.default,
+            },
+            required: {
+              type: GraphQLBoolean,
+            }
+          },
+        }));
+      }
       const c = sequelizeConnection({
         name: `${modelName}`,
         nodeType: typeCollection[modelName],
@@ -85,9 +109,18 @@ export default async function createModelLists(models, modelNames, typeCollectio
           }
           return {[key]: value};
         },
-        before(options, args, context, info) {
+        // connectionArgs: {
+        //   include,
+        // },
+        before(findOptions, args, context, info) {
+          if (context.dataloader) {
+            findOptions = Object.assign(findOptions, context.dataloader);
+          }
+          if (findOptions.where) {
+            findOptions.where = replaceWhereOperators(findOptions.where);
+          }
           if (args.include) {
-            options.include = args.include.map((i) => {
+            findOptions.include = args.include.map((i) => {
               const {relName, where, required} = i;
               return {
                 as: relName,
@@ -98,34 +131,9 @@ export default async function createModelLists(models, modelNames, typeCollectio
             });
           }
 
-          return before(options, args, context, info);
+          return before(findOptions, args, context, info);
         }, after,
       });
-      const relatedFields = typeCollection[modelName].$sql2gql.relatedFields();
-      const complexKeys = Object.keys(relatedFields);
-      let include;
-      if (complexKeys.length > 0) {
-        include = new GraphQLList(new GraphQLInputObjectType({
-          name: `${modelName}Include`,
-          fields: {
-            relName: {
-              type: new GraphQLEnumType({
-                name: `${modelName}IncludeEnum`,
-                values: Object.keys(relatedFields).reduce((o, k) => {
-                  o[k] = {value: k};
-                  return o;
-                }, {}),
-              }),
-            },
-            where: {
-              type: JSONType.default,
-            },
-            required: {
-              type: GraphQLBoolean,
-            }
-          },
-        }));
-      }
       fields[modelName] = {
         type: c.connectionType,
         args: {

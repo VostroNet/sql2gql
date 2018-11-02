@@ -221,7 +221,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             async before(findOptions, args, context, info) {
               const options = await before(findOptions, args, context, info);
               const {source} = info;
-
+              if (options.dataloader) {
+                findOptions = Object.assign(findOptions, options.dataloader);
+              }
               const fk = source.get(assoc.sourceKey);
               options.where = {
                 $and: [{[assoc.foreignKey]: fk}, options.where],
@@ -268,6 +270,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                 before(findOptions, args, context, info) {
                   const model = models[modelName];
                   const assoc = model.associations[relName];
+                  if (options.dataloader) {
+                    findOptions = Object.assign(findOptions, options.dataloader);
+                  }
                   if (!findOptions.include) {
                     findOptions.include = [];
                   }
