@@ -265,6 +265,11 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               const {
                 source
               } = info;
+
+              if (options.dataloader) {
+                findOptions = Object.assign(findOptions, options.dataloader);
+              }
+
               const fk = source.get(assoc.sourceKey);
               options.where = {
                 $and: [{
@@ -336,6 +341,10 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                   const model = models[modelName];
                   const assoc = model.associations[relName];
 
+                  if (options.dataloader) {
+                    findOptions = Object.assign(findOptions, options.dataloader);
+                  }
+
                   if (!findOptions.include) {
                     findOptions.include = [];
                   }
@@ -358,11 +367,20 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                     });
                   }
 
-                  findOptions.include.push({
+                  if (!assoc.paired) {
+                    throw new Error(`${modelName} ${relName} .paired missing on belongsToMany association. You need to set up both sides of the association`);
+                  }
+
+                  let b2mInc = {
                     model: assoc.source,
-                    as: assoc.paired.as,
-                    include: [inc]
-                  });
+                    as: assoc.paired.as
+                  };
+
+                  if (inc) {
+                    b2mInc.include = inc;
+                  }
+
+                  findOptions.include.push(b2mInc);
                   return before(findOptions, args, context, info);
                 },
 

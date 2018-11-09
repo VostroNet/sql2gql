@@ -25,6 +25,8 @@ var _node = require("graphql-relay/lib/node/node");
 
 var _models = require("../utils/models");
 
+var _replaceIdDeep = _interopRequireDefault(require("../utils/replace-id-deep"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -230,7 +232,9 @@ async function createProcessRelationships(model, models) {
                     };
                     result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                     updateVars[assoc.foreignKey] = result[assoc.targetKey];
-                    source = await source.update(updateVars, context);
+                    source = await source.update(updateVars, {
+                      context
+                    });
                     await modelDefinition.events.after(result, createArgs, context, info);
                     break;
 
@@ -267,23 +271,57 @@ async function createProcessRelationships(model, models) {
                         const createArgs = {
                           input: Object.assign({}, action)
                         };
-                        let models = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
-                        return source[assoc.accessors.add].apply(source, [models, {
+                        let results = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
+                        return source[assoc.accessors.add].apply(source, [results, {
                           context
                         }]);
                       });
 
                     case "update":
                       return (0, _waterfall.default)(commands.update, async action => {
-                        const models = await source[assoc.accessors.get]({
+                        const results = await source[assoc.accessors.get]({
                           where: action.where,
                           context
                         });
-                        return (0, _waterfall.default)(models, model => {
+                        return (0, _waterfall.default)(results, model => {
                           return modelDefinition.mutationFunctions.updateSingle(model, {
                             input: action.input
                           }, context, info);
                         });
+                      });
+
+                    case "add":
+                      return (0, _waterfall.default)(commands.add, async action => {
+                        const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                        const results = await models[relationship.source].findAll({
+                          where,
+                          context
+                        });
+
+                        if (results.length > 0) {
+                          return source[assoc.accessors.addMultiple].apply(source, [results, {
+                            context
+                          }]);
+                        }
+
+                        return undefined;
+                      });
+
+                    case "remove":
+                      return (0, _waterfall.default)(commands.remove, async action => {
+                        const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                        const results = await models[relationship.source].findAll({
+                          where,
+                          context
+                        });
+
+                        if (results.length > 0) {
+                          return source[assoc.accessors.removeMultiple].apply(source, [results, {
+                            context
+                          }]);
+                        }
+
+                        return undefined;
                       });
                   }
 
@@ -317,7 +355,43 @@ async function createProcessRelationships(model, models) {
                         };
                         await modelDefinition.mutationFunctions.update(source, updateArgs, context, info);
                         break;
+
+                      case "add":
+                        return (0, _waterfall.default)(commands.add, async action => {
+                          const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                          const results = await models[relationship.source].findAll({
+                            where,
+                            context
+                          });
+
+                          if (results.length > 0) {
+                            return source[assoc.accessors.addMultiple].apply(source, [results, {
+                              context
+                            }]);
+                          }
+
+                          return undefined;
+                        });
+
+                      case "remove":
+                        return (0, _waterfall.default)(commands.remove, async action => {
+                          const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                          const results = await models[relationship.source].findAll({
+                            where,
+                            context
+                          });
+
+                          if (results.length > 0) {
+                            return source[assoc.accessors.removeMultiple].apply(source, [results, {
+                              context
+                            }]);
+                          }
+
+                          return undefined;
+                        });
                     }
+
+                    return undefined;
                   });
                 });
               });

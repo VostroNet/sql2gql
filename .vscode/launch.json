@@ -63,10 +63,10 @@
     "request": "launch",
     "args": ["./build/tests/express.js"],
     "env": {
-      "NODE_ENV": "dev6elopment",
+      "NODE_ENV": "development",
       "DEBUG": "*"
     },
-    "console": "externalTerminal",
+    "console": "integratedTerminal",
     "sourceMaps": true,
     "outFiles": ["./build/**/*.js"],
   }]

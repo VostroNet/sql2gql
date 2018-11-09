@@ -40,6 +40,7 @@ function createBeforeAfter(model, options, hooks = {}) {
   const foreignKeys = Object.keys(model.fieldRawAttributesMap).filter(k => {
     return !!model.fieldRawAttributesMap[k].references;
   });
+  modelDefinition.globalKeys = primaryKeys.concat(foreignKeys);
 
   if (options.before) {
     targetBeforeFuncs.push(function (params, args, context, info) {
@@ -102,7 +103,7 @@ function createBeforeAfter(model, options, hooks = {}) {
     findOptions.rootValue = info.rootValue;
 
     if (findOptions.where) {
-      findOptions.where = (0, _replaceIdDeep.default)(findOptions.where, primaryKeys.concat(foreignKeys));
+      findOptions.where = (0, _replaceIdDeep.default)(findOptions.where, modelDefinition.globalKeys);
     }
 
     if (targetBeforeFuncs.length === 0) {

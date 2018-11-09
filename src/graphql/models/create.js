@@ -288,12 +288,17 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                       };
                     });
                   }
-
-                  findOptions.include.push({
+                  if (!assoc.paired) {
+                    throw new Error(`${modelName} ${relName} .paired missing on belongsToMany association. You need to set up both sides of the association`);
+                  }
+                  let b2mInc = {
                     model: assoc.source,
                     as: assoc.paired.as,
-                    include: [inc],
-                  });
+                  };
+                  if (inc) {
+                    b2mInc.include = inc;
+                  }
+                  findOptions.include.push(b2mInc);
                   return before(findOptions, args, context, info);
                 }, after,
               });

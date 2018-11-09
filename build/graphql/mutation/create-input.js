@@ -151,7 +151,7 @@ async function createMutationInputs(models, keys, typeCollection, options) {
           }
 
           if (targetType) {
-            let createType, updateType;
+            // let createType, updateType, addType, removeType;
             const createInput = new _graphql.GraphQLInputObjectType({
               name: `${sourceType.required.name}${relName}Create`,
               fields: targetType.required.fields
@@ -169,32 +169,48 @@ async function createMutationInputs(models, keys, typeCollection, options) {
                   })
                 }
               }
-            });
+            }); // const whereInput = new GraphQLInputObjectType({
+            //   name: `${sourceType.optional.name}${relName}Where`,
+            //   fields: {
+            //     where: {
+            //       type: jsonType,
+            //     },
+            //   },
+            // });
+
+            let inputOptions = {
+              name: `${sourceType.required.name}${relName}`,
+              fields: {}
+            };
 
             switch (relationship.type) {
               case "hasMany":
               case "belongsToMany":
-                createType = new _graphql.GraphQLList(createInput);
-                updateType = new _graphql.GraphQLList(updateInput);
+                inputOptions.fields.create = {
+                  type: new _graphql.GraphQLList(createInput)
+                };
+                inputOptions.fields.update = {
+                  type: new _graphql.GraphQLList(updateInput)
+                };
+                inputOptions.fields.add = {
+                  type: new _graphql.GraphQLList(_jsonType.default)
+                };
+                inputOptions.fields.remove = {
+                  type: new _graphql.GraphQLList(_jsonType.default)
+                };
                 break;
 
               default:
-                createType = createInput;
-                updateType = updateInput;
+                inputOptions.fields.create = {
+                  type: createInput
+                };
+                inputOptions.fields.update = {
+                  type: updateInput
+                };
                 break;
             }
 
-            const input = new _graphql.GraphQLInputObjectType({
-              name: `${sourceType.required.name}${relName}`,
-              fields: {
-                create: {
-                  type: createType
-                },
-                update: {
-                  type: updateType
-                }
-              }
-            });
+            const input = new _graphql.GraphQLInputObjectType(inputOptions);
 
             switch (relationship.type) {
               case "belongsToMany": //eslint-disable-line

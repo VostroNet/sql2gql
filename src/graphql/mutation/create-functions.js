@@ -15,6 +15,7 @@ import events from "../events";
 import getModelDefinition from "../utils/get-model-def";
 import {fromGlobalId, toGlobalId} from "graphql-relay/lib/node/node";
 import { getForeignKeysForModel } from "../utils/models";
+import replaceIdDeep from "../utils/replace-id-deep";
 
 /**
  * @function createFunctions
@@ -157,7 +158,7 @@ async function createProcessRelationships(model, models) {
                     };
                     result = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                     updateVars[assoc.foreignKey] = result[assoc.targetKey];
-                    source = await source.update(updateVars, context);
+                    source = await source.update(updateVars, {context});
                     await modelDefinition.events.after(result, createArgs, context, info);
                     break;
                   case "update":
@@ -189,23 +190,48 @@ async function createProcessRelationships(model, models) {
                         const createArgs = {
                           input: Object.assign({}, action),
                         };
-                        let models = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
+                        let results = await modelDefinition.mutationFunctions.create(source, createArgs, context, info);
                         return source[assoc.accessors.add].apply(source, [
-                          models,
+                          results,
                           {context},
                         ]);
 
                       });
                     case "update":
                       return waterfall(commands.update, async(action) => {
-                        const models = await source[assoc.accessors.get]({
+                        const results = await source[assoc.accessors.get]({
                           where: action.where, context,
                         });
-                        return waterfall(models, (model) => {
+                        return waterfall(results, (model) => {
                           return modelDefinition.mutationFunctions.updateSingle(model, {
                             input: action.input,
                           }, context, info);
                         });
+                      });
+                    case "add":
+                      return waterfall(commands.add, async(action) => {
+                        const where = replaceIdDeep(action, modelDefinition.globalKeys);
+                        const results = await models[relationship.source].findAll({where, context});
+                        if (results.length > 0) {
+                          return source[assoc.accessors.addMultiple].apply(source, [
+                            results,
+                            {context},
+                          ]);
+                        }
+                        return undefined;
+                      });
+
+                    case "remove":
+                      return waterfall(commands.remove, async(action) => {
+                        const where = replaceIdDeep(action, modelDefinition.globalKeys);
+                        const results = await models[relationship.source].findAll({where, context});
+                        if (results.length > 0) {
+                          return source[assoc.accessors.removeMultiple].apply(source, [
+                            results,
+                            {context},
+                          ]);
+                        }
+                        return undefined;
                       });
                   }
                   return undefined;
@@ -232,7 +258,32 @@ async function createProcessRelationships(model, models) {
                         };
                         await modelDefinition.mutationFunctions.update(source, updateArgs, context, info);
                         break;
+                      case "add":
+                        return waterfall(commands.add, async(action) => {
+                          const where = replaceIdDeep(action, modelDefinition.globalKeys);
+                          const results = await models[relationship.source].findAll({where, context});
+                          if (results.length > 0) {
+                            return source[assoc.accessors.addMultiple].apply(source, [
+                              results,
+                              {context},
+                            ]);
+                          }
+                          return undefined;
+                        });
+                      case "remove":
+                        return waterfall(commands.remove, async(action) => {
+                          const where = replaceIdDeep(action, modelDefinition.globalKeys);
+                          const results = await models[relationship.source].findAll({where, context});
+                          if (results.length > 0) {
+                            return source[assoc.accessors.removeMultiple].apply(source, [
+                              results,
+                              {context},
+                            ]);
+                          }
+                          return undefined;
+                        });
                     }
+                    return undefined;
                   });
                 });
               });
