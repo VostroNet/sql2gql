@@ -292,7 +292,7 @@ async function createProcessRelationships(model, models) {
 
                     case "add":
                       return (0, _waterfall.default)(commands.add, async action => {
-                        const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                        const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys, info.variableValues);
                         const results = await models[relationship.source].findAll({
                           where,
                           context
@@ -309,7 +309,7 @@ async function createProcessRelationships(model, models) {
 
                     case "remove":
                       return (0, _waterfall.default)(commands.remove, async action => {
-                        const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                        const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys, info.variableValues);
                         const results = await models[relationship.source].findAll({
                           where,
                           context
@@ -358,7 +358,7 @@ async function createProcessRelationships(model, models) {
 
                       case "add":
                         return (0, _waterfall.default)(commands.add, async action => {
-                          const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                          const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys, info.variableValues);
                           const results = await models[relationship.source].findAll({
                             where,
                             context
@@ -375,7 +375,7 @@ async function createProcessRelationships(model, models) {
 
                       case "remove":
                         return (0, _waterfall.default)(commands.remove, async action => {
-                          const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys);
+                          const where = (0, _replaceIdDeep.default)(action, modelDefinition.globalKeys, info.variableValues);
                           const results = await models[relationship.source].findAll({
                             where,
                             context

@@ -103,7 +103,7 @@ function createBeforeAfter(model, options, hooks = {}) {
     findOptions.rootValue = info.rootValue;
 
     if (findOptions.where) {
-      findOptions.where = (0, _replaceIdDeep.default)(findOptions.where, modelDefinition.globalKeys);
+      findOptions.where = (0, _replaceIdDeep.default)(findOptions.where, modelDefinition.globalKeys, info.variableValues);
     }
 
     if (targetBeforeFuncs.length === 0) {

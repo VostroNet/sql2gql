@@ -7,21 +7,15 @@ exports.default = replaceIdDeep;
 
 var _graphqlRelay = require("graphql-relay");
 
-function createProxy(func, keyMap) {
-  return function (obj) {
-    return func(replaceIdDeep(obj, keyMap));
-  };
-}
-
 function getProperties(obj) {
   return [].concat(Object.keys(obj), Object.getOwnPropertySymbols(obj));
 }
 
-function replaceIdDeep(obj, keyMap) {
+function replaceIdDeep(obj, keyMap, variableValues) {
   return getProperties(obj).reduce((m, key) => {
     if (keyMap.indexOf(key) > -1) {
       if (typeof obj[key] === "function") {
-        m[key] = createProxy(obj[key], key);
+        m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key](variableValues)).id;
       } else {
         try {
           m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
@@ -33,13 +27,13 @@ function replaceIdDeep(obj, keyMap) {
       if (Array.isArray(obj[key])) {
         m[key] = obj[key].map(val => {
           if (Object.prototype.toString.call(val) === "[object Object]") {
-            return replaceIdDeep(val, keyMap);
+            return replaceIdDeep(val, keyMap, variableValues);
           }
 
           return val;
         });
       } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
-        m[key] = replaceIdDeep(obj[key], keyMap);
+        m[key] = replaceIdDeep(obj[key], keyMap, variableValues);
       } else {
         m[key] = obj[key];
       }

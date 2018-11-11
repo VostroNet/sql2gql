@@ -73,7 +73,7 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     findOptions.context = context;
     findOptions.rootValue = info.rootValue;
     if (findOptions.where) {
-      findOptions.where = replaceIdDeep(findOptions.where, modelDefinition.globalKeys);
+      findOptions.where = replaceIdDeep(findOptions.where, modelDefinition.globalKeys, info.variableValues);
     }
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
