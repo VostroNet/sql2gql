@@ -11,32 +11,33 @@ function getProperties(obj) {
   return [].concat(Object.keys(obj), Object.getOwnPropertySymbols(obj));
 }
 
-function replaceIdDeep(obj, keyMap, variableValues) {
-  return getProperties(obj).reduce((m, key) => {
-    if (keyMap.indexOf(key) > -1) {
-      if (typeof obj[key] === "function") {
-        m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key](variableValues)).id;
-      } else {
-        try {
-          m[key] = (0, _graphqlRelay.fromGlobalId)(obj[key]).id;
-        } catch (e) {
-          m[key] = obj[key]; //is not a global id
-        }
-      }
-    } else {
-      if (Array.isArray(obj[key])) {
-        m[key] = obj[key].map(val => {
-          if (Object.prototype.toString.call(val) === "[object Object]") {
-            return replaceIdDeep(val, keyMap, variableValues);
-          }
+function checkObject(value, keyMap, variableValues, isTagged) {
+  if (typeof value === "function") {
+    const result = value(variableValues);
+    return checkObject(result, keyMap, variableValues, isTagged);
+  } else if (Array.isArray(value)) {
+    return value.map(val => {
+      return checkObject(val, keyMap, variableValues, isTagged);
+    });
+  } else if (Object.prototype.toString.call(value) === "[object Object]") {
+    return replaceIdDeep(value, keyMap, variableValues, isTagged);
+  } else if (isTagged) {
+    try {
+      return (0, _graphqlRelay.fromGlobalId)(value).id;
+    } catch (_unused) {
+      return value;
+    }
+  } else {
+    return value;
+  }
+}
 
-          return val;
-        });
-      } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
-        m[key] = replaceIdDeep(obj[key], keyMap, variableValues);
-      } else {
-        m[key] = obj[key];
-      }
+function replaceIdDeep(obj, keyMap, variableValues, isTagged = false) {
+  return getProperties(obj).reduce((m, key) => {
+    if (keyMap.indexOf(key) > -1 || isTagged) {
+      m[key] = checkObject(obj[key], keyMap, variableValues, true);
+    } else {
+      m[key] = checkObject(obj[key], keyMap, variableValues, false);
     }
 
     return m;

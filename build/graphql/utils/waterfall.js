@@ -5,11 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = waterfall;
 
-function waterfall(arr = [], func) {
+function waterfall(arr = [], func, start) {
   return arr.reduce(function (promise, val) {
     return promise.then(function (prevVal) {
       return func(val, prevVal);
     });
-  }, Promise.resolve());
+  }, Promise.resolve(start));
 }
 //# sourceMappingURL=waterfall.js.map

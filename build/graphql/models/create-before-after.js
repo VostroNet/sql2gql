@@ -9,6 +9,8 @@ var _getModelDef = _interopRequireDefault(require("../utils/get-model-def"));
 
 var _replaceIdDeep = _interopRequireDefault(require("../utils/replace-id-deep"));
 
+var _waterfall = _interopRequireDefault(require("../utils/waterfall"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -110,12 +112,9 @@ function createBeforeAfter(model, options, hooks = {}) {
       return findOptions;
     }
 
-    const results = targetBeforeFuncs.reduce((promise, curr) => {
-      return promise.then(prev => {
-        return curr(prev, args, context, info);
-      });
-    }, Promise.resolve(findOptions));
-    return results;
+    return (0, _waterfall.default)(targetBeforeFuncs, async (curr, prev) => {
+      return curr(prev, args, context, info);
+    }, findOptions);
   };
 
   const targetAfter = (result, args, context, info) => {
@@ -123,21 +122,19 @@ function createBeforeAfter(model, options, hooks = {}) {
       return result;
     }
 
-    return targetAfterFuncs.reduce((promise, curr) => {
-      return promise.then(prev => {
-        return Promise.resolve(curr(prev, args, context, info)).then(data => {
-          if (!data) {
-            return undefined;
-          }
+    return (0, _waterfall.default)(targetAfterFuncs, async (curr, prev) => {
+      const data = await curr(prev, args, context, info);
 
-          if (data.edges) {
-            data.edges = data.edges.filter(x => !!x);
-          }
+      if (!data) {
+        return undefined;
+      }
 
-          return data;
-        });
-      });
-    }, Promise.resolve(result));
+      if (data.edges) {
+        data.edges = data.edges.filter(x => !!x);
+      }
+
+      return data;
+    }, result);
   };
 
   const targetAfterArray = (results, args, context, info) => {
@@ -145,9 +142,9 @@ function createBeforeAfter(model, options, hooks = {}) {
       return results;
     }
 
-    return results.map(result => {
-      return targetAfter(result, args, context, info);
-    });
+    return (0, _waterfall.default)(results, async (result, prev) => {
+      return prev.concat((await targetAfter(result, args, context, info)));
+    }, []);
   };
 
   const events = {

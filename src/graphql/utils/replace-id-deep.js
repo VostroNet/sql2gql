@@ -5,31 +5,34 @@ function getProperties(obj) {
   return [].concat(Object.keys(obj), Object.getOwnPropertySymbols(obj));
 }
 
-export default function replaceIdDeep(obj, keyMap, variableValues) {
+
+function checkObject(value, keyMap, variableValues, isTagged) {
+  if (typeof value === "function") {
+    const result = value(variableValues);
+    return checkObject(result, keyMap, variableValues, isTagged);
+  } else if (Array.isArray(value)) {
+    return value.map((val) => {
+      return checkObject(val, keyMap, variableValues, isTagged);
+    });
+  } else if (Object.prototype.toString.call(value) === "[object Object]") {
+    return replaceIdDeep(value, keyMap, variableValues, isTagged);
+  } else if (isTagged) {
+    try {
+      return fromGlobalId(value).id;
+    } catch {
+      return value;
+    }
+  } else {
+    return value;
+  }
+}
+
+export default function replaceIdDeep(obj, keyMap, variableValues, isTagged = false) {
   return getProperties(obj).reduce((m, key) => {
-    if (keyMap.indexOf(key) > -1) {
-      if (typeof obj[key] === "function") {
-        m[key] = fromGlobalId(obj[key](variableValues)).id;
-      } else {
-        try {
-          m[key] = fromGlobalId(obj[key]).id;
-        } catch (e) {
-          m[key] = obj[key]; //is not a global id
-        }
-      }
+    if (keyMap.indexOf(key) > -1 || isTagged) {
+      m[key] = checkObject(obj[key], keyMap, variableValues, true);
     } else {
-      if (Array.isArray(obj[key])) {
-        m[key] = obj[key].map((val) => {
-          if (Object.prototype.toString.call(val) === "[object Object]") {
-            return replaceIdDeep(val, keyMap, variableValues);
-          }
-          return val;
-        });
-      } else if (Object.prototype.toString.call(obj[key]) === "[object Object]") {
-        m[key] = replaceIdDeep(obj[key], keyMap, variableValues);
-      } else {
-        m[key] = obj[key];
-      }
+      m[key] = checkObject(obj[key], keyMap, variableValues, false);
     }
     return m;
   }, {});

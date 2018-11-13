@@ -11,6 +11,8 @@ var _graphqlSequelize = require("graphql-sequelize");
 
 var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 
+var _waterfall = _interopRequireDefault(require("../utils/waterfall"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 /**
@@ -47,24 +49,26 @@ async function createMutationV3(models, keys, typeCollection, mutationFunctions,
           let results = [];
 
           if (args.create) {
-            results = results.concat((await Promise.all(args.create.map(async arg => {
-              const createResult = await funcs.create(source, {
+            results = await (0, _waterfall.default)(args.create, async (arg, arr) => {
+              const result = await funcs.create(source, {
                 input: arg
               }, context, info);
-              return createResult;
-            }))));
+              return arr.concat(result);
+            }, results);
           }
 
           if (args.update) {
-            results = results.concat((await args.update.reduce(async (arr, arg) => {
-              return arr.concat((await funcs.update(source, arg, context, info)));
-            }, [])));
+            results = await (0, _waterfall.default)(args.update, async (arg, arr) => {
+              const result = await funcs.update(source, arg, context, info);
+              return arr.concat(result);
+            }, results);
           }
 
           if (args.delete) {
-            results = results.concat((await args.delete.reduce(async (arr, arg) => {
-              return arr.concat((await funcs.delete(source, arg, context, info)));
-            }, [])));
+            results = await (0, _waterfall.default)(args.delete, async (arg, arr) => {
+              const result = await funcs.delete(source, arg, context, info);
+              return arr.concat(result);
+            }, results);
           }
 
           if (!(args.create || args.update || args.delete) || args.where) {

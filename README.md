@@ -31,12 +31,20 @@ Mutations will still work without the following its just they will not be consis
 
 ### Temporary Fix
 
-I have applied a fix to detect if the sub execution context is under a mutation and execute all in a fashion syncronous instead.
+I have applied a fix to detect if the sub execution context is under a mutation and execute all in a syncronous fashion instead.
 
 Version: 14.0.2 (as of 20181113 - let me know if you need a specific version in the Issues section)
 
 ```sh
 yarn add graphql@npm:vostro/graphql
+```
+
+ensure the following is in your package.json otherwise you end up with a ton of nested copies of graphql on your other libraries
+
+```json
+  "resolutions": {
+    "graphql": "npm:@vostro/graphql",
+  },
 ```
 
 [commit](https://github.com/VostroNet/graphql-js/commit/ed3d0aee334ed3856db2ade13a40803fe1b9b9c6)

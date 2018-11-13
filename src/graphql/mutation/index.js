@@ -5,6 +5,7 @@ import {
   resolver,
 } from "graphql-sequelize";
 import createBeforeAfter from "../models/create-before-after";
+import waterfall from "../utils/waterfall";
 
 /**
  * @function createMutationV3
@@ -30,21 +31,24 @@ export default async function createMutationV3(models, keys, typeCollection, mut
         args: fields,
         async resolve(source, args, context, info) {
           let results = [];
+
           if (args.create) {
-            results = results.concat(await Promise.all(args.create.map(async(arg) => {
-              const createResult = await funcs.create(source, {input: arg}, context, info);
-              return createResult;
-            })));
+            results = await waterfall(args.create, async(arg, arr) => {
+              const result = await funcs.create(source, {input: arg}, context, info);
+              return arr.concat(result);
+            }, results);
           }
           if (args.update) {
-            results = results.concat(await args.update.reduce(async(arr, arg) => {
-              return arr.concat(await funcs.update(source, arg, context, info));
-            }, []));
+            results = await waterfall(args.update, async(arg, arr) => {
+              const result = await funcs.update(source, arg, context, info);
+              return arr.concat(result);
+            }, results);
           }
           if (args.delete) {
-            results = results.concat(await args.delete.reduce(async(arr, arg) => {
-              return arr.concat(await funcs.delete(source, arg, context, info));
-            }, []));
+            results = await waterfall(args.delete, async(arg, arr) => {
+              const result = await funcs.delete(source, arg, context, info);
+              return arr.concat(result);
+            }, results);
           }
           if (!(args.create || args.update || args.delete) || args.where) {
             return resolver(models[modelName], {

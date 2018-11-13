@@ -1,5 +1,6 @@
 import getModelDefinition from "../utils/get-model-def";
 import replaceIdDeep from "../utils/replace-id-deep";
+import waterfall from "../utils/waterfall";
 
 /**
  * @typedef {Object} CreateBeforeAfterOutput
@@ -78,38 +79,33 @@ export default function createBeforeAfter(model, options, hooks = {}) {
     if (targetBeforeFuncs.length === 0) {
       return findOptions;
     }
-    const results = targetBeforeFuncs.reduce((promise, curr) => {
-      return promise.then((prev) => {
-        return curr(prev, args, context, info);
-      });
-    }, Promise.resolve(findOptions));
-    return results;
+
+    return waterfall(targetBeforeFuncs, async(curr, prev) => {
+      return curr(prev, args, context, info);
+    }, findOptions);
   };
   const targetAfter = (result, args, context, info) => {
     if (targetAfterFuncs.length === 0) {
       return result;
     }
-    return targetAfterFuncs.reduce((promise, curr) => {
-      return promise.then((prev) => {
-        return Promise.resolve(curr(prev, args, context, info)).then((data) => {
-          if (!data) {
-            return undefined;
-          }
-          if (data.edges) {
-            data.edges = data.edges.filter(x => !!x);
-          }
-          return data;
-        });
-      });
-    }, Promise.resolve(result));
+    return waterfall(targetAfterFuncs, async(curr, prev) => {
+      const data = await curr(prev, args, context, info);
+      if (!data) {
+        return undefined;
+      }
+      if (data.edges) {
+        data.edges = data.edges.filter(x => !!x);
+      }
+      return data;
+    }, result);
   };
   const targetAfterArray = (results, args, context, info) => {
     if (targetAfterFuncs.length === 0) {
       return results;
     }
-    return results.map((result) => {
-      return targetAfter(result, args, context, info);
-    });
+    return waterfall(results, async(result, prev) => {
+      return prev.concat(await targetAfter(result, args, context, info));
+    }, []);
   };
   const events = {
     before: targetBefore,

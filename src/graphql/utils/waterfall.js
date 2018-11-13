@@ -1,9 +1,9 @@
 
 
-export default function waterfall(arr = [], func) {
+export default function waterfall(arr = [], func, start) {
   return arr.reduce(function(promise, val) {
     return promise.then(function(prevVal) {
       return func(val, prevVal);
     });
-  }, Promise.resolve());
+  }, Promise.resolve(start));
 }
