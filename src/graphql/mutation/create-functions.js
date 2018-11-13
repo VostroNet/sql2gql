@@ -17,6 +17,8 @@ import {fromGlobalId, toGlobalId} from "graphql-relay/lib/node/node";
 import { getForeignKeysForModel } from "../utils/models";
 import replaceIdDeep from "../utils/replace-id-deep";
 
+import {replaceWhereOperators} from "graphql-sequelize/lib/replaceWhereOperators";
+
 /**
  * @function createFunctions
  * @param {Object} models
@@ -210,7 +212,7 @@ async function createProcessRelationships(model, models) {
                       });
                     case "add":
                       return waterfall(commands.add, async(action) => {
-                        const where = replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues);
+                        const where = replaceWhereOperators(replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues));
                         const results = await models[relationship.source].findAll({where, context});
                         if (results.length > 0) {
                           return source[assoc.accessors.addMultiple].apply(source, [
@@ -223,7 +225,7 @@ async function createProcessRelationships(model, models) {
 
                     case "remove":
                       return waterfall(commands.remove, async(action) => {
-                        const where = replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues);
+                        const where = replaceWhereOperators(replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues));
                         const results = await models[relationship.source].findAll({where, context});
                         if (results.length > 0) {
                           return source[assoc.accessors.removeMultiple].apply(source, [
@@ -260,7 +262,7 @@ async function createProcessRelationships(model, models) {
                         break;
                       case "add":
                         return waterfall(commands.add, async(action) => {
-                          const where = replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues);
+                          const where = replaceWhereOperators(replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues));
                           const results = await models[relationship.source].findAll({where, context});
                           if (results.length > 0) {
                             return source[assoc.accessors.addMultiple].apply(source, [
@@ -272,7 +274,7 @@ async function createProcessRelationships(model, models) {
                         });
                       case "remove":
                         return waterfall(commands.remove, async(action) => {
-                          const where = replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues);
+                          const where = replaceWhereOperators(replaceIdDeep(action, modelDefinition.globalKeys, info.variableValues));
                           const results = await models[relationship.source].findAll({where, context});
                           if (results.length > 0) {
                             return source[assoc.accessors.removeMultiple].apply(source, [
