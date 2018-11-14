@@ -1,4 +1,4 @@
-import Sequelize from "sequelize";
+import Sequelize, {Op} from "sequelize";
 
 import {
   GraphQLString,
@@ -119,6 +119,22 @@ export default {
       foreignKey: "taskId",
     },
   }],
+  whereOperators: {
+    async hasNoItems(newWhere, findOptions) {
+      const {context} = findOptions;
+      const {instance} = context;
+      return {
+        id: {
+          [Op.notIn]: instance.literal(`(SELECT DISTINCT("taskId") FROM "task-items")`)
+        }
+      };
+    },
+    async innerTest(newWhere, findOptions) {
+      return {
+        hasNoItems: true
+      };
+    }
+  },
   expose: {
     instanceMethods: {
       query: {

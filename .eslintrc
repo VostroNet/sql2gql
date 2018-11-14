@@ -141,7 +141,7 @@
     "operator-assignment": [0, "always"],
     "padded-blocks": 0,
     "quote-props": 0,
-    "quotes": [2, "double"],
+    "quotes": [2, "double", { "allowTemplateLiterals": true }],
     "radix": 0,
     "semi": 2,
     "semi-spacing": [2, {"before": false, "after": true}],

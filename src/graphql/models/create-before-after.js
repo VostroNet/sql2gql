@@ -1,5 +1,5 @@
 import getModelDefinition from "../utils/get-model-def";
-import replaceIdDeep from "../utils/replace-id-deep";
+import replaceIdDeep, { replaceDefWhereOperators } from "../utils/replace-id-deep";
 import waterfall from "../utils/waterfall";
 
 /**
@@ -70,7 +70,7 @@ export default function createBeforeAfter(model, options, hooks = {}) {
   if (hooks.before) {
     targetBeforeFuncs = targetBeforeFuncs.concat(hooks.before);
   }
-  const targetBefore = (findOptions, args, context, info) => {
+  const targetBefore = async(findOptions, args, context, info) => {
     findOptions.context = context;
     findOptions.rootValue = info.rootValue;
     if (findOptions.where) {

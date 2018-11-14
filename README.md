@@ -18,6 +18,37 @@ Relay structured opininated Sequelize to GraphQL databinder, extending out graph
 - Exposing class and instance methods as mutation/query options.
 - Permissions to restrict access to parts of the graphql schema on generation.
 - Generation of [subscriptions](https://github.com/apollographql/graphql-subscriptions) from sequelize hooks
+- user defined where operators to allow for complicated where statements
+
+```gql
+query {
+  models {
+    Task(where: {hasNoItems: true}) {
+      id
+    }
+  }
+}
+
+```
+
+```js
+  whereOperators: {
+    async hasNoItems(newWhere, findOptions) {
+      const {context} = findOptions;
+      const {instance} = context;
+      return {
+        id: {
+          [Op.notIn]: instance.literal(`(SELECT DISTINCT("taskId") FROM "task-items")`)
+        }
+      };
+    },
+    async innerTest(newWhere, findOptions) {
+      return {
+        hasNoItems: true
+      };
+    }
+  },
+```
 
 ## Mutations
 
@@ -68,10 +99,14 @@ ensure the following is in your package.json otherwise you end up with a ton of 
 - belongsToMany
 - paging
 - orderBy
+- whereOperators
+  - inner recursion attributes (being able to return an whereOp attribute from another one and it gets processes)
 
 ### Features
 
 - set hasOne or belongsTo to null
+- custom where operators
+- raw queries
 
 ### Bugs
 

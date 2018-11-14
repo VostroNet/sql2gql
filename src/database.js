@@ -4,6 +4,7 @@ if (global.Promise) {
 }
 
 import logger from "./utils/logger";
+import { replaceDefWhereOperators } from "./graphql/utils/replace-id-deep";
 
 const log = logger("sql2gql::database:");
 
@@ -141,6 +142,14 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
       });
       hooks.push(schema.$subscriptions.hooks);
     }
+    hooks.push({
+      async beforeFind(findOptions) {
+        if (schema.whereOperators && findOptions.where) {
+          findOptions.where = await replaceDefWhereOperators(findOptions.where, schema.whereOperators, findOptions);
+        }
+        return findOptions;
+      }
+    });
     schemaOptions = Object.assign(schemaOptions, {
       hooks: generateHooks(hooks, schema.name),
     });

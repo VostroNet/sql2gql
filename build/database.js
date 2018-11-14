@@ -11,6 +11,8 @@ var _sequelize = _interopRequireDefault(require("sequelize"));
 
 var _logger = _interopRequireDefault(require("./utils/logger"));
 
+var _replaceIdDeep = require("./graphql/utils/replace-id-deep");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 if (global.Promise) {
@@ -186,6 +188,16 @@ function loadSchemas(schemas, sqlInstance, options = {}) {
       hooks.push(schema.$subscriptions.hooks);
     }
 
+    hooks.push({
+      async beforeFind(findOptions) {
+        if (schema.whereOperators && findOptions.where) {
+          findOptions.where = await (0, _replaceIdDeep.replaceDefWhereOperators)(findOptions.where, schema.whereOperators, findOptions);
+        }
+
+        return findOptions;
+      }
+
+    });
     schemaOptions = Object.assign(schemaOptions, {
       hooks: generateHooks(hooks, schema.name)
     });
