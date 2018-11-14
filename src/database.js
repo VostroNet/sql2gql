@@ -148,6 +148,12 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
           findOptions.where = await replaceDefWhereOperators(findOptions.where, schema.whereOperators, findOptions);
         }
         return findOptions;
+      },
+      async beforeCount(findOptions) {
+        if (schema.whereOperators && findOptions.where) {
+          findOptions.where = await replaceDefWhereOperators(findOptions.where, schema.whereOperators, findOptions);
+        }
+        return findOptions;
       }
     });
     schemaOptions = Object.assign(schemaOptions, {

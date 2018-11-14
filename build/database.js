@@ -195,6 +195,14 @@ function loadSchemas(schemas, sqlInstance, options = {}) {
         }
 
         return findOptions;
+      },
+
+      async beforeCount(findOptions) {
+        if (schema.whereOperators && findOptions.where) {
+          findOptions.where = await (0, _replaceIdDeep.replaceDefWhereOperators)(findOptions.where, schema.whereOperators, findOptions);
+        }
+
+        return findOptions;
       }
 
     });

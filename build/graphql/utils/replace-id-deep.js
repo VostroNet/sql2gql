@@ -52,6 +52,10 @@ function replaceIdDeep(obj, keyMap, variableValues, isTagged = false) {
 }
 
 function hasUserPrototype(obj) {
+  if (!obj) {
+    return false;
+  }
+
   return Object.getPrototypeOf(obj) !== Object.prototype;
 }
 

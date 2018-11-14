@@ -43,6 +43,9 @@ export default function replaceIdDeep(obj, keyMap, variableValues, isTagged = fa
 
 
 function hasUserPrototype(obj) {
+  if (!obj) {
+    return false;
+  }
   return Object.getPrototypeOf(obj) !== Object.prototype;
 }
 async function checkObjectForWhereOps(value, keyMap, params) {

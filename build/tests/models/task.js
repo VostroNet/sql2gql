@@ -153,8 +153,6 @@ var _default = {
     },
 
     async innerTest(newWhere, findOptions) {
-      // const {context} = findOptions;
-      // const {instance} = context;
       return {
         hasNoItems: true
       };
