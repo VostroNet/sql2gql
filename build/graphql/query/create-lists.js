@@ -115,8 +115,9 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
               } = source;
 
               if (args.first || args.last) {
+                const where = (0, _replaceWhereOperators.replaceWhereOperators)(args.where || {});
                 return models[modelName].count({
-                  where: args.where,
+                  where: where,
                   context,
                   info
                 });

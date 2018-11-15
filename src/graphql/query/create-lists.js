@@ -93,7 +93,8 @@ export default async function createModelLists(models, modelNames, typeCollectio
             async resolve(source, a, context, info) {
               const {args} = source;
               if (args.first || args.last) {
-                return models[modelName].count({where: args.where, context, info});
+                const where = replaceWhereOperators(args.where || {});
+                return models[modelName].count({where: where, context, info});
               }
               return (source.edges || []).length;
             },
