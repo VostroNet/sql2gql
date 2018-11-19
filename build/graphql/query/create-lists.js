@@ -15,6 +15,8 @@ var _createBeforeAfter = _interopRequireDefault(require("../models/create-before
 
 var _graphql = require("graphql");
 
+var _replaceIdDeep = _interopRequireDefault(require("../utils/replace-id-deep"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
@@ -115,7 +117,8 @@ async function createModelLists(models, modelNames, typeCollection, options, fie
               } = source;
 
               if (args.first || args.last) {
-                const where = (0, _replaceWhereOperators.replaceWhereOperators)(args.where || {});
+                let where = (0, _replaceWhereOperators.replaceWhereOperators)(args.where || {});
+                where = (0, _replaceIdDeep.default)(where, def.globalKeys, info.variableValues);
                 return models[modelName].count({
                   where: where,
                   context,

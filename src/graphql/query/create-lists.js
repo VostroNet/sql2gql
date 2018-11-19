@@ -11,6 +11,7 @@ import {
   GraphQLInt, GraphQLEnumType, GraphQLInputObjectType, GraphQLList,
   GraphQLBoolean,
 } from "graphql";
+import replaceIdDeep from "../utils/replace-id-deep";
 
 /**
  * @function createModelLists
@@ -93,7 +94,8 @@ export default async function createModelLists(models, modelNames, typeCollectio
             async resolve(source, a, context, info) {
               const {args} = source;
               if (args.first || args.last) {
-                const where = replaceWhereOperators(args.where || {});
+                let where = replaceWhereOperators(args.where || {});
+                where = replaceIdDeep(where, def.globalKeys, info.variableValues);
                 return models[modelName].count({where: where, context, info});
               }
               return (source.edges || []).length;
