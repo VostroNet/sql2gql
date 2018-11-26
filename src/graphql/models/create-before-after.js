@@ -1,6 +1,6 @@
 import getModelDefinition from "../utils/get-model-def";
 import replaceIdDeep, { replaceDefWhereOperators } from "../utils/replace-id-deep";
-import waterfall from "../utils/waterfall";
+import waterfall from "../../utils/waterfall";
 
 /**
  * @typedef {Object} CreateBeforeAfterOutput

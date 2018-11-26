@@ -13,7 +13,7 @@ var _graphql = require("graphql");
 
 var _graphqlSequelize = require("graphql-sequelize");
 
-var _waterfall = _interopRequireDefault(require("../utils/waterfall"));
+var _waterfall = _interopRequireDefault(require("../../utils/waterfall"));
 
 var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 

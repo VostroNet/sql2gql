@@ -1,6 +1,6 @@
 
 import {fromGlobalId} from "graphql-relay";
-import waterfall from "./waterfall";
+import waterfall from "../../utils/waterfall";
 import {Op} from "sequelize";
 
 function getProperties(obj) {

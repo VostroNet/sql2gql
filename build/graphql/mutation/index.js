@@ -11,7 +11,7 @@ var _graphqlSequelize = require("graphql-sequelize");
 
 var _createBeforeAfter = _interopRequireDefault(require("../models/create-before-after"));
 
-var _waterfall = _interopRequireDefault(require("../utils/waterfall"));
+var _waterfall = _interopRequireDefault(require("../../utils/waterfall"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

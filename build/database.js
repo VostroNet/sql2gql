@@ -13,12 +13,13 @@ var _logger = _interopRequireDefault(require("./utils/logger"));
 
 var _replaceIdDeep = require("./graphql/utils/replace-id-deep");
 
+var _waterfall = _interopRequireDefault(require("./utils/waterfall"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-if (global.Promise) {
-  _sequelize.default.Promise = global.Promise;
-}
-
+// if (global.Promise) {
+//   Sequelize.Promise = global.Promise;
+// }
 const log = (0, _logger.default)("sql2gql::database:");
 /**
  * @function connect
@@ -109,7 +110,15 @@ function createHookQueue(hookName, hooks, schemaName) {
     return hooks.reduce((promise, targetHooks) => {
       return promise.then(async val => {
         if (targetHooks[hookName]) {
-          const result = await targetHooks[hookName](val, options, error, schemaName, hookName);
+          let result;
+
+          if (Array.isArray(targetHooks[hookName])) {
+            result = await (0, _waterfall.default)(targetHooks[hookName], (hook, prevResult) => {
+              return hook(prevResult, options, error, schemaName, hookName);
+            }, val);
+          } else {
+            result = await targetHooks[hookName](val, options, error, schemaName, hookName);
+          }
 
           if (result) {
             return result;

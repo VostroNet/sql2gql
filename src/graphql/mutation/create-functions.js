@@ -8,7 +8,7 @@ import {
   defaultListArgs,
 } from "graphql-sequelize";
 
-import waterfall from "../utils/waterfall";
+import waterfall from "../../utils/waterfall";
 
 import createBeforeAfter from "../models/create-before-after";
 import events from "../events";

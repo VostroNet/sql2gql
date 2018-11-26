@@ -1,10 +1,12 @@
 import Sequelize from "sequelize";
-if (global.Promise) {
-  Sequelize.Promise = global.Promise;
-}
+
+// if (global.Promise) {
+//   Sequelize.Promise = global.Promise;
+// }
 
 import logger from "./utils/logger";
 import { replaceDefWhereOperators } from "./graphql/utils/replace-id-deep";
+import waterfall from "./utils/waterfall";
 
 const log = logger("sql2gql::database:");
 
@@ -73,7 +75,14 @@ function createHookQueue(hookName, hooks, schemaName) {
     return hooks.reduce((promise, targetHooks) => {
       return promise.then(async(val) => {
         if (targetHooks[hookName]) {
-          const result = await targetHooks[hookName](val, options, error, schemaName, hookName);
+          let result;
+          if (Array.isArray(targetHooks[hookName])) {
+            result = await waterfall(targetHooks[hookName], (hook, prevResult) => {
+              return hook(prevResult, options, error, schemaName, hookName);
+            }, val);
+          } else {
+            result = await targetHooks[hookName](val, options, error, schemaName, hookName);
+          }
           if (result) {
             return result;
           }

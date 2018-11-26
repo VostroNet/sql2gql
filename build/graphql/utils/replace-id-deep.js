@@ -8,7 +8,7 @@ exports.replaceDefWhereOperators = replaceDefWhereOperators;
 
 var _graphqlRelay = require("graphql-relay");
 
-var _waterfall = _interopRequireDefault(require("./waterfall"));
+var _waterfall = _interopRequireDefault(require("../../utils/waterfall"));
 
 var _sequelize = require("sequelize");
 

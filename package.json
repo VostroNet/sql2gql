@@ -26,11 +26,11 @@
     "build/graphql/utils/replace-id-deep.js",
     "build/graphql/utils/process-fk.js",
     "build/graphql/utils/models.js",
-    "build/graphql/utils/waterfall.js",
     "build/graphql/events.js",
     "build/graphql/index.js",
     "build/graphql/subscriptions.js",
     "build/utils/logger.js",
+    "build/utils/waterfall.js",
     "build/database.js",
     "build/index.js",
     "build/permission-helper.js"

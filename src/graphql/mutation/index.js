@@ -5,7 +5,7 @@ import {
   resolver,
 } from "graphql-sequelize";
 import createBeforeAfter from "../models/create-before-after";
-import waterfall from "../utils/waterfall";
+import waterfall from "../../utils/waterfall";
 
 /**
  * @function createMutationV3
