@@ -204,6 +204,14 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
             name: `${modelName}${relName}`,
             nodeType: targetType,
             target: relationship.rel,
+            connectionFields: {
+              total: {
+                type: GraphQLInt,
+                async resolve({source}, args, context, info) {
+                  return source[assoc.accessors.count].apply(source, [{where: args.where, context, info}]);
+                },
+              },
+            },
             orderBy: new GraphQLEnumType({
               name: `${modelName}${relName}OrderBy`,
               values: Object.assign({}, values, modelDefinition.orderBy),
@@ -299,6 +307,9 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
                     b2mInc.include = inc;
                   }
                   findOptions.include.push(b2mInc);
+                  if (findOptions.where) {
+                    findOptions.where = replaceWhereOperators(findOptions.where);
+                  }
                   return before(findOptions, args, context, info);
                 }, after,
               });

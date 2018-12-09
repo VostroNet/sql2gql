@@ -235,6 +235,11 @@ function loadSchemas(schemas, sqlInstance, options = {}) {
     }
 
     sqlInstance.define(schema.name, Object.assign({}, defaultAttr, schema.define), schemaOptions);
+
+    if (!sqlInstance.models[schema.name]) {
+      throw new Error(`Schema ${schema.name} is missing, unable to continue`);
+    }
+
     sqlInstance.models[schema.name].$sqlgql = schema;
     sqlInstance.models[schema.name].prototype.getOriginalModel = createBind(sqlInstance.models, schema.name);
 
