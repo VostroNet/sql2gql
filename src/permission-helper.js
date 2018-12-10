@@ -110,6 +110,7 @@ export default function createRoleBasedPermissions(role, rules, options = {}) {
     "mutationDelete",
     "mutationUpdateAll",
     "mutationDeleteAll",
+    "extensions",
   ].reduce((obj, key) => {
     if (compiledRules[key]) {
       obj[key] = (modelName) => {

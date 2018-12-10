@@ -20,6 +20,7 @@ import createMutationClassMethods from "./mutation/create-class-methods";
 import createQueryLists from "./query/create-lists";
 import createQueryClassMethods from "./query/create-class-methods";
 import createSubscriptionFunctions from "./subscriptions";
+import waterfall from "../utils/waterfall";
 
 /**
  * @function createSchema
@@ -63,6 +64,20 @@ export async function createSchema(sqlInstance, options = {}) {
       },
     };
   }
+  if ((extend || {}).query) {
+    queryRootFields = await waterfall(Object.keys(extend.query), async(k, o) => {
+      if (options.permission) {
+        if (options.permission.queryExtension) {
+          const result = await options.permission.queryExtension(k, options.permission.options);
+          if (!result) {
+            return o;
+          }
+        }
+      }
+      o[k] = extend.query[k];
+      return o;
+    }, queryRootFields);
+  }
   if (Object.keys(queryRootFields).length > 0) {
     rootSchema.query = new GraphQLObjectType({
       name: "RootQuery",
@@ -86,6 +101,20 @@ export async function createSchema(sqlInstance, options = {}) {
         return {};
       },
     };
+  }
+  if ((extend || {}).mutation) {
+    mutationRootFields = await waterfall(Object.keys(extend.mutation), async(k, o) => {
+      if (options.permission) {
+        if (options.permission.mutationExtension) {
+          const result = await options.permission.mutationExtension(k, options.permission.options);
+          if (!result) {
+            return o;
+          }
+        }
+      }
+      o[k] = extend.mutation[k];
+      return o;
+    }, mutationRootFields);
   }
   if (Object.keys(mutationRootFields).length > 0) {
     rootSchema.mutation = new GraphQLObjectType({
@@ -115,12 +144,13 @@ export async function createSchema(sqlInstance, options = {}) {
       });
     }
   }
-  const schemaParams = Object.assign(rootSchema, extend);
+  // const extensions = {};
+  // const schemaParams = Object.assign(rootSchema, extensions);
 
-  if (!schemaParams.query) {
+  if (!rootSchema.query) {
     throw new Error("GraphQLSchema requires query to be set. Are your permissions settings to aggressive?");
   }
-  const schema = new GraphQLSchema(schemaParams);
+  const schema = new GraphQLSchema(rootSchema);
   schema.$sql2gql = {
     types: typeCollection,
   };

@@ -116,7 +116,7 @@ function createRoleBasedPermissions(role, rules, options = {}) {
     }
 
     return obj;
-  }, {}), ["query", "model", "mutation", "mutationUpdate", "mutationCreate", "mutationDelete", "mutationUpdateAll", "mutationDeleteAll"].reduce((obj, key) => {
+  }, {}), ["query", "model", "mutation", "mutationUpdate", "mutationCreate", "mutationDelete", "mutationUpdateAll", "mutationDeleteAll", "extensions"].reduce((obj, key) => {
     if (compiledRules[key]) {
       obj[key] = modelName => {
         const target = compiledRules[key];

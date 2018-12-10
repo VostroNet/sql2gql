@@ -27,6 +27,8 @@ var _createClassMethods2 = _interopRequireDefault(require("./query/create-class-
 
 var _subscriptions = _interopRequireDefault(require("./subscriptions"));
 
+var _waterfall = _interopRequireDefault(require("../utils/waterfall"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const {
@@ -98,6 +100,23 @@ async function createSchema(sqlInstance, options = {}) {
     };
   }
 
+  if ((extend || {}).query) {
+    queryRootFields = await (0, _waterfall.default)(Object.keys(extend.query), async (k, o) => {
+      if (options.permission) {
+        if (options.permission.queryExtension) {
+          const result = await options.permission.queryExtension(k, options.permission.options);
+
+          if (!result) {
+            return o;
+          }
+        }
+      }
+
+      o[k] = extend.query[k];
+      return o;
+    }, queryRootFields);
+  }
+
   if (Object.keys(queryRootFields).length > 0) {
     rootSchema.query = new _graphql.GraphQLObjectType({
       name: "RootQuery",
@@ -137,6 +156,23 @@ async function createSchema(sqlInstance, options = {}) {
     };
   }
 
+  if ((extend || {}).mutation) {
+    mutationRootFields = await (0, _waterfall.default)(Object.keys(extend.mutation), async (k, o) => {
+      if (options.permission) {
+        if (options.permission.mutationExtension) {
+          const result = await options.permission.mutationExtension(k, options.permission.options);
+
+          if (!result) {
+            return o;
+          }
+        }
+      }
+
+      o[k] = extend.mutation[k];
+      return o;
+    }, mutationRootFields);
+  }
+
   if (Object.keys(mutationRootFields).length > 0) {
     rootSchema.mutation = new _graphql.GraphQLObjectType({
       name: "Mutation",
@@ -166,15 +202,15 @@ async function createSchema(sqlInstance, options = {}) {
         fields: subscriptionRootFields
       });
     }
-  }
+  } // const extensions = {};
+  // const schemaParams = Object.assign(rootSchema, extensions);
 
-  const schemaParams = Object.assign(rootSchema, extend);
 
-  if (!schemaParams.query) {
+  if (!rootSchema.query) {
     throw new Error("GraphQLSchema requires query to be set. Are your permissions settings to aggressive?");
   }
 
-  const schema = new _graphql.GraphQLSchema(schemaParams);
+  const schema = new _graphql.GraphQLSchema(rootSchema);
   schema.$sql2gql = {
     types: typeCollection
   };
