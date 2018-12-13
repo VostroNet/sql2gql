@@ -6,6 +6,7 @@ const mocha = require("gulp-mocha");
 const babel = require("gulp-babel");
 const sourcemaps = require("gulp-sourcemaps");
 const jsdoc3 = require("gulp-jsdoc3");
+const path = require("path");
 
 gulp.task("clean", () => {
   return del(["build/**/*"]);
@@ -34,7 +35,10 @@ gulp.task("compile:publish", ["lint"], () => {
       ]],
       "plugins": ["@babel/plugin-proposal-object-rest-spread"],
     }))
-    .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
+    .pipe(sourcemaps.write(".", {
+      includeContent: false,
+      sourceRoot: process.env.NODE_ENV === "production" ? "../src/" : path.resolve(__dirname, "./src/")
+    }))
     .pipe(gulp.dest("build/"));
 });
 gulp.task("compile", ["lint"], () => {
@@ -50,7 +54,10 @@ gulp.task("compile", ["lint"], () => {
         }],
       ], plugins: ["@babel/plugin-proposal-object-rest-spread"],
     }))
-    .pipe(sourcemaps.write(".", {includeContent: false, sourceRoot: "../src/"}))
+    .pipe(sourcemaps.write(".", {
+      includeContent: false,
+      sourceRoot: process.env.NODE_ENV === "production" ? "../src/" : path.resolve(__dirname, "./src/")
+    }))
     .pipe(gulp.dest("build/"));
 });
 

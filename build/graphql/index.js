@@ -31,6 +31,10 @@ var _waterfall = _interopRequireDefault(require("../utils/waterfall"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 const {
   sequelizeNodeInterface
 } = _graphqlSequelize.relay;
@@ -48,10 +52,9 @@ async function createSchema(sqlInstance, options = {}) {
     nodeTypeMapper
   } = sequelizeNodeInterface(sqlInstance);
   const {
-    query,
-    mutations = {},
     subscriptions,
-    extend = {}
+    extend = {},
+    root
   } = options;
   let validKeys = Object.keys(sqlInstance.models).reduce((o, key) => {
     if ((0, _getModelDef.default)(sqlInstance.models[key])) {
@@ -64,9 +67,9 @@ async function createSchema(sqlInstance, options = {}) {
   const mutationInputTypes = await (0, _createInput.default)(sqlInstance.models, validKeys, typeCollection, options);
   const mutationFunctions = await (0, _createFunctions.default)(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options, () => mutationFunctions);
   let mutationCollection = await (0, _mutation.default)(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
-  let queryRootFields = Object.assign({
+  let queryRootFields = {
     node: nodeField
-  }, query);
+  };
   let rootSchema = {};
   let modelQueries = await (0, _createLists.default)(sqlInstance.models, validKeys, typeCollection, options);
 
@@ -124,7 +127,7 @@ async function createSchema(sqlInstance, options = {}) {
     });
   }
 
-  let mutationRootFields = Object.assign({}, mutations);
+  let mutationRootFields = {}; //Object.assign({}, extemmutations);
 
   if (Object.keys(mutationCollection).length > 0) {
     mutationRootFields.models = {
@@ -210,7 +213,7 @@ async function createSchema(sqlInstance, options = {}) {
     throw new Error("GraphQLSchema requires query to be set. Are your permissions settings to aggressive?");
   }
 
-  const schema = new _graphql.GraphQLSchema(rootSchema);
+  const schema = new _graphql.GraphQLSchema(Object.assign(rootSchema, _objectSpread({}, root)));
   schema.$sql2gql = {
     types: typeCollection
   };

@@ -31,7 +31,7 @@ import waterfall from "../utils/waterfall";
 
 export async function createSchema(sqlInstance, options = {}) {
   const {nodeInterface, nodeField, nodeTypeMapper} = sequelizeNodeInterface(sqlInstance);
-  const {query, mutations = {}, subscriptions, extend = {}} = options;
+  const {subscriptions, extend = {}, root} = options;
   let validKeys = Object.keys(sqlInstance.models).reduce((o, key) => {
     if (getModelDefinition(sqlInstance.models[key])) {
       o.push(key);
@@ -42,9 +42,9 @@ export async function createSchema(sqlInstance, options = {}) {
   const mutationInputTypes = await createMutationInputs(sqlInstance.models, validKeys, typeCollection, options);
   const mutationFunctions = await createMutationFunctions(sqlInstance.models, validKeys, typeCollection, mutationInputTypes, options, () => mutationFunctions);
   let mutationCollection = await createMutation(sqlInstance.models, validKeys, typeCollection, mutationFunctions, options);
-  let queryRootFields = Object.assign({
+  let queryRootFields = {
     node: nodeField,
-  }, query);
+  };
   let rootSchema = {};
   let modelQueries = await createQueryLists(sqlInstance.models, validKeys, typeCollection, options);
   if (Object.keys(modelQueries).length > 0) {
@@ -84,7 +84,7 @@ export async function createSchema(sqlInstance, options = {}) {
       fields: queryRootFields,
     });
   }
-  let mutationRootFields = Object.assign({}, mutations);
+  let mutationRootFields = {};//Object.assign({}, extemmutations);
   if (Object.keys(mutationCollection).length > 0) {
     mutationRootFields.models = {
       type: new GraphQLObjectType({name: "MutationModels", fields: mutationCollection}),
@@ -150,7 +150,8 @@ export async function createSchema(sqlInstance, options = {}) {
   if (!rootSchema.query) {
     throw new Error("GraphQLSchema requires query to be set. Are your permissions settings to aggressive?");
   }
-  const schema = new GraphQLSchema(rootSchema);
+
+  const schema = new GraphQLSchema(Object.assign(rootSchema, {...root}));
   schema.$sql2gql = {
     types: typeCollection,
   };
