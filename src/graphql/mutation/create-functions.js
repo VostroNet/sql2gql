@@ -201,8 +201,9 @@ async function createProcessRelationships(model, models) {
                       });
                     case "update":
                       return waterfall(commands.update, async(action) => {
+                        const where = replaceWhereOperators(replaceIdDeep(action.where, modelDefinition.globalKeys, info.variableValues));
                         const results = await source[assoc.accessors.get]({
-                          where: action.where, context,
+                          where, context,
                         });
                         return waterfall(results, (model) => {
                           return modelDefinition.mutationFunctions.updateSingle(model, {
@@ -255,7 +256,7 @@ async function createProcessRelationships(model, models) {
                         break;
                       case "update":
                         updateArgs = {
-                          where: {and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, action.where]},
+                          where: {and: [{[assoc.foreignKey]: source.get(assoc.sourceKey)}, replaceWhereOperators(replaceIdDeep(action.where, modelDefinition.globalKeys, info.variableValues))]},
                           input: action.input,
                         };
                         await modelDefinition.mutationFunctions.update(source, updateArgs, context, info);
