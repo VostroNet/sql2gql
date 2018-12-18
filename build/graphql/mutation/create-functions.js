@@ -9,6 +9,8 @@ exports.onDelete = onDelete;
 exports.default = createFunctions;
 exports.convertInputForModelToKeys = convertInputForModelToKeys;
 
+require("core-js/modules/es6.array.sort");
+
 var _graphql = require("graphql");
 
 var _graphqlSequelize = require("graphql-sequelize");
@@ -226,7 +228,7 @@ async function createProcessRelationships(model, models) {
 
           switch (relationship.type) {
             case "belongsTo":
-              await (0, _waterfall.default)(Object.keys(input[relName]), async command => {
+              await (0, _waterfall.default)(Object.keys(input[relName]).sort(fOrder), async command => {
                 switch (command) {
                   case "create":
                     createArgs = {
@@ -247,7 +249,7 @@ async function createProcessRelationships(model, models) {
               break;
 
             case "hasOne":
-              await (0, _waterfall.default)(Object.keys(input[relName]), async command => {
+              await (0, _waterfall.default)(Object.keys(input[relName]).sort(fOrder), async command => {
                 switch (command) {
                   case "create":
                     createArgs = {
@@ -266,7 +268,7 @@ async function createProcessRelationships(model, models) {
             case "belongsToMany":
               //eslint-disable-line
               await (0, _waterfall.default)(input[relName], commands => {
-                return (0, _waterfall.default)(Object.keys(commands), command => {
+                return (0, _waterfall.default)(Object.keys(commands).sort(fOrder), command => {
                   switch (command) {
                     case "create":
                       return (0, _waterfall.default)(commands.create, async action => {
@@ -335,7 +337,7 @@ async function createProcessRelationships(model, models) {
 
             case "hasMany":
               await (0, _waterfall.default)(input[relName], commands => {
-                return (0, _waterfall.default)(Object.keys(commands), command => {
+                return (0, _waterfall.default)(Object.keys(commands).sort(fOrder), command => {
                   return (0, _waterfall.default)(commands[command], async action => {
                     switch (command) {
                       case "create":
@@ -541,5 +543,24 @@ function convertInputForModelToKeys(input, targetModel) {
   }
 
   return input;
+}
+
+const commandKeys = {
+  create: 4,
+  update: 3,
+  add: 2,
+  remove: 1
+};
+
+function fOrder(a, b) {
+  if (commandKeys[a] < commandKeys[b]) {
+    return -1;
+  }
+
+  if (commandKeys[a] > commandKeys[b]) {
+    return 1;
+  }
+
+  return 0;
 }
 //# sourceMappingURL=create-functions.js.map

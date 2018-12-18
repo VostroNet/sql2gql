@@ -152,7 +152,7 @@ async function createProcessRelationships(model, models) {
 
           switch (relationship.type) {
             case "belongsTo":
-              await waterfall(Object.keys(input[relName]), async(command) => {
+              await waterfall(Object.keys(input[relName]).sort(fOrder), async(command) => {
                 switch (command) {
                   case "create":
                     createArgs = {
@@ -169,7 +169,7 @@ async function createProcessRelationships(model, models) {
               });
               break;
             case "hasOne":
-              await waterfall(Object.keys(input[relName]), async(command) => {
+              await waterfall(Object.keys(input[relName]).sort(fOrder), async(command) => {
                 switch (command) {
                   case "create":
                     createArgs = {
@@ -185,7 +185,7 @@ async function createProcessRelationships(model, models) {
               break;
             case "belongsToMany": //eslint-disable-line
               await waterfall(input[relName], (commands) => {
-                return waterfall(Object.keys(commands), (command) => {
+                return waterfall(Object.keys(commands).sort(fOrder), (command) => {
                   switch (command) {
                     case "create":
                       return waterfall(commands.create, async(action) => {
@@ -243,7 +243,7 @@ async function createProcessRelationships(model, models) {
               break;
             case "hasMany":
               await waterfall(input[relName], (commands) => {
-                return waterfall(Object.keys(commands), (command) => {
+                return waterfall(Object.keys(commands).sort(fOrder), (command) => {
                   return waterfall(commands[command], async(action) => {
                     switch (command) {
                       case "create":
@@ -395,4 +395,23 @@ export function convertInputForModelToKeys(input, targetModel) {
     });
   }
   return input;
+}
+
+
+const commandKeys = {
+  create: 4,
+  update: 3,
+  add: 2,
+  remove: 1
+};
+
+
+function fOrder(a, b) {
+  if (commandKeys[a] < commandKeys[b]) {
+    return -1;
+  }
+  if (commandKeys[a] > commandKeys[b]) {
+    return 1;
+  }
+  return 0;
 }
