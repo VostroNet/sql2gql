@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createSchemaObjects = createSchemaObjects;
 exports.createSchema = createSchema;
 
 var _graphql = require("graphql");
@@ -45,7 +46,7 @@ const {
  * @param {Object} options
  * @return {GraphQLSchema}
 */
-async function createSchema(sqlInstance, options = {}) {
+async function createSchemaObjects(sqlInstance, options = {}) {
   const {
     nodeInterface,
     nodeField,
@@ -213,9 +214,17 @@ async function createSchema(sqlInstance, options = {}) {
     throw new Error("GraphQLSchema requires query to be set. Are your permissions settings to aggressive?");
   }
 
-  const schema = new _graphql.GraphQLSchema(Object.assign(rootSchema, _objectSpread({}, root)));
+  return {
+    types: typeCollection,
+    root: Object.assign(rootSchema, _objectSpread({}, root))
+  };
+}
+
+async function createSchema(sqlInstance, options = {}) {
+  const schemaObjects = await createSchemaObjects(sqlInstance, options);
+  const schema = new _graphql.GraphQLSchema(schemaObjects.root);
   schema.$sql2gql = {
-    types: typeCollection
+    types: schemaObjects.types
   };
   return schema;
 }

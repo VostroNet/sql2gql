@@ -29,7 +29,7 @@ import waterfall from "../utils/waterfall";
  * @return {GraphQLSchema}
 */
 
-export async function createSchema(sqlInstance, options = {}) {
+export async function createSchemaObjects(sqlInstance, options = {}) {
   const {nodeInterface, nodeField, nodeTypeMapper} = sequelizeNodeInterface(sqlInstance);
   const {subscriptions, extend = {}, root} = options;
   let validKeys = Object.keys(sqlInstance.models).reduce((o, key) => {
@@ -150,10 +150,20 @@ export async function createSchema(sqlInstance, options = {}) {
   if (!rootSchema.query) {
     throw new Error("GraphQLSchema requires query to be set. Are your permissions settings to aggressive?");
   }
-
-  const schema = new GraphQLSchema(Object.assign(rootSchema, {...root}));
-  schema.$sql2gql = {
+  return {
     types: typeCollection,
+    root: Object.assign(rootSchema, {...root})
+  };
+
+}
+
+
+
+export async function createSchema(sqlInstance, options = {}) {
+  const schemaObjects = await createSchemaObjects(sqlInstance, options);
+  const schema = new GraphQLSchema(schemaObjects.root);
+  schema.$sql2gql = {
+    types: schemaObjects.types,
   };
   return schema;
 }
