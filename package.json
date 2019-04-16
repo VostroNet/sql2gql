@@ -5,7 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "test": "node ./node_modules/mocha/bin/_mocha --no-timeouts ./build/tests/**/*.test.js",
-    "prepublishOnly": "gulp compile:publish"
+    "prepublishOnly": ""
   },
   "author": "VostroNet",
   "license": "GPL-3.0",
