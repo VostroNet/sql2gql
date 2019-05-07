@@ -21,6 +21,7 @@ import processFK from "../utils/process-fk";
 import {toGlobalId} from "graphql-relay/lib/node/node";
 import {getForeignKeysForModel} from "../utils/models";
 import {replaceWhereOperators} from "graphql-sequelize/lib/replaceWhereOperators";
+import {Op} from "sequelize";
 
 const {sequelizeConnection} =  relay;
 
@@ -234,7 +235,7 @@ async function createModelType(modelName, models, prefix = "", options = {}, nod
               }
               const fk = source.get(assoc.sourceKey);
               options.where = {
-                $and: [{[assoc.foreignKey]: fk}, options.where],
+                [Op.and]: [{[assoc.foreignKey]: fk}, options.where],
               };
               if (args.include) {
                 options.include = args.include.map((i) => {

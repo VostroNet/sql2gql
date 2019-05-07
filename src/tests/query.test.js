@@ -279,6 +279,7 @@ describe("queries", () => {
               name
               parentId
               children {
+                
                 edges {
                   node {
                     id

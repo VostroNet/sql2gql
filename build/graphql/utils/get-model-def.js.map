@@ -1,1 +1,0 @@
-{"version":3,"sources":["graphql/utils/get-model-def.js"],"names":["getModelDefinition","model","$sqlgql"],"mappings":";;;;;;;AAAe,SAASA,kBAAT,CAA4BC,KAA5B,EAAmC;AAChD,SAAOA,KAAK,CAACC,OAAb;AACD","file":"get-model-def.js","sourceRoot":"D:\\dev\\sql2gql\\src"}

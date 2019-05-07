@@ -170,7 +170,7 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
     });
 
     let {classMethods, instanceMethods} = schema;
-    if (!(/^4/.test(Sequelize.version))) { // v3 compatibilty
+    if ((/^3/.test(Sequelize.version))) { // v3 compatibilty
       if (classMethods) {
         schema.options.classMethods = classMethods;
       }
@@ -184,7 +184,7 @@ export function loadSchemas(schemas, sqlInstance, options = {}) {
     }
     sqlInstance.models[schema.name].$sqlgql = schema;
     sqlInstance.models[schema.name].prototype.getOriginalModel = createBind(sqlInstance.models, schema.name);
-    if (/^4/.test(Sequelize.version)) {// v4 compatibilty
+    if (!/^3/.test(Sequelize.version)) {// v4 compatibilty
       if (schema.options) {
         if (schema.options.classMethods) {
           classMethods = schema.options.classMethods;
