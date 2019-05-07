@@ -12,25 +12,26 @@ gulp.task("clean", () => {
   return del(["build/**/*"]);
 });
 
-gulp.task("lint", ["clean"], () => {
+gulp.task("lint", gulp.series("clean", () => {
   return gulp.src(["src/**/*.js"])
     .pipe(eslint({
       fix: true,
     }))
     .pipe(eslint.format())
     .pipe(eslint.failAfterError());
-});
+}));
 
-gulp.task("compile:publish", ["lint"], () => {
+gulp.task("compile:publish", gulp.series("lint", () => {
   return gulp.src(["src/**/*"])
     .pipe(sourcemaps.init())
     .pipe(babel({
       "presets": [[
         "@babel/preset-env", {
           "targets": {
-            "node": "8.9.4", //8.9.4 LTS as of 17/01/2018
+            "node": "10.15.3", //10.15.3 LTS as of 07/05/2019
           },
-          "useBuiltIns": "usage",
+          "useBuiltIns": "entry",
+          "corejs": "3",
         },
       ]],
       "plugins": ["@babel/plugin-proposal-object-rest-spread"],
@@ -40,8 +41,8 @@ gulp.task("compile:publish", ["lint"], () => {
       sourceRoot: process.env.NODE_ENV === "production" ? "../src/" : path.resolve(__dirname, "./src/")
     }))
     .pipe(gulp.dest("build/"));
-});
-gulp.task("compile", ["lint"], () => {
+}));
+gulp.task("compile", gulp.series("lint", () => {
   return gulp.src(["src/**/*"])
     .pipe(sourcemaps.init())
     .pipe(babel({
@@ -50,7 +51,8 @@ gulp.task("compile", ["lint"], () => {
           "targets": {
             "node": "current",
           },
-          "useBuiltIns": "usage",
+          "useBuiltIns": "entry",
+          "corejs": "3",
         }],
       ], plugins: ["@babel/plugin-proposal-object-rest-spread"],
     }))
@@ -59,12 +61,12 @@ gulp.task("compile", ["lint"], () => {
       sourceRoot: process.env.NODE_ENV === "production" ? "../src/" : path.resolve(__dirname, "./src/")
     }))
     .pipe(gulp.dest("build/"));
-});
+}));
 
-gulp.task("test", ["compile"], function() {
+gulp.task("test", gulp.series("compile", function() {
   return gulp.src("./build/tests/**/*.test.js")
     .pipe(mocha());
-});
+}));
 
 gulp.task("doc", function(cb) {
   var config = require("./jsdoc.json");
@@ -73,7 +75,7 @@ gulp.task("doc", function(cb) {
 });
 
 gulp.task("watch", () => {
-  gulp.watch("src/**/*.*", ["test"]);
+  gulp.watch("src/**/*.*", gulp.parallel("test")) ;
 });
 
-gulp.task("default", ["test"]);
+gulp.task("default", gulp.series("test"));
