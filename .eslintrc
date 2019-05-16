@@ -1,13 +1,13 @@
 {
-  "plugins": [],
+  "plugins": ["jest"],
 
   "parser": "babel-eslint",
 
   "env": {
-    "browser": true,
+    "browser": false,
     "node": true,
     "amd": false,
-    "mocha": true,
+    "jest": true,
     "jasmine": false,
     "phantomjs": false,
     "prototypejs": false,
@@ -161,6 +161,11 @@
     "vars-on-top": 0,
     "wrap-iife": 0,
     "wrap-regex": 0,
-    "yoda": [2, "never"]
+    "yoda": [2, "never"],
+    "jest/no-disabled-tests": "warn",
+    "jest/no-focused-tests": "error",
+    "jest/no-identical-title": "error",
+    "jest/prefer-to-have-length": "warn",
+    "jest/valid-expect": "error"
   }
 }

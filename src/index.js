@@ -1,9 +1,39 @@
-// import "babel-polyfill";
-import * as database from "./database";
-import * as graphql from "./graphql";
-import pEvents from "./graphql/events";
-import permHelper from "./permission-helper";
-export const connect = database.connect;
-export const createSchema = graphql.createSchema; //TODO: better way to lay this out?
-export const events = pEvents;
-export const permissionHelper = permHelper;
+
+import waterfall from "./utils/waterfall";
+
+export default class GQL {
+  constructor() {
+    this.models = {};
+    this.modelsAdapters = {};
+    this.adapters = {};
+    this.defaultAdapter = undefined;
+  }
+  registerAdapter = (adapter, adapterName) => {
+    this.adapters[adapterName || adapter.name] = adapter;
+    if (!this.defaultAdapter) {
+      this.defaultAdapter = adapterName || adapter.name;
+    }
+  }
+  addModel(model) {
+    const datasource = model.datasource || this.defaultAdapter;
+    if (this.models[model.name]) {
+      throw new Error(`Model with the name ${model.name} has already been added`);
+    }
+    this.models[model.name] = model;
+    this.modelsAdapters[model.name] = datasource;
+    this.adapters[datasource].addModel(model);
+  }
+  async initialise(reset = false) {
+    await Promise.all(Object.keys(this.models).map((modelName) => {
+      const model = this.models[modelName];
+    }));
+    await Promise.all(Object.keys(this.adapters).map((adapterName) => {
+      const adapter = this.adapters[adapterName];
+      if (reset) {
+        return adapter.reset();
+      }
+      return adapter.initialise();
+    }));
+  }
+
+}

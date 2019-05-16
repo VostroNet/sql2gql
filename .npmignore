@@ -1,4 +1,3 @@
-src/
 .vscode/
 .eslintrc
 .eslintignore
@@ -7,4 +6,4 @@ launch-nodemon
 gulpfile.js
 nodemon.json
 yarn.lock
-build/tests/
+__tests__

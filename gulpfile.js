@@ -2,14 +2,16 @@
 const gulp = require("gulp");
 const eslint = require("gulp-eslint");
 const del = require("del");
-const mocha = require("gulp-mocha");
+const jest = require("gulp-jest").default;
 const babel = require("gulp-babel");
 const sourcemaps = require("gulp-sourcemaps");
 const jsdoc3 = require("gulp-jsdoc3");
 const path = require("path");
 
+const jestConfig = require("./jest.config");
+
 gulp.task("clean", () => {
-  return del(["build/**/*"]);
+  return del(["lib/**/*"]);
 });
 
 gulp.task("lint", gulp.series("clean", () => {
@@ -34,13 +36,16 @@ gulp.task("compile:publish", gulp.series("lint", () => {
           "corejs": "3",
         },
       ]],
-      "plugins": ["@babel/plugin-proposal-object-rest-spread"],
+      plugins: [
+        "@babel/plugin-proposal-object-rest-spread",
+        "@babel/plugin-proposal-class-properties",
+      ],
     }))
     .pipe(sourcemaps.write(".", {
       includeContent: false,
       sourceRoot: process.env.NODE_ENV === "production" ? "../src/" : path.resolve(__dirname, "./src/")
     }))
-    .pipe(gulp.dest("build/"));
+    .pipe(gulp.dest("lib/"));
 }));
 gulp.task("compile", gulp.series("lint", () => {
   return gulp.src(["src/**/*"])
@@ -54,19 +59,24 @@ gulp.task("compile", gulp.series("lint", () => {
           "useBuiltIns": "entry",
           "corejs": "3",
         }],
-      ], plugins: ["@babel/plugin-proposal-object-rest-spread"],
+      ],
+      plugins: [
+        "@babel/plugin-proposal-object-rest-spread",
+        "@babel/plugin-proposal-class-properties",
+      ],
     }))
     .pipe(sourcemaps.write(".", {
       includeContent: false,
       sourceRoot: process.env.NODE_ENV === "production" ? "../src/" : path.resolve(__dirname, "./src/")
     }))
-    .pipe(gulp.dest("build/"));
+    .pipe(gulp.dest("lib/"));
 }));
 
-gulp.task("test", gulp.series("compile", function() {
-  return gulp.src("./build/tests/**/*.test.js")
-    .pipe(mocha());
-}));
+gulp.task("test", function() {
+  process.env.NODE_ENV = "test";
+  return gulp.src("./__tests__/**/*.test.js")
+    .pipe(jest(jestConfig));
+});
 
 gulp.task("doc", function(cb) {
   var config = require("./jsdoc.json");

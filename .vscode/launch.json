@@ -1,63 +1,19 @@
 {
   "version": "0.2.0",
-  "configurations": [{
-    "type": "node",
-    "request": "launch",
-    "name": "Mocha All",
-    "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-    "args": [
-        "--timeout",
-        "999999",
-        "--colors",
-        "${workspaceRoot}/build/tests/**/*.test.js"
-    ],
-    "env": {
-      "NODE_ENV": "development",
-      "DEBUG": "*"
-    },
-    "console": "integratedTerminal",
-    "internalConsoleOptions": "neverOpen",
-    "sourceMaps": true,
-    "outFiles": ["${workspaceRoot}/build/**/*.js"],
-  }, {
-    "type": "node",
-    "request": "launch",
-    "name": "Mocha Current File",
-    "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-    "args": [
-        "--require", "babel-register",
-        "--timeout", "999999",
-        "--colors",
-        "${file}"
-    ],
-    "sourceMaps": true,
-    "console": "integratedTerminal",
-    "internalConsoleOptions": "neverOpen"
-  }, {
-    "name": "Launch Node Debug",
-    "type": "node",
-    "request": "launch",
-    "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
-    "runtimeExecutable": "node",
-    "runtimeArgs": [
-      "--debug=6868",
-      "--nolazy",
-      "--inspect"
-    ],
-    "restart": false,
-    "port": 6868,
-    "stopOnEntry": false,
-    "args": ["--no-timeouts", "${workspaceRoot}/build/tests/**/*.test.js"],
-    "cwd": "${workspaceRoot}",
-    "env": {
-      "NODE_ENV": "development",
-      "DEBUG": "*"
-    },
-    "console": "integratedTerminal",
-    "sourceMaps": true,
-    "outFiles": ["${workspaceRoot}/build/**/*.js"],
-    "protocol": "inspector"
-  }, {
+  "configurations": [
+    {
+      "type": "node",
+      "name": "vscode-jest-tests",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+      "args": [
+        "--runInBand"
+      ],
+      "disableOptimisticBPs": true,
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+   }, {
     "name": "Launch Express Debug",
     "type": "node",
     "request": "launch",
