@@ -1,4 +1,5 @@
 import waterfall from "./utils/waterfall";
+import Cache from "./utils/cache";
 import pluralize from "pluralize";
 
 export default class GQL {
@@ -9,6 +10,8 @@ export default class GQL {
     this.models = {};
     this.relationships = {};
     this.globalKeys = {};
+    // this.reference = {};
+    this.cache = new Cache();
     this.defaultAdapter = undefined;
   }
   registerAdapter = (adapter, adapterName) => {
@@ -27,8 +30,7 @@ export default class GQL {
     this.defs[def.name] = def;
     this.defsAdapters[def.name] = datasource;
     const adapter = this.adapters[datasource];
-    this.models[def.name] = await this.adapters[datasource].createModel(def);
-    this.globalKeys[def.name] = [adapter.getPrimaryKeyNameForModel(def.name)];
+    this.models[def.name] = await adapter.createModel(def);
   }
   getModel = (modelName) => {
     return this.getModelAdapter(modelName).getModel(modelName);
@@ -40,8 +42,26 @@ export default class GQL {
     return this.defs[defName];
   }
   getGlobalKeys = (defName) => {
-    return this.globalKeys[defName];
-  } 
+    const fields = this.getFields(defName);
+    return Object.keys(fields).filter((key) => {
+      return fields[key].foreignKey || fields[key].primaryKey;
+    });
+  }
+  getFields = (defName) => {
+    const adapter = this.getModelAdapter(defName);
+    //TODO: add cross adapter fields
+    return adapter.getFields(defName);
+  }
+  getRelationships = (defName) => {
+    const adapter = this.getModelAdapter(defName);
+    //TODO: add cross adapter relationships
+    return adapter.getRelationships(defName);
+  }
+  getGraphQLOutputType = (modelName, type) => {
+    const adapter = this.getModelAdapter(modelName);
+    const typeMapper = adapter.getTypeMapper();
+    return typeMapper(type);
+  }
   getModelAdapter = (modelName) => {
     const adapterName = this.defsAdapters[modelName];
     return this.adapters[adapterName];
@@ -60,9 +80,6 @@ export default class GQL {
       options: rel.options,
     };
     let {foreignKey} = rel.options;
-    if (foreignKey) {
-      this.globalKeys[def.name].push(foreignKey);
-    }
     if (targetAdapter === sourceAdapter) {
       this.relationships[def.name][rel.name].internal = true;
       //TODO: populate foreignKey/sourceKeys if not provided
@@ -110,6 +127,10 @@ export default class GQL {
       return findFunc(keyValue, filterKey, singular)
         .apply(undefined, Array.from(arguments));
     };
+  }
+  getValueFromInstance = (defName, data, keyName) => {
+    const adapter = this.getModelAdapter(defName);
+    return adapter.getValueFromInstance(data, keyName);
   }
   initialise = async(reset = false) => {
     await Promise.all(Object.keys(this.defs).map((defName) => {

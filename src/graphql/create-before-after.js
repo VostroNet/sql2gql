@@ -1,7 +1,7 @@
 // import getModelDefinition from "../utils/get-model-def";
 import replaceIdDeep, { replaceDefWhereOperators } from "./utils/replace-id-deep";
 import waterfall from "../utils/waterfall";
-import events from "./events";
+import events from "../events";
 /**
  * @typedef {Object} CreateBeforeAfterOutput
  * @property {function} before

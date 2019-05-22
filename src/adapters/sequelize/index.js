@@ -1,6 +1,7 @@
 import Sequelize, {Op} from "sequelize";
-import waterfall from "../utils/waterfall";
-import logger from "../utils/logger";
+import waterfall from "../../utils/waterfall";
+import logger from "../../utils/logger";
+import typeMapper from "./type-mapper";
 const log = logger("sql2gql::database:");
 
 
@@ -19,6 +20,78 @@ export default class SequelizeAdapter {
   }
   getORM = () => {
     return this.sequelize;
+  }
+  addInstanceFunction = (modelName, funcName, func) => {
+    this.sequelize.models[modelName].prototype[funcName] = func;
+  }
+
+  addStaticFunction = (modelName, funcName, func) => {
+    this.sequelize.models[modelName][funcName] = func;
+  }
+  getModel = (modelName) => {
+    return this.sequelize.models[modelName];
+  }
+  getModels = () => {
+    return this.sequelize.models;
+  }
+  getTypeMapper() {
+    return typeMapper;
+  }
+  getFields = (modelName) => {
+    const Model = this.sequelize.models[modelName];
+    //TODO add filter for excluding or including fields
+    const fieldNames = Object.keys(Model.rawAttributes);
+    return fieldNames.reduce((fields, key) => {
+      const attr = Model.rawAttributes[key];
+      const autoPopulated = attr.autoIncrement === true ||
+        !(!Model._dataTypeChanges[key]); //eslint-disable-line
+      const allowNull = attr.allowNull === true;
+      const foreignKey = !(!attr.references);
+      let foreignTarget;
+      if (foreignKey) {
+        foreignTarget = Object.keys(Model.associations)
+          .filter((assocKey) => {
+            return Model.associations[assocKey].identifierField === key;
+          }).map((assocKey) => {
+            return Model.associations[assocKey].target.name;
+          })[0];
+        if (!foreignTarget) {
+          //TODO: better error logging
+          throw new Error("There is a problem with associations and fields");
+        }
+      }
+
+      fields[key] = {
+        name: key,
+        type: attr.type,
+        primaryKey: attr.primaryKey === true,
+        allowNull,
+        description: attr.comment,
+        defaultValue: attr.defaultValue,
+        foreignKey,
+        foreignTarget,
+        autoPopulated,
+      };
+      return fields;
+    }, {});
+  }
+  getRelationships = (modelName) => {
+    const Model = this.sequelize.models[modelName];
+    return Object.keys(Model.associations)
+      .reduce((fields, key) => {
+        const assoc = Model.associations[key];
+        const {associationType} = assoc;
+        fields[key] = {
+          name: key,
+          target: assoc.target.name,
+          source: assoc.source.name,
+          associationType: `${associationType.charAt(0).toLowerCase()}${associationType.slice(1)}`,
+          foreignKey: assoc.foreignKey,
+          sourceKey: assoc.sourceKey,
+          accessors: assoc.accessors,
+        };
+        return fields;
+      }, {});
   }
   createModel = async(def) => {
     const {defaultAttr, defaultModel} = this.options;
@@ -76,19 +149,6 @@ export default class SequelizeAdapter {
       log.error("Error Mapping relationship", {model, sourceModel, name, type, options, err});
     }
     this.sequelize.models[targetModel] = model;
-  }
-  addInstanceFunction = (modelName, funcName, func) => {
-    this.sequelize.models[modelName].prototype[funcName] = func;
-  }
-
-  addStaticFunction = (modelName, funcName, func) => {
-    this.sequelize.models[modelName][funcName] = func;
-  }
-  getModel = (modelName) => {
-    return this.sequelize.models[modelName];
-  }
-  getModels = () => {
-    return this.sequelize.models;
   }
   createFunctionForFind = (modelName) => {
     const model = this.sequelize.models[modelName];

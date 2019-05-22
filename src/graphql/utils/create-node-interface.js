@@ -3,9 +3,9 @@ import {
   nodeDefinitions,
 } from "graphql-relay";
 
-import NodeTypeMapper from "./utils/node-type-mapper";
-import idFetcher from "./utils/id-fetcher";
-import typeResolver from "./utils/type-resolver";
+import NodeTypeMapper from "./node-type-mapper";
+import idFetcher from "./id-fetcher";
+import typeResolver from "./type-resolver";
 
 export default function createNodeInterface(dbInstance) {
   let nodeTypeMapper = new NodeTypeMapper();

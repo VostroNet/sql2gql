@@ -1,6 +1,10 @@
 import {
   GraphQLSchema,
   GraphQLObjectType,
+  GraphQLNonNull,
+  GraphQLScalarType,
+  GraphQLEnumType,
+  GraphQLList,
 } from "graphql";
 
 import {
@@ -8,7 +12,8 @@ import {
   connectionFromArray,
   nodeDefinitions,
   connectionDefinitions,
-  connectionArgs
+  connectionArgs,
+  globalIdField
 } from "graphql-relay";
 
 import createNodeInterface from "./utils/create-node-interface";
@@ -17,11 +22,38 @@ import createBeforeAfter from "./create-before-after";
 
 import waterfall from "../utils/waterfall";
 
+import createBasicFieldsFunc from "./create-basic-fields";
 
-async function createModelType(defName, dbInstance, options, nodeInterface) {
-  const definition = dbInstance.getDefinition(defName);
-  const {before, after} = createBeforeAfter(defName, definition, dbInstance, options);
+import createRelatedFieldsFunc from "./create-related-fields";
 
+// function getGraphQLObject(defName, instance) {
+//   return !(!instance.cache.get("objects", {})[defName]);
+// }
+
+
+export async function createModelType(defName, instance, options, nodeInterface, typeCollection) {
+  const definition = instance.getDefinition(defName);
+  const {before, after} = createBeforeAfter(defName, definition, instance, options);
+  const basicFields = createBasicFieldsFunc(defName, instance, definition, options);
+  const relatedFields = createRelatedFieldsFunc(defName, instance, definition, options, typeCollection);
+  const obj = new GraphQLObjectType({
+    name: `${prefix}${modelName}`,
+    description: "",
+    fields() {
+      return Object.assign({}, basicFields(), relatedFields(), complexFields());
+    },
+    interfaces: [nodeInterface],
+  });
+  obj.$sql2gql = {
+    basicFields: basicFields,
+    complexFields: complexFields,
+    relatedFields: relatedFields,
+    fields: {},
+    events: {before, after}
+  };
+
+  typeCollection[`${defName}[]`] = new GraphQLList(obj);
+  return obj;
 }
 
 
@@ -38,7 +70,7 @@ export async function createSchemaObjects(dbInstance, options) {
         }
       }
     }
-    o[defName] = await createModelType(defName, dbInstance, options, nodeInterface, o);;
+    o[defName] = await createModelType(defName, dbInstance, options, nodeInterface, o);
     return o;
   }, {});
 

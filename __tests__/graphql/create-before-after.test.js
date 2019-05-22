@@ -1,7 +1,7 @@
 
 import Database from "../../src/database";
 import createBeforeAfter from "../../src/graphql/create-before-after";
-import events from "../../src/graphql/events";
+import events from "../../src/events";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 
 
