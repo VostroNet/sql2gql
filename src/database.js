@@ -1,6 +1,7 @@
 import waterfall from "./utils/waterfall";
 import Cache from "./utils/cache";
 import pluralize from "pluralize";
+import replaceIdDeep from "./utils/replace-id-deep";
 
 export default class GQL {
   constructor() {
@@ -58,6 +59,11 @@ export default class GQL {
     return adapter.getRelationships(defName);
   }
   getGraphQLOutputType = (modelName, type) => {
+    const adapter = this.getModelAdapter(modelName);
+    const typeMapper = adapter.getTypeMapper();
+    return typeMapper(type);
+  }
+  getGraphQLInputType = (modelName, type) => {
     const adapter = this.getModelAdapter(modelName);
     const typeMapper = adapter.getTypeMapper();
     return typeMapper(type);
@@ -146,6 +152,48 @@ export default class GQL {
       }
       return adapter.initialise();
     }));
+  }
+  getDefaultListArgs = (defName) => {
+    const adapter = this.getModelAdapter(defName);
+    return adapter.getDefaultListArgs();
+  }
+  getFilterGraphQLType = (defName) => {
+    const adapter = this.getModelAdapter(defName);
+    return adapter.getFilterGraphQLType();
+  }
+  resolveManyRelationship = async(defName, relationship, source, args, context, info) => {
+    const adapter = this.getModelAdapter(defName);
+    //(instance, defName, args, info, defaultOptions = {})
+    const argNames = adapter.getAllArgsToReplaceId();
+    const globalKeys = this.getGlobalKeys(defName);
+    const a = Object.keys(args).reduce((o, key) => {
+      if (argNames.indexOf(key) > -1) {
+        o[key] = replaceIdDeep(args[key], globalKeys, info.variableValues);
+      } else {
+        o[key] = args[key];
+      }
+      return o;
+    }, {});
+    const {getOptions, countOptions} = adapter.processListArgsToOptions(this, defName, a, info, {
+      context,
+      info,
+    }, true);
+    const models = await source[relationship.accessors.get](getOptions);
+    let total;
+    if (adapter.hasInlineCountFeature()) {
+      total = await adapter.getInlineCount(models);
+    } else {
+      total = await source[relationship.accessors.count](countOptions);
+    }
+    return {
+      total, models,
+    };
+  }
+  resolveSingleRelationship = async(defName, relationship, source, args, context, info) => {
+    return source[relationship.accessors.get]({
+      context,
+      info,
+    });
   }
 
 }

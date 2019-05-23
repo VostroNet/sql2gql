@@ -4,6 +4,8 @@ import logger from "../../utils/logger";
 import typeMapper from "./type-mapper";
 const log = logger("sql2gql::database:");
 
+import jsonType from "@vostro/graphql-types/lib/json";
+import replaceIdDeep from "../../utils/replace-id-deep";
 
 export default class SequelizeAdapter {
   static name = "sequelize";
@@ -87,6 +89,7 @@ export default class SequelizeAdapter {
           source: assoc.source.name,
           associationType: `${associationType.charAt(0).toLowerCase()}${associationType.slice(1)}`,
           foreignKey: assoc.foreignKey,
+          targetKey: assoc.targetKey,
           sourceKey: assoc.sourceKey,
           accessors: assoc.accessors,
         };
@@ -169,6 +172,69 @@ export default class SequelizeAdapter {
   }
   getValueFromInstance(data, keyName) {
     return data.get(keyName);
+  }
+  getFilterGraphQLType() {
+    return jsonType;
+  }
+  getDefaultListArgs() {
+    return {
+      where: {
+        type: jsonType,
+      },
+    };
+  }
+  hasInlineCountFeature = () => {
+    if (this.options.disableInlineCount) {
+      return false;
+    }
+    const dialect = this.sequelize.dialect.name;
+    return (dialect === "postgres" || dialect === "mssql" || dialect === "sqlite");
+  }
+  getInlineCount = (values) => {
+    let fullCount = values[0] &&
+      (values[0].dataValues || values[0]).full_count &&
+      parseInt((values[0].dataValues || values[0]).full_count, 10);
+    if (!values[0]) {
+      fullCount = 0;
+    }
+    return fullCount;
+  }
+  processListArgsToOptions = (instance, defName, args, info, defaultOptions = {}) => {
+    let limit, attributes = defaultOptions.attributes || [], where;
+    if (args.first || args.last) {
+      limit = parseInt(args.first || args.last, 10);
+    }
+    if (this.hasInlineCountFeature()) {
+      if (attributes.filter((a) => a.indexOf("full_count") > -1).length === 0) {
+        if (this.sequelize.dialect.name === "postgres") {
+          attributes.push([
+            this.sequelize.literal("COUNT(*) OVER()"),
+            "full_count",
+          ]);
+        } else if (this.sequelize.dialect.name === "mssql" || this.sequelize.dialect.name === "sqlite") {
+          attributes.push([
+            this.sequelize.literal("COUNT(1) OVER()"),
+            "full_count",
+          ]);
+        } else {
+          throw new Error(`Inline count feature enabled but dialect does not match`);
+        }
+      }
+    }
+    return {
+      getOptions: Object.assign({
+        where,
+        limit,
+        attributes,
+      }, defaultOptions),
+      countOptions: !(this.hasInlineCountFeature()) ? Object.assign({
+        where,
+        attributes,
+      }, defaultOptions) : undefined,
+    };
+  }
+  getAllArgsToReplaceId() {
+    return ["where"];
   }
 }
 

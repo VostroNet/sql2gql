@@ -56,6 +56,7 @@
   },
   "dependencies": {
     "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@vostro/graphql-types": "^2019.5.854",
     "core-js": "^3.0.1",
     "deepmerge": "^3.2.0",
     "pluralize": "^7.0.0"

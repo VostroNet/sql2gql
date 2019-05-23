@@ -1,6 +1,6 @@
 import Database from "../../src/database";
 import SequelizeAdapter from "../../src/adapters/sequelize";
-import {createModelType} from "../../src/graphql";
+import createModelType from "../../src/graphql/create-model-type";
 
 
 test("createModelType", async() => {
@@ -15,6 +15,10 @@ test("createModelType", async() => {
   };
   await db.addDefinition(itemDef);
   await db.initialise();
-  const graphqlModel = await createModelType(itemDef.name, db, {});
+  //(defName, instance, options, nodeInterface, typeCollection, prefix = "")
+  const types = {};
+  const graphqlModel = await createModelType(itemDef.name, db, {}, {}, types, "");
   expect(graphqlModel).toBeDefined();
+  expect(types.Item).toBeDefined();
+  expect(types["Item[]"]).toBeDefined();
 });

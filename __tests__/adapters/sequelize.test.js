@@ -4,104 +4,106 @@ import TaskModel from "../models/task";
 import TaskItemModel from "../models/task-item";
 import waterfall from "../../src/utils/waterfall";
 import Sequelize from "sequelize";
+import jsonType from "@vostro/graphql-types/lib/json";
+
 test("adapter - getORM", () => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  expect(sequelizeAdapter.getORM()).not.toBeUndefined();
+  expect(adapter.getORM()).not.toBeUndefined();
 });
 
 test("adapter - initialize", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.initialise();
-  expect(sequelizeAdapter.getORM()).not.toBeUndefined();
+  await adapter.initialise();
+  expect(adapter.getORM()).not.toBeUndefined();
 });
 
 test("adapter - reset", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.reset();
-  expect(sequelizeAdapter.getORM()).not.toBeUndefined();
+  await adapter.reset();
+  expect(adapter.getORM()).not.toBeUndefined();
 });
 
 test("adapter - createModel", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
+  await adapter.createModel(TaskModel);
 
-  await sequelizeAdapter.reset();
-  expect(sequelizeAdapter.getORM().models.Task).not.toBeUndefined();
+  await adapter.reset();
+  expect(adapter.getORM().models.Task).not.toBeUndefined();
 });
 test("adapter - getModel", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  await sequelizeAdapter.reset();
-  expect(sequelizeAdapter.getModel("Task")).not.toBeUndefined();
+  await adapter.createModel(TaskModel);
+  await adapter.reset();
+  expect(adapter.getModel("Task")).not.toBeUndefined();
 });
 test("adapter - getModels", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  await sequelizeAdapter.reset();
-  expect(sequelizeAdapter.getModels().Task).not.toBeUndefined();
+  await adapter.createModel(TaskModel);
+  await adapter.reset();
+  expect(adapter.getModels().Task).not.toBeUndefined();
 });
 test("adapter - addInstanceFunction", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  sequelizeAdapter.addInstanceFunction("Task", "test", function() {
-    expect(this).toBeInstanceOf(sequelizeAdapter.getModel("Task"));
+  await adapter.createModel(TaskModel);
+  adapter.addInstanceFunction("Task", "test", function() {
+    expect(this).toBeInstanceOf(adapter.getModel("Task"));
     return true;
   });
-  await sequelizeAdapter.reset();
-  const Task = sequelizeAdapter.getModel("Task");
+  await adapter.reset();
+  const Task = adapter.getModel("Task");
   const task = new Task();
   expect(task.test()).toEqual(true);
 });
 
 test("adapter - addStaticFunction", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  sequelizeAdapter.addStaticFunction("Task", "test", function() {
+  await adapter.createModel(TaskModel);
+  adapter.addStaticFunction("Task", "test", function() {
     return true;
   });
-  await sequelizeAdapter.reset();
-  const Task = sequelizeAdapter.getModel("Task");
+  await adapter.reset();
+  const Task = adapter.getModel("Task");
   expect(Task.test()).toEqual(true);
 });
 
 test("adapter - createRelationship", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  await sequelizeAdapter.createModel(TaskItemModel);
-  await sequelizeAdapter.createModel(ItemModel);
+  await adapter.createModel(TaskModel);
+  await adapter.createModel(TaskItemModel);
+  await adapter.createModel(ItemModel);
 
   await waterfall([TaskModel, TaskItemModel, ItemModel], async(model) => {
     return waterfall(model.relationships, async(rel) => {
-      return sequelizeAdapter.createRelationship(model.name, rel.model, rel.name, rel.type, rel.options);
+      return adapter.createRelationship(model.name, rel.model, rel.name, rel.type, rel.options);
     });
   });
 
-  await sequelizeAdapter.reset();
-  expect(sequelizeAdapter.getORM().models.Task).not.toBeUndefined();
-  expect(sequelizeAdapter.getORM().models.TaskItem).not.toBeUndefined();
-  expect(sequelizeAdapter.getORM().models.Item).not.toBeUndefined();
+  await adapter.reset();
+  expect(adapter.getORM().models.Task).not.toBeUndefined();
+  expect(adapter.getORM().models.TaskItem).not.toBeUndefined();
+  expect(adapter.getORM().models.Item).not.toBeUndefined();
 });
 
 test("adapter - createRelationship - belongsToMany", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
   const itemDef = {
@@ -157,35 +159,35 @@ test("adapter - createRelationship - belongsToMany", async() => {
     }],
   };
 
-  await sequelizeAdapter.createModel(itemDef);
-  await sequelizeAdapter.createModel(itemChildMapDef);
-  await sequelizeAdapter.createModel(itemChildDef);
+  await adapter.createModel(itemDef);
+  await adapter.createModel(itemChildMapDef);
+  await adapter.createModel(itemChildDef);
 
   await waterfall([itemDef, itemChildMapDef, itemChildDef], async(model) => {
     return waterfall(model.relationships, async(rel) => {
-      return sequelizeAdapter.createRelationship(model.name, rel.model, rel.name, rel.type, rel.options);
+      return adapter.createRelationship(model.name, rel.model, rel.name, rel.type, rel.options);
     });
   });
 
-  await sequelizeAdapter.reset();
-  const {models} = sequelizeAdapter.getORM();
+  await adapter.reset();
+  const {models} = adapter.getORM();
   expect(models.Item).toBeDefined();
   expect(models.ItemChildMap).toBeDefined();
   expect(models.ItemChild).toBeDefined();
 });
 
 test("adapter - createFunctionForFind", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  await sequelizeAdapter.reset();
-  const Task = sequelizeAdapter.getModel("Task");
+  await adapter.createModel(TaskModel);
+  await adapter.reset();
+  const Task = adapter.getModel("Task");
   const task = await Task.create({
     name: "ttttttttttttttt",
   });
 
-  const func = await sequelizeAdapter.createFunctionForFind("Task", false);
+  const func = await adapter.createFunctionForFind("Task", false);
   const proxyFunc = await func(task.id, "id");
   const result = await proxyFunc();
   expect(result).not.toBeUndefined();
@@ -193,30 +195,30 @@ test("adapter - createFunctionForFind", async() => {
   expect(result[0].id).toEqual(task.id);
 });
 test("adapter - getPrimaryKeyNameForModel", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  await sequelizeAdapter.reset();
-  const primaryKeyName = sequelizeAdapter.getPrimaryKeyNameForModel("Task");
+  await adapter.createModel(TaskModel);
+  await adapter.reset();
+  const primaryKeyName = adapter.getPrimaryKeyNameForModel("Task");
   expect(primaryKeyName).toEqual("id");
 });
 test("adapter - getValueFromInstance", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  await sequelizeAdapter.createModel(TaskModel);
-  await sequelizeAdapter.reset();
-  const model = await sequelizeAdapter.getModel("Task").create({
+  await adapter.createModel(TaskModel);
+  await adapter.reset();
+  const model = await adapter.getModel("Task").create({
     name: "111111111111111111",
   });
-  expect(sequelizeAdapter.getValueFromInstance(model, "name")).toEqual("111111111111111111");
+  expect(adapter.getValueFromInstance(model, "name")).toEqual("111111111111111111");
 });
 
 
 
 test("adapter - getFields - primary key", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
   const itemDef = {
@@ -224,9 +226,9 @@ test("adapter - getFields - primary key", async() => {
     define: {},
     relationships: [],
   };
-  await sequelizeAdapter.createModel(itemDef);
-  await sequelizeAdapter.reset();
-  const ItemFields = sequelizeAdapter.getFields("Item");
+  await adapter.createModel(itemDef);
+  await adapter.reset();
+  const ItemFields = adapter.getFields("Item");
   expect(ItemFields).toBeDefined();
   expect(ItemFields.id).toBeDefined();
   expect(ItemFields.id.primaryKey).toEqual(true);
@@ -236,7 +238,7 @@ test("adapter - getFields - primary key", async() => {
 });
 
 test("adapter - getFields - define field", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
   const itemDef = {
@@ -251,9 +253,9 @@ test("adapter - getFields - define field", async() => {
     },
     relationships: [],
   };
-  await sequelizeAdapter.createModel(itemDef);
-  await sequelizeAdapter.reset();
-  const ItemFields = sequelizeAdapter.getFields("Item");
+  await adapter.createModel(itemDef);
+  await adapter.reset();
+  const ItemFields = adapter.getFields("Item");
   expect(ItemFields).toBeDefined();
   expect(ItemFields.name).toBeDefined();
   expect(ItemFields.name.type).toBeInstanceOf(Sequelize.STRING);
@@ -263,7 +265,7 @@ test("adapter - getFields - define field", async() => {
 });
 
 test("adapter - getFields - relationship foreign keys", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
   const itemDef = {
@@ -292,16 +294,16 @@ test("adapter - getFields - relationship foreign keys", async() => {
       },
     }],
   };
-  await sequelizeAdapter.createModel(itemDef);
-  await sequelizeAdapter.createModel(itemChildDef);
+  await adapter.createModel(itemDef);
+  await adapter.createModel(itemChildDef);
   await waterfall(itemDef.relationships, async(rel) => {
-    return sequelizeAdapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
+    return adapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
   });
   await waterfall(itemChildDef.relationships, async(rel) => {
-    return sequelizeAdapter.createRelationship(itemChildDef.name, rel.model, rel.name, rel.type, rel.options);
+    return adapter.createRelationship(itemChildDef.name, rel.model, rel.name, rel.type, rel.options);
   });
-  await sequelizeAdapter.reset();
-  const fields = sequelizeAdapter.getFields("ItemChild");
+  await adapter.reset();
+  const fields = adapter.getFields("ItemChild");
   expect(fields).toBeDefined();
   expect(fields.parentId).toBeDefined();
   expect(fields.parentId.foreignKey).toEqual(true);
@@ -311,7 +313,7 @@ test("adapter - getFields - relationship foreign keys", async() => {
 
 
 test("adapter - getFields - relationship not null foreign keys", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
   const itemDef = {
@@ -341,12 +343,12 @@ test("adapter - getFields - relationship not null foreign keys", async() => {
       },
     }],
   };
-  await sequelizeAdapter.createModel(itemDef);
+  await adapter.createModel(itemDef);
   await waterfall(itemDef.relationships, async(rel) => {
-    return sequelizeAdapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
+    return adapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
   });
-  await sequelizeAdapter.reset();
-  const ItemFields = sequelizeAdapter.getFields("Item");
+  await adapter.reset();
+  const ItemFields = adapter.getFields("Item");
   expect(ItemFields).toBeDefined();
   expect(ItemFields.parentId).toBeDefined();
   expect(ItemFields.parentId.allowNull).toEqual(false);
@@ -358,7 +360,7 @@ test("adapter - getFields - relationship not null foreign keys", async() => {
 
 
 test("adapter - getFields - timestamp fields", async() => {
-  const sequelizeAdapter = new SequelizeAdapter({}, {
+  const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
   const itemDef = {
@@ -389,15 +391,259 @@ test("adapter - getFields - timestamp fields", async() => {
       },
     }],
   };
-  await sequelizeAdapter.createModel(itemDef);
+  await adapter.createModel(itemDef);
   await waterfall(itemDef.relationships, async(rel) => {
-    return sequelizeAdapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
+    return adapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
   });
-  await sequelizeAdapter.reset();
-  const ItemFields = sequelizeAdapter.getFields("Item");
+  await adapter.reset();
+  const ItemFields = adapter.getFields("Item");
   expect(ItemFields).toBeDefined();
   expect(ItemFields.createdAt).toBeDefined();
   expect(ItemFields.createdAt.type).toBeInstanceOf(Sequelize.DATE);
   expect(ItemFields.createdAt.allowNull).toEqual(false);
   expect(ItemFields.createdAt.autoPopulated).toEqual(true);
+});
+
+
+
+test("adapter - getRelationships - hasMany", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: [{
+      type: "hasMany",
+      model: "Item",
+      name: "children",
+      options: {
+        as: "children",
+        foreignKey: "parentId",
+      },
+    }, {
+      type: "belongsTo",
+      model: "Item",
+      name: "parent",
+      options: {
+        as: "parent",
+        foreignKey: "parentId",
+      },
+    }],
+  };
+  await adapter.createModel(itemDef);
+  await waterfall(itemDef.relationships, async(rel) => {
+    return adapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
+  });
+  await adapter.reset();
+  const rels = adapter.getRelationships("Item");
+  expect(rels).toBeDefined();
+  expect(rels.parent).toBeDefined();
+  expect(rels.parent.name).toEqual("parent");
+  expect(rels.parent.target).toEqual("Item");
+  expect(rels.parent.source).toEqual("Item");
+  expect(rels.parent.associationType).toEqual("belongsTo");
+  expect(rels.parent.foreignKey).toEqual("parentId");
+  expect(rels.parent.targetKey).toEqual("id");
+  expect(rels.parent.accessors).toBeDefined();
+  expect(rels.parent.accessors.get).toBeDefined();
+  expect(rels.parent.accessors.set).toBeDefined();
+  expect(rels.parent.accessors.create).toBeDefined();
+});
+
+
+test("adapter - getRelationships - belongsTo", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: [{
+      type: "hasMany",
+      model: "Item",
+      name: "children",
+      options: {
+        as: "children",
+        foreignKey: "parentId",
+      },
+    }, {
+      type: "belongsTo",
+      model: "Item",
+      name: "parent",
+      options: {
+        as: "parent",
+        foreignKey: "parentId",
+      },
+    }],
+  };
+  await adapter.createModel(itemDef);
+  await waterfall(itemDef.relationships, async(rel) => {
+    return adapter.createRelationship(itemDef.name, rel.model, rel.name, rel.type, rel.options);
+  });
+  await adapter.reset();
+  const rels = adapter.getRelationships("Item");
+  expect(rels).toBeDefined();
+  expect(rels.children).toBeDefined();
+  expect(rels.children.name).toEqual("children");
+  expect(rels.children.target).toEqual("Item");
+  expect(rels.children.source).toEqual("Item");
+  expect(rels.children.associationType).toEqual("hasMany");
+  expect(rels.children.foreignKey).toEqual("parentId");
+  expect(rels.children.sourceKey).toEqual("id");
+  expect(rels.children.accessors).toBeDefined();
+  expect(rels.children.accessors.add).toBeDefined();
+  expect(rels.children.accessors.addMultiple).toBeDefined();
+  expect(rels.children.accessors.count).toBeDefined();
+  expect(rels.children.accessors.create).toBeDefined();
+  expect(rels.children.accessors.get).toBeDefined();
+  expect(rels.children.accessors.hasAll).toBeDefined();
+  expect(rels.children.accessors.hasSingle).toBeDefined();
+  expect(rels.children.accessors.remove).toBeDefined();
+  expect(rels.children.accessors.removeMultiple).toBeDefined();
+  expect(rels.children.accessors.set).toBeDefined();
+});
+
+
+test("adapter - getDefaultListArgs", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  const defaultArgs = adapter.getDefaultListArgs();
+  expect(defaultArgs).toBeDefined();
+  expect(defaultArgs.where).toBeDefined();
+  expect(defaultArgs.where.type).toEqual(jsonType);
+});
+
+test("adapter - hasInlineCountFeature - sqlite", async() => {
+  const adapter = new SequelizeAdapter({
+    disableInlineCount: false,
+  }, {
+    dialect: "sqlite",
+  });
+  const result = adapter.hasInlineCountFeature();
+  expect(result).toEqual(true);
+});
+test("adapter - hasInlineCountFeature - disable inline count", async() => {
+  const adapter = new SequelizeAdapter({
+    disableInlineCount: true,
+  }, {
+    dialect: "sqlite",
+  });
+  const result = adapter.hasInlineCountFeature();
+  expect(result).toEqual(false);
+});
+
+test("adapter - hasInlineCountFeature - postgres", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  adapter.sequelize.dialect.name = "postgres";
+  const result = adapter.hasInlineCountFeature();
+  expect(result).toEqual(true);
+});
+
+test("adapter - hasInlineCountFeature - mssql", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  adapter.sequelize.dialect.name = "mssql";
+  const result = adapter.hasInlineCountFeature();
+  expect(result).toEqual(true);
+});
+
+
+test("adapter - processListArgsToOptions - hasInlineCount", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+    first: 1,
+  });
+  expect(countOptions).toBeUndefined();
+  expect(getOptions).toBeDefined();
+  expect(getOptions.limit).toEqual(1);
+  expect(getOptions.attributes).toHaveLength(1);
+  expect(getOptions.attributes[0]).toHaveLength(2);
+  expect(getOptions.attributes[0][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[0][1]).toEqual("full_count");
+});
+
+test("adapter - processListArgsToOptions - hasInlineCount - full_count args already exist", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+    first: 1,
+  }, {
+    attributes: [[
+      adapter.sequelize.literal("COUNT(1) OVER()"),
+      "full_count",
+    ]],
+  });
+  expect(countOptions).toBeUndefined();
+  expect(getOptions).toBeDefined();
+  expect(getOptions.limit).toEqual(1);
+  expect(getOptions.attributes).toHaveLength(1);
+  expect(getOptions.attributes[0]).toHaveLength(2);
+  expect(getOptions.attributes[0][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[0][1]).toEqual("full_count");
+});
+
+test("adapter - processListArgsToOptions - hasInlineCount - mssql", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  adapter.sequelize.dialect.name = "mssql";
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+    first: 1,
+  });
+  expect(countOptions).toBeUndefined();
+  expect(getOptions).toBeDefined();
+  expect(getOptions.limit).toEqual(1);
+  expect(getOptions.attributes).toHaveLength(1);
+  expect(getOptions.attributes[0]).toHaveLength(2);
+  expect(getOptions.attributes[0][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[0][1]).toEqual("full_count");
+});
+
+test("adapter - processListArgsToOptions - hasInlineCount - postgres", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  adapter.sequelize.dialect.name = "postgres";
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+    first: 1,
+  });
+  expect(countOptions).toBeUndefined();
+  expect(getOptions).toBeDefined();
+  expect(getOptions.limit).toEqual(1);
+  expect(getOptions.attributes).toHaveLength(1);
+  expect(getOptions.attributes[0]).toHaveLength(2);
+  expect(getOptions.attributes[0][0].val).toEqual("COUNT(*) OVER()");
+  expect(getOptions.attributes[0][1]).toEqual("full_count");
+});
+
+test("adapter - processListArgsToOptions - no inlineCount", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  adapter.sequelize.dialect.name = "unknown";
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+    first: 1,
+  });
+  expect(countOptions).toBeDefined();
+  expect(countOptions.limit).toBeUndefined();
+  expect(getOptions).toBeDefined();
+  expect(getOptions.limit).toEqual(1);
+  expect(getOptions.attributes).toHaveLength(0);
+});
+
+test("adapter - getTypeMapper", async() => {
+  const adapter = new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  });
+  const typeMapper = adapter.getTypeMapper();
+  expect(typeMapper).toBeDefined();
+  expect(typeMapper).toBeInstanceOf(Function);
 });

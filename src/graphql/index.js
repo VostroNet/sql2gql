@@ -18,43 +18,15 @@ import {
 
 import createNodeInterface from "./utils/create-node-interface";
 
-import createBeforeAfter from "./create-before-after";
 
 import waterfall from "../utils/waterfall";
-
-import createBasicFieldsFunc from "./create-basic-fields";
-
-import createRelatedFieldsFunc from "./create-related-fields";
+import createModelType from "./create-model-type";
 
 // function getGraphQLObject(defName, instance) {
 //   return !(!instance.cache.get("objects", {})[defName]);
 // }
 
 
-export async function createModelType(defName, instance, options, nodeInterface, typeCollection) {
-  const definition = instance.getDefinition(defName);
-  const {before, after} = createBeforeAfter(defName, definition, instance, options);
-  const basicFields = createBasicFieldsFunc(defName, instance, definition, options);
-  const relatedFields = createRelatedFieldsFunc(defName, instance, definition, options, typeCollection);
-  const obj = new GraphQLObjectType({
-    name: `${prefix}${modelName}`,
-    description: "",
-    fields() {
-      return Object.assign({}, basicFields(), relatedFields(), complexFields());
-    },
-    interfaces: [nodeInterface],
-  });
-  obj.$sql2gql = {
-    basicFields: basicFields,
-    complexFields: complexFields,
-    relatedFields: relatedFields,
-    fields: {},
-    events: {before, after}
-  };
-
-  typeCollection[`${defName}[]`] = new GraphQLList(obj);
-  return obj;
-}
 
 
 export async function createSchemaObjects(dbInstance, options) {

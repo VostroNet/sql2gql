@@ -370,3 +370,326 @@ test("database - belongsTo - multi adapter", async() => {
   expect(Array.isArray(parent)).toEqual(false);
   expect(parent.name).toEqual(parentModel.name);
 });
+
+
+
+test("database - resolveManyRelationship - hasMany", async() => {
+  const db = new Database();
+  db.registerAdapter(new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  }), "sqlite");
+
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: [{
+      type: "belongsTo",
+      model: "Item",
+      name: "parent",
+      options: {
+        as: "parent",
+        foreignKey: "parentId",
+      },
+    }, {
+      type: "hasMany",
+      model: "Item",
+      name: "children",
+      options: {
+        as: "children",
+        foreignKey: "parentId",
+      }
+    }],
+  };
+
+  await db.addDefinition(itemDef);
+  await db.initialise();
+  const Item = db.getModel("Item");
+  const parent = await Item.create({});
+  await Item.create({
+    parentId: parent.id,
+  });
+  await Item.create({
+    parentId: parent.id,
+  });
+  const relationship = db.getRelationships(itemDef.name).children;
+  const {total, models} = await db.resolveManyRelationship(itemDef.name, relationship, parent, {}, {}, {});
+  expect(total).toEqual(2);
+  expect(models).toHaveLength(2);
+});
+
+
+test("database - resolveManyRelationship - hasMany - with limit", async() => {
+  const db = new Database();
+  db.registerAdapter(new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  }), "sqlite");
+
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: [{
+      type: "belongsTo",
+      model: "Item",
+      name: "parent",
+      options: {
+        as: "parent",
+        foreignKey: "parentId",
+      },
+    }, {
+      type: "hasMany",
+      model: "Item",
+      name: "children",
+      options: {
+        as: "children",
+        foreignKey: "parentId",
+      }
+    }],
+  };
+
+  await db.addDefinition(itemDef);
+  await db.initialise();
+  const Item = db.getModel("Item");
+  const parent = await Item.create({});
+  await Item.create({
+    parentId: parent.id,
+  });
+  await Item.create({
+    parentId: parent.id,
+  });
+  const relationship = db.getRelationships(itemDef.name).children;
+  const {total, models} = await db.resolveManyRelationship(itemDef.name, relationship, parent, {
+    first: 1,
+  }, {}, {});
+  expect(total).toEqual(2);
+  expect(models).toHaveLength(1);
+});
+
+
+
+
+test("database - resolveManyRelationship - belongsToMany", async() => {
+  const db = new Database();
+  db.registerAdapter(new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  }), "sqlite");
+
+  const parentDef = {
+    name: "Parent",
+    define: {},
+    relationships: [{
+      type: "belongsToMany",
+      model: "Child",
+      name: "children",
+      options: {
+        as: "children",
+        foreignKey: "parentId",
+        through: {
+          model: "Mapping",
+        },
+      }
+    }]
+  };
+  const mappingDef = {
+    name: "Mapping",
+    define: {},
+    relationships: [{
+      type: "belongsTo",
+      model: "Parent",
+      name: "parent",
+      options: {
+        as: "parent",
+        foreignKey: "parentId",
+      }
+    }, {
+      type: "belongsTo",
+      model: "Child",
+      name: "child",
+      options: {
+        as: "child",
+        foreignKey: "childId",
+      }
+    }]
+  };
+  const childDef = {
+    name: "Child",
+    define: {},
+    relationships: [{
+      type: "belongsToMany",
+      model: "Parent",
+      name: "parent",
+      options: {
+        as: "parent",
+        through: {
+          model: "Mapping"
+        },
+        foreignKey: "childId",
+      }
+    }]
+  };
+
+  await db.addDefinition(parentDef);
+  await db.addDefinition(childDef);
+  await db.addDefinition(mappingDef);
+  await db.initialise();
+  const Parent = db.getModel("Parent");
+  const Child = db.getModel("Child");
+  const parent = await Parent.create({});
+  await parent.addChild(await Child.create({}));
+  await parent.addChild(await Child.create({}));
+
+  const relationship = db.getRelationships(parentDef.name).children;
+  const {total, models} = await db.resolveManyRelationship(parentDef.name, relationship, parent, {}, {}, {});
+  expect(total).toEqual(2);
+  expect(models).toHaveLength(2);
+});
+
+
+test("database - resolveManyRelationship - belongsToMany - with limit", async() => {
+  const db = new Database();
+  db.registerAdapter(new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  }), "sqlite");
+
+  const parentDef = {
+    name: "Parent",
+    define: {},
+    relationships: [{
+      type: "belongsToMany",
+      model: "Child",
+      name: "children",
+      options: {
+        as: "children",
+        foreignKey: "parentId",
+        through: {
+          model: "Mapping",
+        },
+      }
+    }]
+  };
+  const mappingDef = {
+    name: "Mapping",
+    define: {},
+    relationships: [{
+      type: "belongsTo",
+      model: "Parent",
+      name: "parent",
+      options: {
+        as: "parent",
+        foreignKey: "parentId",
+      }
+    }, {
+      type: "belongsTo",
+      model: "Child",
+      name: "child",
+      options: {
+        as: "child",
+        foreignKey: "childId",
+      }
+    }]
+  };
+  const childDef = {
+    name: "Child",
+    define: {},
+    relationships: [{
+      type: "belongsToMany",
+      model: "Parent",
+      name: "parent",
+      options: {
+        as: "parent",
+        through: {
+          model: "Mapping",
+        },
+        foreignKey: "childId",
+      }
+    }]
+  };
+
+  await db.addDefinition(parentDef);
+  await db.addDefinition(childDef);
+  await db.addDefinition(mappingDef);
+  await db.initialise();
+  const Parent = db.getModel("Parent");
+  const Child = db.getModel("Child");
+  const parent = await Parent.create({});
+  await parent.addChild(await Child.create({}));
+  await parent.addChild(await Child.create({}));
+
+  const relationship = db.getRelationships(parentDef.name).children;
+  const {total, models} = await db.resolveManyRelationship(parentDef.name, relationship, parent, {first: 1}, {}, {});
+  expect(total).toEqual(2);
+  expect(models).toHaveLength(1);
+});
+
+test("database - resolveSingleRelationship - belongsTo", async() => {
+  const db = new Database();
+  db.registerAdapter(new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  }), "sqlite");
+
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: [{
+      type: "belongsTo",
+      model: "Item",
+      name: "parent",
+      options: {
+        as: "parent",
+        foreignKey: "parentId",
+      },
+    }, {
+      type: "hasMany",
+      model: "Item",
+      name: "children",
+      options: {
+        as: "children",
+        foreignKey: "parentId",
+      }
+    }],
+  };
+
+  await db.addDefinition(itemDef);
+  await db.initialise();
+  const Item = db.getModel("Item");
+  const parent = await Item.create({});
+  const child = await Item.create({
+    parentId: parent.id,
+  });
+  const relationship = db.getRelationships(itemDef.name).parent;
+  const model = await db.resolveSingleRelationship(itemDef.name, relationship, child, {}, {}, {});
+  expect(model).toBeDefined();
+  expect(model.id).toEqual(parent.id);
+});
+
+test("database - resolveSingleRelationship - hasOne", async() => {
+  const db = new Database();
+  db.registerAdapter(new SequelizeAdapter({}, {
+    dialect: "sqlite",
+  }), "sqlite");
+
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: [{
+      type: "hasOne",
+      model: "Item",
+      name: "test",
+      options: {
+        as: "test",
+        foreignKey: "testId",
+      },
+    }],
+  };
+
+  await db.addDefinition(itemDef);
+  await db.initialise();
+  const Item = db.getModel("Item");
+  const test = await Item.create({});
+  const parent = await Item.create({
+    testId: test.id,
+  });
+  const relationship = db.getRelationships(itemDef.name).test;
+  const model = await db.resolveSingleRelationship(itemDef.name, relationship, test, {}, {}, {});
+  expect(model).toBeDefined();
+  expect(model.id).toEqual(parent.id);
+});
