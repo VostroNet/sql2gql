@@ -75,7 +75,7 @@ test("database - processRelationship - hasMany - single adapter", async() => {
       options: {
         foreignKey: "taskId",
       },
-    }]
+    }],
   };
   await db.addDefinition(def);
   await db.processRelationship(def, db.getModelAdapter("TestItem"), def.relationships[0]);
@@ -106,7 +106,7 @@ test("database - processRelationship - hasMany - multi adapter", async() => {
       options: {
         foreignKey: "parentId",
       },
-    }]
+    }],
   };
   const childDef = {
     name: "Child",
@@ -119,7 +119,7 @@ test("database - processRelationship - hasMany - multi adapter", async() => {
         foreignKey: "taskId",
         sourceKey: "id",
       },
-    }]
+    }],
   };
   await db.addDefinition(parentDef, "sqlite");
   await db.addDefinition(childDef, "sqlite2");
@@ -161,7 +161,7 @@ test("database - hasMany - multi adapter", async() => {
       options: {
         foreignKey: "parentId",
       },
-    }]
+    }],
   };
   const childDef = {
     name: "Child",
@@ -213,7 +213,7 @@ test("database - processRelationship - belongsTo - single adapter", async() => {
       options: {
         foreignKey: "parentId",
       },
-    }]
+    }],
   };
   const childDef = {
     name: "Child",
@@ -273,7 +273,7 @@ test("database - processRelationship - belongsTo - multi adapter", async() => {
       options: {
         foreignKey: "parentId",
       },
-    }]
+    }],
   };
   const childDef = {
     name: "Child",
@@ -335,7 +335,7 @@ test("database - belongsTo - multi adapter", async() => {
       options: {
         foreignKey: "parentId",
       },
-    }]
+    }],
   };
   const childDef = {
     name: "Child",
@@ -397,7 +397,7 @@ test("database - resolveManyRelationship - hasMany", async() => {
       options: {
         as: "children",
         foreignKey: "parentId",
-      }
+      },
     }],
   };
 
@@ -442,7 +442,7 @@ test("database - resolveManyRelationship - hasMany - with limit", async() => {
       options: {
         as: "children",
         foreignKey: "parentId",
-      }
+      },
     }],
   };
 
@@ -486,8 +486,8 @@ test("database - resolveManyRelationship - belongsToMany", async() => {
         through: {
           model: "Mapping",
         },
-      }
-    }]
+      },
+    }],
   };
   const mappingDef = {
     name: "Mapping",
@@ -499,7 +499,7 @@ test("database - resolveManyRelationship - belongsToMany", async() => {
       options: {
         as: "parent",
         foreignKey: "parentId",
-      }
+      },
     }, {
       type: "belongsTo",
       model: "Child",
@@ -507,8 +507,8 @@ test("database - resolveManyRelationship - belongsToMany", async() => {
       options: {
         as: "child",
         foreignKey: "childId",
-      }
-    }]
+      },
+    }],
   };
   const childDef = {
     name: "Child",
@@ -520,11 +520,11 @@ test("database - resolveManyRelationship - belongsToMany", async() => {
       options: {
         as: "parent",
         through: {
-          model: "Mapping"
+          model: "Mapping",
         },
         foreignKey: "childId",
-      }
-    }]
+      },
+    }],
   };
 
   await db.addDefinition(parentDef);
@@ -563,8 +563,8 @@ test("database - resolveManyRelationship - belongsToMany - with limit", async() 
         through: {
           model: "Mapping",
         },
-      }
-    }]
+      },
+    }],
   };
   const mappingDef = {
     name: "Mapping",
@@ -576,7 +576,7 @@ test("database - resolveManyRelationship - belongsToMany - with limit", async() 
       options: {
         as: "parent",
         foreignKey: "parentId",
-      }
+      },
     }, {
       type: "belongsTo",
       model: "Child",
@@ -584,8 +584,8 @@ test("database - resolveManyRelationship - belongsToMany - with limit", async() 
       options: {
         as: "child",
         foreignKey: "childId",
-      }
-    }]
+      },
+    }],
   };
   const childDef = {
     name: "Child",
@@ -600,8 +600,8 @@ test("database - resolveManyRelationship - belongsToMany - with limit", async() 
           model: "Mapping",
         },
         foreignKey: "childId",
-      }
-    }]
+      },
+    }],
   };
 
   await db.addDefinition(parentDef);
@@ -644,7 +644,7 @@ test("database - resolveSingleRelationship - belongsTo", async() => {
       options: {
         as: "children",
         foreignKey: "parentId",
-      }
+      },
     }],
   };
 

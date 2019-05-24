@@ -114,10 +114,10 @@ export default class SequelizeAdapter {
       }),
     });
     let schemaOptions = Object.assign({}, defaultModel, def.options);
-    const hooks = [this.options.hooks || {}, schemaOptions.hooks || {}];
-    schemaOptions = Object.assign(schemaOptions, {
-      hooks: generateHooks(hooks, def.name),
-    });
+    // const hooks = [this.options.hooks || {}, schemaOptions.hooks || {}];
+    // schemaOptions = Object.assign(schemaOptions, {
+    //   hooks: generateHooks(hooks, def.name),
+    // });
     this.sequelize.define(newDef.name, Object.assign({}, defaultAttr, newDef.define), schemaOptions);
 
     let {classMethods, instanceMethods} = newDef;
@@ -212,10 +212,13 @@ export default class SequelizeAdapter {
     return fullCount;
   }
   processListArgsToOptions = (instance, defName, args, info, defaultOptions = {}) => {
-    let limit, attributes = defaultOptions.attributes || [], where;
-    const Model = this.getModel(defName);
+    let limit, order, attributes = defaultOptions.attributes || [], where;
+    // const Model = this.getModel(defName);
     if (args.first || args.last) {
       limit = parseInt(args.first || args.last, 10);
+    }
+    if(args.orderBy) {
+      order = args.orderBy;
     }
     if (this.hasInlineCountFeature()) {
       const fields = this.getFields(defName);
@@ -251,6 +254,7 @@ export default class SequelizeAdapter {
     }
     return {
       getOptions: Object.assign({
+        order,
         where,
         limit,
         attributes: unique(attributes),

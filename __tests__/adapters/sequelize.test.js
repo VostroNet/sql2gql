@@ -570,10 +570,10 @@ test("adapter - processListArgsToOptions - hasInlineCount", async() => {
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
-  expect(getOptions.attributes).toHaveLength(2);
-  expect(getOptions.attributes[1]).toHaveLength(2);
-  expect(getOptions.attributes[1][0].val).toEqual("COUNT(1) OVER()");
-  expect(getOptions.attributes[1][1]).toEqual("full_count");
+  expect(getOptions.attributes).toHaveLength(4);
+  expect(getOptions.attributes[getOptions.attributes.length - 1]).toHaveLength(2);
+  expect(getOptions.attributes[getOptions.attributes.length - 1][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[getOptions.attributes.length - 1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - hasInlineCount - full_count args already exist", async() => {
@@ -598,10 +598,10 @@ test("adapter - processListArgsToOptions - hasInlineCount - full_count args alre
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
-  expect(getOptions.attributes).toHaveLength(2);
-  expect(getOptions.attributes[1]).toHaveLength(2);
-  expect(getOptions.attributes[1][0].val).toEqual("COUNT(1) OVER()");
-  expect(getOptions.attributes[1][1]).toEqual("full_count");
+  expect(getOptions.attributes).toHaveLength(4);
+  expect(getOptions.attributes[getOptions.attributes.length - 1]).toHaveLength(2);
+  expect(getOptions.attributes[getOptions.attributes.length - 1][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[getOptions.attributes.length - 1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - hasInlineCount - mssql", async() => {
@@ -622,10 +622,10 @@ test("adapter - processListArgsToOptions - hasInlineCount - mssql", async() => {
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
-  expect(getOptions.attributes).toHaveLength(1);
-  expect(getOptions.attributes[1]).toHaveLength(2);
-  expect(getOptions.attributes[1][0].val).toEqual("COUNT(1) OVER()");
-  expect(getOptions.attributes[1][1]).toEqual("full_count");
+  expect(getOptions.attributes).toHaveLength(4);
+  expect(getOptions.attributes[getOptions.attributes.length - 1]).toHaveLength(2);
+  expect(getOptions.attributes[getOptions.attributes.length - 1][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[getOptions.attributes.length - 1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - hasInlineCount - postgres", async() => {
@@ -646,16 +646,16 @@ test("adapter - processListArgsToOptions - hasInlineCount - postgres", async() =
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
-  expect(getOptions.attributes).toHaveLength(2);
-  expect(getOptions.attributes[1]).toHaveLength(2);
-  expect(getOptions.attributes[1][0].val).toEqual("COUNT(*) OVER()");
-  expect(getOptions.attributes[1][1]).toEqual("full_count");
+  expect(getOptions.attributes).toHaveLength(4);
+  expect(getOptions.attributes[getOptions.attributes.length - 1]).toHaveLength(2);
+  expect(getOptions.attributes[getOptions.attributes.length - 1][0].val).toEqual("COUNT(*) OVER()");
+  expect(getOptions.attributes[getOptions.attributes.length - 1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - no inlineCount", async() => {
   const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
-  });  
+  });
   const itemDef = {
     name: "Item",
     define: {},

@@ -1,4 +1,4 @@
-import Sequelize from "sequelize";
+import Sequelize, {Op} from "sequelize";
 
 export default {
   name: "TaskItem",
@@ -81,13 +81,18 @@ export default {
     },
     hooks: {
       beforeFind(options = {}) {
-        const {filterName} = ((options || {}).rootValue || {});
-        if (filterName) {
-          options.where = {
-            name: {
-              $ne: filterName,
-            },
-          };
+        if (options.getGraphQLArgs) {
+          const graphqlArgs = options.getGraphQLArgs();
+          if (graphqlArgs.info.rootValue) {
+            const {filterName} = graphqlArgs.info.rootValue;
+            if (filterName) {
+              options.where = {
+                name: {
+                  [Op.ne]: filterName,
+                },
+              };
+            }
+          }
         }
         return options;
       },

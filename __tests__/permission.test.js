@@ -135,9 +135,9 @@ describe("permissions", () => {
       },
     });
     const {args} = schema.getMutationType().getFields().models.type.getFields().Task;
-    expect(args.filter((a) => a.name === "delete").length).toEqual(1);
-    expect(args.filter((a) => a.name === "update").length).toEqual(1);
-    return expect(args.filter((a) => a.name === "create").length).toEqual(0);
+    expect(args.filter((a) => a.name === "delete")).toHaveLength(1);
+    expect(args.filter((a) => a.name === "update")).toHaveLength(1);
+    return expect(args.filter((a) => a.name === "create")).toHaveLength(0);
   });
   it("mutation model - update", async() => {
     const instance = await createInstance();
@@ -152,9 +152,9 @@ describe("permissions", () => {
       },
     });
     const {args} = schema.getMutationType().getFields().models.type.getFields().Task;
-    expect(args.filter((a) => a.name === "delete").length).toEqual(1);
-    expect(args.filter((a) => a.name === "update").length).toEqual(0);
-    return expect(args.filter((a) => a.name === "create").length).toEqual(1);
+    expect(args.filter((a) => a.name === "delete")).toHaveLength(1);
+    expect(args.filter((a) => a.name === "update")).toHaveLength(0);
+    return expect(args.filter((a) => a.name === "create")).toHaveLength(1);
   });
   it("mutation model - delete", async() => {
     const instance = await createInstance();
@@ -169,9 +169,9 @@ describe("permissions", () => {
       },
     });
     const {args} = schema.getMutationType().getFields().models.type.getFields().Task;
-    expect(args.filter((a) => a.name === "delete").length).toEqual(0);
-    expect(args.filter((a) => a.name === "update").length).toEqual(1);
-    return expect(args.filter((a) => a.name === "create").length).toEqual(1);
+    expect(args.filter((a) => a.name === "delete")).toHaveLength(0);
+    expect(args.filter((a) => a.name === "update")).toHaveLength(1);
+    return expect(args.filter((a) => a.name === "create")).toHaveLength(1);
   });
   it("mutation model - classMethods", async() => {
     const instance = await createInstance();

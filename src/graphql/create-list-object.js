@@ -31,6 +31,7 @@ export default function createListObject(instance, schemaCache, targetDefName, t
   if (schemaCache.lists[name]) {
     return schemaCache.lists[name]; //TODO: figure out why this is getting hit?
   }
+  const fields = instance.getFields(targetDefName);
   const response = {
     type: new GraphQLObjectType({
       name: `${name}List`,
@@ -71,6 +72,17 @@ export default function createListObject(instance, schemaCache, targetDefName, t
       last: {
         type: GraphQLInt,
       },
+      orderBy: {
+        type: new GraphQLList(new GraphQLEnumType({
+          name: `${name}OrderBy`,
+          values: Object.keys(fields).reduce((o, fieldName) => {
+            o[`${fieldName}ASC`] = {value: [fieldName, "ASC"]};
+            o[`${fieldName}DESC`] = {value: [fieldName, "DESC"]};
+            return o;
+          }, {}),
+          description: "",
+        }))
+      }
     }, instance.getDefaultListArgs(targetDefName)),
     async resolve(source, args, context, info) {
       const a = processDefaultArgs(args);

@@ -1,6 +1,6 @@
 import createListObject from "./create-list-object";
-import { fromCursor, toCursor } from "./objects/cursor";
-import { capitalize } from "../utils/word";
+// import { fromCursor, toCursor } from "./objects/cursor";
+import {capitalize} from "../utils/word";
 
 export default function createRelatedFieldsFunc(
   defName,
@@ -24,7 +24,7 @@ export default function createRelatedFieldsFunc(
               const result = options.permission.relationship(
                 defName,
                 relName,
-                relationship.source,
+                relationship.target,
                 options.permission.options
               );
               if (!result) {
@@ -52,7 +52,7 @@ export default function createRelatedFieldsFunc(
                     context,
                     info,
                   );
-                }
+                },
               };
               break;
             default:
@@ -63,7 +63,7 @@ export default function createRelatedFieldsFunc(
           return f;
         }, {});
       }
-      instance.cache.merge("relatedFields", { [defName]: fields });
+      instance.cache.merge("relatedFields", {[defName]: fields});
     }
     return fields;
   };
