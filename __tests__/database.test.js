@@ -2,7 +2,7 @@ import Database from "../src/database";
 import Sequelize from "sequelize";
 import SequelizeAdapter from "../src/adapters/sequelize";
 // import ItemDef from "./models/item";
-import TaskDef from "./models/task";
+import TaskDef from "./helper/models/task";
 // import TaskItemDef from "./models/task-item";
 
 

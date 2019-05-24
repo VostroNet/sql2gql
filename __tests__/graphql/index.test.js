@@ -16,9 +16,11 @@ test("createModelType", async() => {
   await db.addDefinition(itemDef);
   await db.initialise();
   //(defName, instance, options, nodeInterface, typeCollection, prefix = "")
-  const types = {};
-  const graphqlModel = await createModelType(itemDef.name, db, {}, {}, types, "");
+  const schemaCache = {
+    types: {},
+  };
+  const graphqlModel = await createModelType(itemDef.name, db, {}, {}, schemaCache, "");
   expect(graphqlModel).toBeDefined();
-  expect(types.Item).toBeDefined();
-  expect(types["Item[]"]).toBeDefined();
+  expect(schemaCache.types.Item).toBeDefined();
+  expect(schemaCache.types["Item[]"]).toBeDefined();
 });

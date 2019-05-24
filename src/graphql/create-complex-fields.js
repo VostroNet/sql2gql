@@ -5,16 +5,17 @@ export default function createComplexFieldsFunc(
   instance,
   definition,
   options,
-  typeCollection) {
+  schemaCache
+) {
   return function complexFields() {
     let fields = instance.cache.get("complexFields", {})[defName];
-    if (!fields && typeCollection[defName]) {
+    if (!fields && schemaCache.types[defName]) {
       fields = {};
       if (((definition.expose || {}).instanceMethods || {}).query) {
         const instanceMethods = definition.expose.instanceMethods.query;
         Object.keys(instanceMethods).forEach((methodName) => {
           const {type, args} = instanceMethods[methodName];
-          let targetType = (type instanceof String || typeof type === "string") ? typeCollection[type] : type;
+          let targetType = (type instanceof String || typeof type === "string") ? schemaCache.types[type] : type;
           if (!targetType) {
             //target does not exist.. excluded from base types?
             return;

@@ -1,16 +1,17 @@
 import createListObject from "./create-list-object";
 import { fromCursor, toCursor } from "./objects/cursor";
+import { capitalize } from "../utils/word";
 
 export default function createRelatedFieldsFunc(
   defName,
   instance,
   definition,
   options,
-  typeCollection
+  schemaCache
 ) {
   return function relatedFields() {
     let fields = instance.cache.get("relatedFields", {})[defName];
-    if (!fields && typeCollection[defName]) {
+    if (!fields && schemaCache.types[defName]) {
       const relationships = instance.getRelationships(defName);
       const relationshipKeys = Object.keys(relationships);
 
@@ -31,7 +32,7 @@ export default function createRelatedFieldsFunc(
               }
             }
           }
-          const targetObject = typeCollection[relationship.target];
+          const targetObject = schemaCache.types[relationship.target];
           const targetDef = instance.getDefinition(relationship.target);
           if (!targetObject) {
             // `targetType ${relationship.target} not defined for relationship`;
@@ -55,7 +56,7 @@ export default function createRelatedFieldsFunc(
               };
               break;
             default:
-              f[relName] = createManyObject(instance, targetDef, targetObject, "", relName);
+              f[relName] = createManyObject(instance, schemaCache, targetDef, targetObject, "", relationship);
               break;
           }
 
@@ -67,80 +68,16 @@ export default function createRelatedFieldsFunc(
     return fields;
   };
 }
-function processDefaultArgs(args) {
-  const newArgs = {};
-  if (args.first) {
-    newArgs.first = fromCursor(args.first);
-  }
-  if (args.last) {
-    newArgs.last = fromCursor(args.last);
-  }
-  return Object.assign({}, args, newArgs);
-}
-function createManyObject(instance, targetDef, targetObject, prefix, relationship) {
-  return {
-    type: createListObject(instance, targetDef, targetObject, prefix, relationship.name),
-    async resolve(source, args, context, info) {
-      const a = processDefaultArgs(args);
-      let cursor;
-      if (args.after || args.before) {
-        cursor = args.after || args.before;
-      }
-      const { total, models } = instance.resolveManyRelationship(
-        targetDef.name,
-        relationship,
-        source,
-        a,
-        context,
-        info,
-      );
-      const edges = models.map((row, idx) => {
-        let startIndex = null;
-        if (cursor) {
-          startIndex = Number(cursor.index);
-        }
-        if (startIndex !== null) {
-          startIndex++;
-        } else {
-          startIndex = 0;
-        }
-        return {
-          cursor: toCursor(targetDef.name, idx + startIndex),
-          node: row,
-        };
-      });
 
-      let startCursor, endCursor;
-      if (edges.length > 0) {
-        startCursor = edges[0].cursor;
-        endCursor = edges[edges.length - 1].cursor;
-      }
-      let hasNextPage = false;
-      let hasPreviousPage = false;
-      if (args.first || args.last) {
-        const count = parseInt(args.first || args.last, 10);
-        let index = cursor ? Number(cursor.index) : null;
-        if (index !== null) {
-          index++;
-        } else {
-          index = 0;
-        }
-        hasNextPage = index + 1 + count <= total;
-        hasPreviousPage = index - count >= 0;
-        if (args.last) {
-          [hasNextPage, hasPreviousPage] = [hasPreviousPage, hasNextPage];
-        }
-      }
-      return {
-        pageInfo: {
-          hasNextPage,
-          hasPreviousPage,
-          startCursor,
-          endCursor,
-        },
-        total,
-        edges,
-      };
-    }
-  };
+function createManyObject(instance, schemaCache, targetDef, targetObject, prefix, relationship) {
+  return createListObject(instance, schemaCache, targetDef.name, targetObject, (source, args, context, info) => {
+    return instance.resolveManyRelationship(
+      targetDef.name,
+      relationship,
+      source,
+      args,
+      context,
+      info,
+    );
+  }, prefix, `${relationship.associationType}${capitalize(relationship.name)}`);
 }

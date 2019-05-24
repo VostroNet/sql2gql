@@ -9,7 +9,7 @@ import {
   GraphQLInt,
 } from "graphql";
 
-import events from "../../src/events";
+import events from "../../../src/events";
 
 
 function delay(ms = 1) {

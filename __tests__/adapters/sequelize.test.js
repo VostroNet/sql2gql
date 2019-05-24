@@ -1,7 +1,7 @@
 import SequelizeAdapter from "../../src/adapters/sequelize";
-import ItemModel from "../models/item";
-import TaskModel from "../models/task";
-import TaskItemModel from "../models/task-item";
+import ItemModel from "../helper/models/item";
+import TaskModel from "../helper/models/task";
+import TaskItemModel from "../helper/models/task-item";
 import waterfall from "../../src/utils/waterfall";
 import Sequelize from "sequelize";
 import jsonType from "@vostro/graphql-types/lib/json";
@@ -557,23 +557,37 @@ test("adapter - processListArgsToOptions - hasInlineCount", async() => {
   const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: []
+  };
+  await adapter.createModel(itemDef);
+
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
     first: 1,
   });
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
-  expect(getOptions.attributes).toHaveLength(1);
-  expect(getOptions.attributes[0]).toHaveLength(2);
-  expect(getOptions.attributes[0][0].val).toEqual("COUNT(1) OVER()");
-  expect(getOptions.attributes[0][1]).toEqual("full_count");
+  expect(getOptions.attributes).toHaveLength(2);
+  expect(getOptions.attributes[1]).toHaveLength(2);
+  expect(getOptions.attributes[1][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - hasInlineCount - full_count args already exist", async() => {
   const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: []
+  };
+
+  await adapter.createModel(itemDef);
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
     first: 1,
   }, {
     attributes: [[
@@ -584,27 +598,34 @@ test("adapter - processListArgsToOptions - hasInlineCount - full_count args alre
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
-  expect(getOptions.attributes).toHaveLength(1);
-  expect(getOptions.attributes[0]).toHaveLength(2);
-  expect(getOptions.attributes[0][0].val).toEqual("COUNT(1) OVER()");
-  expect(getOptions.attributes[0][1]).toEqual("full_count");
+  expect(getOptions.attributes).toHaveLength(2);
+  expect(getOptions.attributes[1]).toHaveLength(2);
+  expect(getOptions.attributes[1][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - hasInlineCount - mssql", async() => {
   const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
   });
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: []
+  };
+
+  await adapter.createModel(itemDef);
   adapter.sequelize.dialect.name = "mssql";
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
     first: 1,
   });
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
   expect(getOptions.attributes).toHaveLength(1);
-  expect(getOptions.attributes[0]).toHaveLength(2);
-  expect(getOptions.attributes[0][0].val).toEqual("COUNT(1) OVER()");
-  expect(getOptions.attributes[0][1]).toEqual("full_count");
+  expect(getOptions.attributes[1]).toHaveLength(2);
+  expect(getOptions.attributes[1][0].val).toEqual("COUNT(1) OVER()");
+  expect(getOptions.attributes[1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - hasInlineCount - postgres", async() => {
@@ -612,24 +633,38 @@ test("adapter - processListArgsToOptions - hasInlineCount - postgres", async() =
     dialect: "sqlite",
   });
   adapter.sequelize.dialect.name = "postgres";
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: []
+  };
+
+  await adapter.createModel(itemDef);
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
     first: 1,
   });
   expect(countOptions).toBeUndefined();
   expect(getOptions).toBeDefined();
   expect(getOptions.limit).toEqual(1);
-  expect(getOptions.attributes).toHaveLength(1);
-  expect(getOptions.attributes[0]).toHaveLength(2);
-  expect(getOptions.attributes[0][0].val).toEqual("COUNT(*) OVER()");
-  expect(getOptions.attributes[0][1]).toEqual("full_count");
+  expect(getOptions.attributes).toHaveLength(2);
+  expect(getOptions.attributes[1]).toHaveLength(2);
+  expect(getOptions.attributes[1][0].val).toEqual("COUNT(*) OVER()");
+  expect(getOptions.attributes[1][1]).toEqual("full_count");
 });
 
 test("adapter - processListArgsToOptions - no inlineCount", async() => {
   const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
-  });
+  });  
+  const itemDef = {
+    name: "Item",
+    define: {},
+    relationships: []
+  };
+
+  await adapter.createModel(itemDef);
   adapter.sequelize.dialect.name = "unknown";
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "", {
+  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
     first: 1,
   });
   expect(countOptions).toBeDefined();

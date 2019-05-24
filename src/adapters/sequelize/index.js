@@ -1,11 +1,13 @@
 import Sequelize, {Op} from "sequelize";
 import waterfall from "../../utils/waterfall";
 import logger from "../../utils/logger";
+import unique from "../../utils/unique";
 import typeMapper from "./type-mapper";
 const log = logger("sql2gql::database:");
 
 import jsonType from "@vostro/graphql-types/lib/json";
 import replaceIdDeep from "../../utils/replace-id-deep";
+import { replaceWhereOperators } from "graphql-sequelize/lib/replaceWhereOperators";
 
 export default class SequelizeAdapter {
   static name = "sequelize";
@@ -39,6 +41,14 @@ export default class SequelizeAdapter {
   getTypeMapper() {
     return typeMapper;
   }
+  // getAccessors() {
+  //   return {
+  //     "findAll": "findAll",
+  //     "findOne": "findOne",
+  //     "create": "create",
+  //     "update": "update"
+  //   }
+  // }
   getFields = (modelName) => {
     const Model = this.sequelize.models[modelName];
     //TODO add filter for excluding or including fields
@@ -146,7 +156,9 @@ export default class SequelizeAdapter {
         type: type,
         source: sourceModel,
         target: targetModel,
-        rel: model[type](this.sequelize.models[sourceModel], options),
+        rel: model[type](this.sequelize.models[sourceModel], Object.assign({
+          as: name,
+        }, options)),
       };
     } catch (err) {
       log.error("Error Mapping relationship", {model, sourceModel, name, type, options, err});
@@ -201,10 +213,23 @@ export default class SequelizeAdapter {
   }
   processListArgsToOptions = (instance, defName, args, info, defaultOptions = {}) => {
     let limit, attributes = defaultOptions.attributes || [], where;
+    const Model = this.getModel(defName);
     if (args.first || args.last) {
       limit = parseInt(args.first || args.last, 10);
     }
     if (this.hasInlineCountFeature()) {
+      const fields = this.getFields(defName);
+      Object.keys(fields).forEach((key) => {
+        const field = fields[key];
+        if (!field.primaryKey) {
+          attributes.unshift(field.name);
+        }
+      });
+      // const fieldAttr
+
+      attributes.unshift(this.getPrimaryKeyNameForModel(defName));
+
+      // attributes.push(...this.getFields(defName).filter((f) => !f.primaryKey).map((f) => f.name))
       if (attributes.filter((a) => a.indexOf("full_count") > -1).length === 0) {
         if (this.sequelize.dialect.name === "postgres") {
           attributes.push([
@@ -221,11 +246,14 @@ export default class SequelizeAdapter {
         }
       }
     }
+    if (args.where) {
+      where = replaceWhereOperators(args.where);
+    }
     return {
       getOptions: Object.assign({
         where,
         limit,
-        attributes,
+        attributes: unique(attributes),
       }, defaultOptions),
       countOptions: !(this.hasInlineCountFeature()) ? Object.assign({
         where,
@@ -235,6 +263,14 @@ export default class SequelizeAdapter {
   }
   getAllArgsToReplaceId() {
     return ["where"];
+  }
+  findAll = (defName, options) => {
+    const Model = this.sequelize.models[defName];
+    return Model.findAll(options);
+  }
+  count = (defName, options) => {
+    const Model = this.sequelize.models[defName];
+    return Model.count(options);
   }
 }
 

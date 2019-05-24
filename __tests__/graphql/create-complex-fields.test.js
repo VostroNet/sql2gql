@@ -29,9 +29,11 @@ test("createComplexFieldsFunc - empty define", async() => {
   await db.addDefinition(itemDef);
   await db.initialise();
   const func = createComplexFieldsFunc(itemDef.name, db, itemDef, {}, {
-    "Item": new GraphQLObjectType({
-      name: "Item",
-    })
+    types: {
+      "Item": new GraphQLObjectType({
+        name: "Item",
+      })
+    }
   });
   expect(func).toBeInstanceOf(Function);
   const fields = func();

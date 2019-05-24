@@ -2,6 +2,7 @@ import waterfall from "./utils/waterfall";
 import Cache from "./utils/cache";
 import pluralize from "pluralize";
 import replaceIdDeep from "./utils/replace-id-deep";
+import { capitalize } from "./utils/word";
 
 export default class GQL {
   constructor() {
@@ -99,7 +100,7 @@ export default class GQL {
     this.relationships[def.name][rel.name].internal = false;
     const modelClass = sourceAdapter.getModel(def.name);
     const sourcePrimaryKeyName = sourceAdapter.getPrimaryKeyNameForModel(def.name);
-    let funcName = `get${rel.model.charAt(0).toUpperCase()}${rel.model.slice(1)}`;
+    let funcName = `get${capitalize(rel.model)}`;
     switch (rel.type) {
       case "hasMany":
         funcName = pluralize.plural(funcName);
@@ -175,8 +176,13 @@ export default class GQL {
       return o;
     }, {});
     const {getOptions, countOptions} = adapter.processListArgsToOptions(this, defName, a, info, {
-      context,
-      info,
+      getGraphQLArgs() {
+        return {
+          context,
+          info,
+          source,
+        };
+      }
     }, true);
     const models = await source[relationship.accessors.get](getOptions);
     let total;
@@ -191,9 +197,52 @@ export default class GQL {
   }
   resolveSingleRelationship = async(defName, relationship, source, args, context, info) => {
     return source[relationship.accessors.get]({
-      context,
-      info,
+      getGraphQLArgs() {
+        return {
+          context,
+          info,
+          source,
+        };
+      }
     });
+  }
+  resolveFindAll = async(defName, source, args, context, info) => {
+    const adapter = this.getModelAdapter(defName);
+    //(instance, defName, args, info, defaultOptions = {})
+    const argNames = adapter.getAllArgsToReplaceId();
+    const globalKeys = this.getGlobalKeys(defName);
+    const a = Object.keys(args).reduce((o, key) => {
+      if (argNames.indexOf(key) > -1) {
+        o[key] = replaceIdDeep(args[key], globalKeys, info.variableValues);
+      } else {
+        o[key] = args[key];
+      }
+      return o;
+    }, {});
+    const {getOptions, countOptions} = adapter.processListArgsToOptions(this, defName, a, info, {
+      getGraphQLArgs() {
+        return {
+          context,
+          info,
+          source,
+        };
+      }
+    }, true);
+    const models = await adapter.findAll(defName, getOptions);
+    let total;
+    if (adapter.hasInlineCountFeature()) {
+      total = await adapter.getInlineCount(models);
+    } else {
+      total = await adapter.count(defName, countOptions);
+    }
+    return {
+      total, models,
+    };
+  }
+  resolveClassMethod = (defName, methodName, source, args, context, info) => {
+    const Model = this.getModel(defName);
+    //TODO: add before/after events?
+    return Model[methodName](args, context);
   }
 
 }

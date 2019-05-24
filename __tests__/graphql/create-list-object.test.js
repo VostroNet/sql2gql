@@ -25,10 +25,11 @@ test("createListObject", async() => {
   await db.addDefinition(itemDef);
   await db.initialise();
   const {nodeInterface} = createNodeInterface(db);
-  let typeObjects = {};
-  typeObjects.Item = createModelType(itemDef.name, db, {}, nodeInterface, typeObjects);
-  const listObject = createListObject(db, itemDef, itemDef, "", "");
-  expect(listObject).toBeInstanceOf(GraphQLObjectType);
+  const schemaCache = {types: {}, lists: {}};
+  schemaCache.types.Item = createModelType(itemDef.name, db, {}, nodeInterface, schemaCache);
+  //(instance, schemaCache, targetDefName, targetType, resolveData, prefix = "", suffix = "")
+  const listObject = createListObject(db, schemaCache, itemDef.name, schemaCache.types.Item, "", "");
+  expect(listObject.type).toBeInstanceOf(GraphQLObjectType);
 
   // expect(basicFieldsFunc).toBeInstanceOf(Function);
   // const fields = basicFieldsFunc();

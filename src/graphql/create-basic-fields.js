@@ -30,7 +30,7 @@ export default function createBasicFieldsFunc(defName, instance, definition, opt
         .concat(definition.ignoreFields || []);
       if (options.permission) {
         if (options.permission.field) {
-          exclude = exclude.concat(Object.keys(modelFields).filter((keyName) => !options.permission.field(modelName, keyName)));
+          exclude = exclude.concat(Object.keys(modelFields).filter((keyName) => !options.permission.field(defName, keyName)));
         }
       }
       const fieldKeys = Object.keys(modelFields)

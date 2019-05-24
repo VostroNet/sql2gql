@@ -22,7 +22,7 @@ import createRelatedFieldsFunc from "./create-related-fields";
 import createComplexFieldsFunc from "./create-complex-fields";
 
 
-export default async function createModelType(defName, instance, options, nodeInterface, typeCollection, prefix = "") {
+export default async function createModelType(defName, instance, options, nodeInterface, schemaCache, prefix = "") {
   if (options.permission) {
     if (options.permission.model) {
       const result = await options.permission.model(defName);
@@ -34,8 +34,8 @@ export default async function createModelType(defName, instance, options, nodeIn
   const definition = instance.getDefinition(defName);
   const {before, after} = createBeforeAfter(defName, definition, instance, options);
   const basicFields = createBasicFieldsFunc(defName, instance, definition, options);
-  const relatedFields = createRelatedFieldsFunc(defName, instance, definition, options, typeCollection);
-  const complexFields = createComplexFieldsFunc(defName, instance, definition, options, typeCollection);
+  const relatedFields = createRelatedFieldsFunc(defName, instance, definition, options, schemaCache);
+  const complexFields = createComplexFieldsFunc(defName, instance, definition, options, schemaCache);
 
   const obj = new GraphQLObjectType({
     name: `${prefix}${defName}`,
@@ -52,7 +52,7 @@ export default async function createModelType(defName, instance, options, nodeIn
     fields: {},
     events: {before, after}
   };
-  typeCollection[defName] = obj;
-  typeCollection[`${defName}[]`] = new GraphQLList(obj);
+  schemaCache.types[defName] = obj;
+  schemaCache.types[`${defName}[]`] = new GraphQLList(obj);
   return obj;
 }

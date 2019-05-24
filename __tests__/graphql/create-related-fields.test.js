@@ -31,9 +31,12 @@ test("createRelatedFieldsFunc - empty define", async() => {
   await db.addDefinition(itemDef);
   await db.initialise();
   const func = createRelatedFieldsFunc(itemDef.name, db, itemDef, {}, {
-    "Item": new GraphQLObjectType({
-      name: "Item",
-    })
+    types: {
+      "Item": new GraphQLObjectType({
+        name: "Item",
+      })
+    },
+    lists: {}
   });
   expect(func).toBeInstanceOf(Function);
   const fields = func();
