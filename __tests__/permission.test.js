@@ -34,7 +34,7 @@ describe("permissions", () => {
         },
       },
     });
-    const taskFields = schema.$sql2gql.types.Task.getFields();
+    const taskFields = instance.getFields("Task");
     expect(taskFields.mutationCheck).toBeDefined();
     return expect(taskFields.name).not.toBeDefined();
   });

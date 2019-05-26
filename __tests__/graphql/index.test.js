@@ -2,6 +2,7 @@ import Database from "../../src/database";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import createModelType from "../../src/graphql/create-model-type";
 
+import createSchemaCache from "../../src/graphql/create-schema-cache";
 
 test("createModelType", async() => {
   const db = new Database();
@@ -16,9 +17,7 @@ test("createModelType", async() => {
   await db.addDefinition(itemDef);
   await db.initialise();
   //(defName, instance, options, nodeInterface, typeCollection, prefix = "")
-  const schemaCache = {
-    types: {},
-  };
+  const schemaCache = createSchemaCache();
   const graphqlModel = await createModelType(itemDef.name, db, {}, {}, schemaCache, "");
   expect(graphqlModel).toBeDefined();
   expect(schemaCache.types.Item).toBeDefined();

@@ -52,7 +52,7 @@ export default function createBasicFieldsFunc(defName, instance, definition, opt
           const type = instance.getGraphQLOutputType(defName, fieldDef.type);
           f[key] = {
             type: fieldDef.allowNull ? type : new GraphQLNonNull(type),
-            description: fieldDef.description,
+            // description: fieldDef.description,
             resolve: fieldDef.resolve,
             args: fieldDef.args,
           };
@@ -85,7 +85,7 @@ export default function createBasicFieldsFunc(defName, instance, definition, opt
             type = new GraphQLNonNull(type);
           }
           f[fieldName] = {
-            description: overrideFieldDefinition.description || fieldDefinition.description,
+            // description: overrideFieldDefinition.description || fieldDefinition.description,
             type,
             resolve: overrideFieldDefinition.output,
           };

@@ -22,7 +22,10 @@ import createNodeInterface from "./utils/create-node-interface";
 import waterfall from "../utils/waterfall";
 import createModelType from "./create-model-type";
 import createListObject from "./create-list-object";
-import { of } from "rxjs";
+import createClassMethodQueries from "./create-classmethods-queries";
+import createMutationModel from "./create-mutation-model";
+import createMutationInput from "./create-mutation-input";
+import createSchemaCache from "./create-schema-cache";
 
 // function getGraphQLObject(defName, instance) {
 //   return !(!instance.cache.get("objects", {})[defName]);
@@ -60,50 +63,47 @@ export function createListObjects(instance, schemaCache, options) {
   };
 }
 
-
-function createClassMethodFields(instance, defName, definition, query, options, schemaCache) {
-  return waterfall(Object.keys(query), async(methodName, o) => {
-    if (options.permission) {
-      if (options.permission.queryClassMethods) {
-        const result = await options.permission.queryClassMethods(defName, methodName, options.permission.options);
-        if (!result) {
-          return o;
+function createMutationInputs(instance, definitions, options, schemaCache) {
+  return async(defName, o) => {
+    if (schemaCache.types[defName]) {
+      if (options.permission) {
+        if (options.permission.mutation) {
+          const result = await options.permission.mutation(defName, options.permission.options);
+          if (!result) {
+            return o;
+          }
         }
       }
+      o[defName] = await createMutationInput(instance, defName, schemaCache, o);
     }
-    const {type, args} = query[methodName];
-    let outputType = (type instanceof String || typeof type === "string") ? schemaCache.types[type] : type;
-    if (!outputType) {
-      return o;
-    }
-    o[methodName] = {
-      type: outputType,
-      args,
-      async resolve(source, args, context, info) {
-        return instance.resolveClassMethod(defName, methodName, source, args, context, info);
-      },
-    };
     return o;
-
-  }, {});
+  };
 }
 
-export function createClassObjects(instance, definitions, options, schemaCache) {
+function createMutationModels(instance, definitions, options, schemaCache) {
   return async(defName, o) => {
-    const definition = definitions[defName];
-    const {query} = ((definition.expose || {}).classMethods || {});
-    if (query) {
-      const obj = await createClassMethodFields(instance, defName, definition, query, options, schemaCache);
-      if (Object.keys(obj).length > 0) {
-        o[defName] = {
-          type: new GraphQLObjectType({
-            name: `${defName}ClassMethods`,
-            fields: obj,
-          }),
-          resolve() {
-            return {};
+    if (schemaCache.types[defName]) {
+      let updateResult = true, deleteResult = true, createResult = true;
+      if (options.permission) {
+        if (options.permission.mutation) {
+          const result = await options.permission.mutation(defName, options.permission.options);
+          if (!result) {
+            return o;
           }
-        };
+        }
+        if (options.permission.mutationUpdate) {
+          updateResult = await options.permission.mutationUpdate(defName, options.permission.options);
+        }
+        if (options.permission.mutationDelete) {
+          deleteResult = await options.permission.mutationDelete(defName, options.permission.options);
+        }
+        if (options.permission.mutationCreate) {
+          createResult = await options.permission.mutationCreate(defName, options.permission.options);
+        }
+      }
+      if (createResult || updateResult || deleteResult) {
+        o[defName] = await createMutationModel(instance, defName, schemaCache, o,
+          createResult, updateResult, deleteResult);
       }
     }
     return o;
@@ -115,14 +115,24 @@ export async function createSchemaObjects(instance, options) {
   const {nodeInterface, nodeField, nodeTypeMapper} = createNodeInterface(instance);
   const {subscriptions, extend = {}, root} = options;
   const definitions = instance.getDefinitions();
-  const schemaCache = {
-    types: {},
-    lists: {},
-    classMethods: {},
-  };
-  await waterfall(Object.keys(definitions), createModelTypes(instance, options, nodeInterface, schemaCache), schemaCache.types);
-  const queryLists = await waterfall(Object.keys(definitions), createListObjects(instance, schemaCache, options), schemaCache.lists);
-  const classMethodQueries = await waterfall(Object.keys(definitions), createClassObjects(instance, definitions, options, schemaCache), schemaCache.classMethods);
+  const schemaCache = createSchemaCache();
+
+  const types = await waterfall(Object.keys(definitions),
+    createModelTypes(instance, options, nodeInterface, schemaCache), schemaCache.types);
+
+  const queryLists = await waterfall(Object.keys(definitions),
+    createListObjects(instance, schemaCache, options), schemaCache.lists);
+
+  const classMethodQueries = await waterfall(Object.keys(definitions),
+    createClassMethodQueries(instance, definitions, options, schemaCache), schemaCache.classMethods);
+
+  const inputs = await waterfall(Object.keys(definitions),
+    createMutationInputs(instance, definitions, options, schemaCache), schemaCache.mutationInputs);
+
+  const mutationCollection = await waterfall(Object.keys(definitions),
+    createMutationModels(instance, definitions, options, schemaCache), schemaCache.mutationModels);
+
+
   const queryRootFields = {
     node: nodeField,
   };
@@ -168,15 +178,17 @@ export async function createSchemaObjects(instance, options) {
       fields: queryRootFields,
     });
   }
-  // let mutationRootFields = {};//Object.assign({}, extemmutations);
-  // if (Object.keys(mutationCollection).length > 0) {
-  //   mutationRootFields.models = {
-  //     type: new GraphQLObjectType({name: "MutationModels", fields: mutationCollection}),
-  //     resolve() {
-  //       return {};
-  //     },
-  //   };
-  // }
+
+
+
+  if (Object.keys(mutationCollection).length > 0) {
+    mutationRootFields.models = {
+      type: new GraphQLObjectType({name: "MutationModels", fields: mutationCollection}),
+      resolve() {
+        return {};
+      },
+    };
+  }
   // let classMethodMutations = await createMutationClassMethods(sqlInstance.models, validKeys, typeCollection, options);
   // if (Object.keys(classMethodMutations).length > 0) {
   //   mutationRootFields.classMethods = {

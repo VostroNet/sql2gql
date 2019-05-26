@@ -1,9 +1,12 @@
 import expect from "expect";
 import {createInstance, validateResult} from "./helper";
 import {graphql} from "graphql";
-import {createSchema, connect} from "../index";
+// import {createSchema} from "../src/graphql/index";
 import Sequelize from "sequelize";
 import {toGlobalId} from "graphql-relay";
+import SequelizeAdapter from "../src/adapters/sequelize";
+import Database from "../src/database";
+import {createSchema} from "../src/graphql/index";
 
 Sequelize.Promise = global.Promise;
 
@@ -334,14 +337,13 @@ describe("mutations", () => {
         },
       },
     };
-
-    let instance = new Sequelize("database", "username", "password", {
+    const db = new Database();
+    db.registerAdapter(new SequelizeAdapter({}, {
       dialect: "sqlite",
-      logging: false,
-    });
-    connect([taskModel], instance, {});
-    await instance.sync();
-    const schema = await createSchema(instance);
+    }), "sqlite");
+    db.addDefinition(taskModel);
+    await db.initialise({reset: true});
+    const schema = await createSchema(db);
 
     const createMutation = `mutation {
       models {
@@ -383,17 +385,19 @@ describe("mutations", () => {
       },
     };
 
-    let instance = new Sequelize("database", "username", "password", {
+    const db = new Database();
+    db.registerAdapter(new SequelizeAdapter({}, {
       dialect: "sqlite",
-      logging: false,
-    });
-    connect([taskModel], instance, {});
-    await instance.sync();
-    const {Task} = instance.models;
+    }), "sqlite");
+    db.addDefinition(taskModel);
+    await db.initialise({reset: true});
+    
+    const {Task} = db.models;
     const item = await Task.create({
       name: "item2",
     });
-    const schema = await createSchema(instance);
+    const schema = await createSchema(db);
+
     const itemId = toGlobalId("Task", item.id);
     const updateMutation = `mutation {
       models {
@@ -435,19 +439,18 @@ describe("mutations", () => {
         },
       },
     };
-
-    let instance = new Sequelize("database", "username", "password", {
+    const db = new Database();
+    db.registerAdapter(new SequelizeAdapter({}, {
       dialect: "sqlite",
-      logging: false,
-    });
-    connect([taskModel], instance, {});
-    await instance.sync();
-    const {Task} = instance.models;
+    }), "sqlite");
+    db.addDefinition(taskModel);
+    await db.initialise({reset: true});
+    const {Task} = db.models;
     const item = await Task.create({
       name: "item2",
     });
     const itemId = toGlobalId("Task", item.id);
-    const schema = await createSchema(instance);
+    const schema = await createSchema(db);
     const deleteMutation = `mutation {
       models {
         Task(delete: {where: {id: "${itemId}"}}) {
@@ -461,7 +464,7 @@ describe("mutations", () => {
   it("create inputs - with no PK defined", async() => {
     const instance = await createInstance();
     const {TaskItem} = instance.models;
-    const fields = TaskItem.$sqlgql.define;
+    const fields = instance.getFields("TaskItem"); //TaskItem.$sqlgql.define;
     const schema = await createSchema(instance);
     const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"TaskRequiredInput\") { inputFields {name} }}");
     const mutationInputFields = inputFields.map(x => x.name);

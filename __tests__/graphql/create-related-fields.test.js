@@ -2,6 +2,7 @@ import Database from "../../src/database";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import createRelatedFieldsFunc from "../../src/graphql/create-related-fields";
 import {GraphQLObjectType} from "graphql";
+import createSchemaCache from "../../src/graphql/create-schema-cache";
 test("createRelatedFieldsFunc - empty define", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
@@ -30,14 +31,11 @@ test("createRelatedFieldsFunc - empty define", async() => {
   };
   await db.addDefinition(itemDef);
   await db.initialise();
-  const func = createRelatedFieldsFunc(itemDef.name, db, itemDef, {}, {
-    types: {
-      "Item": new GraphQLObjectType({
-        name: "Item",
-      })
-    },
-    lists: {}
+  const schemaCache = createSchemaCache();
+  schemaCache.types.Item = new GraphQLObjectType({
+    name: "Item",
   });
+  const func = createRelatedFieldsFunc(itemDef.name, db, itemDef, {}, schemaCache);
   expect(func).toBeInstanceOf(Function);
   const fields = func();
   expect(fields).toBeDefined();

@@ -39,7 +39,7 @@ export default async function createModelType(defName, instance, options, nodeIn
 
   const obj = new GraphQLObjectType({
     name: `${prefix}${defName}`,
-    description: "",
+    // description: "",
     fields() {
       return Object.assign({}, basicFields(), relatedFields(), complexFields());
     },

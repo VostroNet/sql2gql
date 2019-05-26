@@ -2,7 +2,7 @@ import Database from "../../src/database";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import createModelType from "../../src/graphql/create-model-type";
 import createListObject from "../../src/graphql/create-list-object";
-
+import createSchemaCache from "../../src/graphql/create-schema-cache";
 import createNodeInterface from "../../src/graphql/utils/create-node-interface";
 import {
   GraphQLID,
@@ -25,7 +25,7 @@ test("createListObject", async() => {
   await db.addDefinition(itemDef);
   await db.initialise();
   const {nodeInterface} = createNodeInterface(db);
-  const schemaCache = {types: {}, lists: {}};
+  const schemaCache = createSchemaCache();
   schemaCache.types.Item = createModelType(itemDef.name, db, {}, nodeInterface, schemaCache);
   //(instance, schemaCache, targetDefName, targetType, resolveData, prefix = "", suffix = "")
   const listObject = createListObject(db, schemaCache, itemDef.name, schemaCache.types.Item, "", "");

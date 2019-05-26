@@ -26,12 +26,24 @@ function processDefaultArgs(args) {
 }
 
 
-export default function createListObject(instance, schemaCache, targetDefName, targetType, resolveData, prefix = "", suffix = "") {
+export default function createListObject(instance, schemaCache, targetDefName, targetType, resolveData, prefix = "", suffix = "", customArgs) {
   const name = `${capitalize(prefix)}${capitalize(targetDefName)}${capitalize(suffix)}`;
   if (schemaCache.lists[name]) {
     return schemaCache.lists[name]; //TODO: figure out why this is getting hit?
   }
   const fields = instance.getFields(targetDefName);
+  let orderBy = schemaCache.orderBy[`${name}OrderBy`];
+  if (!orderBy) {
+    schemaCache.orderBy[`${name}OrderBy`] = orderBy = new GraphQLList(new GraphQLEnumType({
+      name: `${name}OrderBy`,
+      values: Object.keys(fields).reduce((o, fieldName) => {
+        o[`${fieldName}ASC`] = {value: [fieldName, "ASC"]};
+        o[`${fieldName}DESC`] = {value: [fieldName, "DESC"]};
+        return o;
+      }, {}),
+      // description: "",
+    }));
+  }
   const response = {
     type: new GraphQLObjectType({
       name: `${name}List`,
@@ -59,7 +71,7 @@ export default function createListObject(instance, schemaCache, targetDefName, t
         };
       }
     }),
-    args: Object.assign({
+    args: customArgs || Object.assign({
       after: {
         type: GraphQLString,
       },
@@ -73,15 +85,7 @@ export default function createListObject(instance, schemaCache, targetDefName, t
         type: GraphQLInt,
       },
       orderBy: {
-        type: new GraphQLList(new GraphQLEnumType({
-          name: `${name}OrderBy`,
-          values: Object.keys(fields).reduce((o, fieldName) => {
-            o[`${fieldName}ASC`] = {value: [fieldName, "ASC"]};
-            o[`${fieldName}DESC`] = {value: [fieldName, "DESC"]};
-            return o;
-          }, {}),
-          description: "",
-        }))
+        type: orderBy,
       }
     }, instance.getDefaultListArgs(targetDefName)),
     async resolve(source, args, context, info) {

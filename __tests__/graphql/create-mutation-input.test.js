@@ -23,6 +23,9 @@ test("createMutationInput", async() => {
   const inputTypes = {};
   const result = createMutationInput(db, "Item", inputTypes);
   expect(result).toBeDefined();
-  expect(inputTypes.Item.required).toBeDefined();
-  expect(inputTypes.Item.optional).toBeDefined();
+  expect(result.required).toBeDefined();
+  expect(result.optional).toBeDefined();
+  expect(result.create).toBeDefined();
+  expect(result.update).toBeDefined();
+  expect(result.delete).toBeDefined();
 });
