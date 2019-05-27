@@ -85,7 +85,7 @@ gulp.task("doc", function(cb) {
 });
 
 gulp.task("watch", () => {
-  gulp.watch("src/**/*.*", gulp.parallel("test"));
+  gulp.watch("src/**/*.*", gulp.parallel("compile"));
 });
 
-gulp.task("default", gulp.series("test"));
+gulp.task("default", gulp.series("compile"));

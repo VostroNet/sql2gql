@@ -92,9 +92,9 @@ export default class GQL {
       this.relationships[def.name][rel.name].internal = true;
       //TODO: populate foreignKey/sourceKeys if not provided
       await sourceAdapter.createRelationship(def.name, rel.model, rel.name, rel.type, rel.options);
-      if (!foreignKey) {
-        throw new Error("TODO: Add foreignKey detection from adapter");
-      }
+      // if (!foreignKey) {
+      //   throw new Error("TODO: Add foreignKey detection from adapter");
+      // }
       return undefined;
 
     }

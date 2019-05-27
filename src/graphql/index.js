@@ -22,7 +22,7 @@ import createNodeInterface from "./utils/create-node-interface";
 import waterfall from "../utils/waterfall";
 import createModelType from "./create-model-type";
 import createListObject from "./create-list-object";
-import createClassMethods from "./create-classmethods";
+import createClassMethods from "./create-class-methods";
 import createMutationModel from "./create-mutation-model";
 import createMutationInput from "./create-mutation-input";
 import createSchemaCache from "./create-schema-cache";
