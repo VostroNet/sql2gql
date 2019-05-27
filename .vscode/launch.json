@@ -1,6 +1,7 @@
 {
   "version": "0.2.0",
   "configurations": [
+
     {
       "type": "node",
       "name": "vscode-jest-tests",
@@ -17,13 +18,12 @@
     "name": "Launch Express Debug",
     "type": "node",
     "request": "launch",
-    "args": ["./build/tests/express.js"],
+    "disableOptimisticBPs": true,
+    "args": ["-r", "@babel/register", "./__tests__/helper/express.js"],
     "env": {
       "NODE_ENV": "development",
-      "DEBUG": "*"
+      "DEBUG": "sql*"
     },
-    "console": "integratedTerminal",
-    "sourceMaps": true,
-    "outFiles": ["./build/**/*.js"],
+    "console": "integratedTerminal"
   }]
 }

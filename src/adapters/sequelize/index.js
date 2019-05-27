@@ -250,7 +250,7 @@ export default class SequelizeAdapter {
       }
     }
     if (args.where) {
-      where = replaceWhereOperators(args.where);
+      where = this.processFilterArgument(args.where);
     }
     return {
       getOptions: Object.assign({
@@ -265,6 +265,9 @@ export default class SequelizeAdapter {
       }, defaultOptions) : undefined,
     };
   }
+  processFilterArgument(where) {
+    return replaceWhereOperators(where);
+  }
   getAllArgsToReplaceId() {
     return ["where"];
   }
@@ -276,42 +279,85 @@ export default class SequelizeAdapter {
     const Model = this.sequelize.models[defName];
     return Model.count(options);
   }
-}
-
-
-function generateHooks(hooks = [], schemaName) {
-  return hooks.reduce((o, h) => {
-    Object.keys(h).forEach((hookName) => {
-      if (!o[hookName]) {
-        o[hookName] = createHookQueue(hookName, hooks, schemaName);
-      }
-    });
-    return o;
-  }, {});
-}
-
-function createHookQueue(hookName, hooks, schemaName) {
-  return function(init, options, error) {
-    return hooks.reduce((promise, targetHooks) => {
-      return promise.then(async(val) => {
-        if (targetHooks[hookName]) {
-          let result;
-          if (Array.isArray(targetHooks[hookName])) {
-            result = await waterfall(targetHooks[hookName], (hook, prevResult) => {
-              return hook(prevResult, options, error, schemaName, hookName);
-            }, val);
-          } else {
-            result = await targetHooks[hookName](val, options, error, schemaName, hookName);
-          }
-          if (result) {
-            return result;
-          }
-        }
-        return val;
+  update = (source, input, options) => {
+    return source.update(input, options);
+  }
+  getCreateFunction = (defName) => {
+    const Model = this.sequelize.models[defName];
+    return (input, options) => {
+      return Model.create(input, options);
+    };
+  }
+  getUpdateFunction = (defName) => {
+    const Model = this.sequelize.models[defName];
+    return async(where, processInput, options) => {
+      const items = await Model.findAll({
+        where: this.processFilterArgument(where),
+        ...options,
       });
-    }, Promise.resolve(init));
-  };
+      return Promise.all(items.map(async(i) => {
+        const input = await processInput(i);
+        if (Object.keys(input).length > 0) {
+          return i.update(input, options);
+        }
+        return i;
+      }));
+    };
+  }
+  getDeleteFunction = (defName) => {
+    const Model = this.sequelize.models[defName];
+    return async(where, options, before, after) => {
+      const items = Model.findAll({
+        where: this.processFilterArgument(where),
+        ...options,
+      });
+      return items.map(async(i) => {
+        i = await before(i);
+        await i.destroy(options);
+        i = await after(i);
+        return i;
+      });
+    };
+  }
+  mergeFilterStatement(fieldName, value, match, originalWhere) {
+    return mergeFilterStatement(fieldName, value, match, originalWhere);
+  }
 }
+
+
+// function generateHooks(hooks = [], schemaName) {
+//   return hooks.reduce((o, h) => {
+//     Object.keys(h).forEach((hookName) => {
+//       if (!o[hookName]) {
+//         o[hookName] = createHookQueue(hookName, hooks, schemaName);
+//       }
+//     });
+//     return o;
+//   }, {});
+// }
+
+// function createHookQueue(hookName, hooks, schemaName) {
+//   return function(init, options, error) {
+//     return hooks.reduce((promise, targetHooks) => {
+//       return promise.then(async(val) => {
+//         if (targetHooks[hookName]) {
+//           let result;
+//           if (Array.isArray(targetHooks[hookName])) {
+//             result = await waterfall(targetHooks[hookName], (hook, prevResult) => {
+//               return hook(prevResult, options, error, schemaName, hookName);
+//             }, val);
+//           } else {
+//             result = await targetHooks[hookName](val, options, error, schemaName, hookName);
+//           }
+//           if (result) {
+//             return result;
+//           }
+//         }
+//         return val;
+//       });
+//     }, Promise.resolve(init));
+//   };
+// }
 
 
 

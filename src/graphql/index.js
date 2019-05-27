@@ -22,7 +22,7 @@ import createNodeInterface from "./utils/create-node-interface";
 import waterfall from "../utils/waterfall";
 import createModelType from "./create-model-type";
 import createListObject from "./create-list-object";
-import createClassMethodQueries from "./create-classmethods-queries";
+import createClassMethods from "./create-classmethods";
 import createMutationModel from "./create-mutation-model";
 import createMutationInput from "./create-mutation-input";
 import createSchemaCache from "./create-schema-cache";
@@ -80,6 +80,7 @@ function createMutationInputs(instance, definitions, options, schemaCache) {
   };
 }
 
+
 function createMutationModels(instance, definitions, options, schemaCache) {
   return async(defName, o) => {
     if (schemaCache.types[defName]) {
@@ -124,13 +125,16 @@ export async function createSchemaObjects(instance, options) {
     createListObjects(instance, schemaCache, options), schemaCache.lists);
 
   const classMethodQueries = await waterfall(Object.keys(definitions),
-    createClassMethodQueries(instance, definitions, options, schemaCache), schemaCache.classMethods);
+    createClassMethods(instance, definitions, options, schemaCache), schemaCache.classMethodQueries);
 
-  const inputs = await waterfall(Object.keys(definitions),
+  await waterfall(Object.keys(definitions),
     createMutationInputs(instance, definitions, options, schemaCache), schemaCache.mutationInputs);
 
   const mutationCollection = await waterfall(Object.keys(definitions),
     createMutationModels(instance, definitions, options, schemaCache), schemaCache.mutationModels);
+
+  const classMethodMutations = await waterfall(Object.keys(definitions),
+    createClassMethods(instance, definitions, options, schemaCache, "mutations"), schemaCache.classMethodMutations);
 
 
   const queryRootFields = {
@@ -189,15 +193,14 @@ export async function createSchemaObjects(instance, options) {
       },
     };
   }
-  // let classMethodMutations = await createMutationClassMethods(sqlInstance.models, validKeys, typeCollection, options);
-  // if (Object.keys(classMethodMutations).length > 0) {
-  //   mutationRootFields.classMethods = {
-  //     type: new GraphQLObjectType({name: "MutationClassMethods", fields: classMethodMutations}),
-  //     resolve() {
-  //       return {};
-  //     },
-  //   };
-  // }
+  if (Object.keys(classMethodMutations).length > 0) {
+    mutationRootFields.classMethods = {
+      type: new GraphQLObjectType({name: "MutationClassMethods", fields: classMethodMutations}),
+      resolve() {
+        return {};
+      },
+    };
+  }
   if ((extend || {}).mutation) {
     mutationRootFields = await waterfall(Object.keys(extend.mutation), async(k, o) => {
       if (options.permission) {

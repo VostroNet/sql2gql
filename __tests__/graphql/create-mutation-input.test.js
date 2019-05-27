@@ -2,7 +2,7 @@ import Database from "../../src/database";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import Sequelize from "sequelize";
 import createMutationInput from "../../src/graphql/create-mutation-input";
-
+import createSchemaCache from "../../src/graphql/create-schema-cache";
 
 test("createMutationInput", async() => {
   const db = new Database();
@@ -21,7 +21,9 @@ test("createMutationInput", async() => {
   await db.addDefinition(itemDef);
   await db.initialise();
   const inputTypes = {};
-  const result = createMutationInput(db, "Item", inputTypes);
+  const schemaCache = createSchemaCache();
+
+  const result = createMutationInput(db, "Item", schemaCache, inputTypes);
   expect(result).toBeDefined();
   expect(result.required).toBeDefined();
   expect(result.optional).toBeDefined();

@@ -74,7 +74,7 @@ gulp.task("compile", gulp.series("lint", () => {
 
 gulp.task("test", function() {
   process.env.NODE_ENV = "test";
-  return gulp.src("./__tests__/**/*.test.js")
+  return gulp.src("__tests__")
     .pipe(jest(jestConfig));
 });
 

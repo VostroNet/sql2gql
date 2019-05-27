@@ -17,7 +17,7 @@ const app = express();
   server.applyMiddleware({app});
   app.listen(PORT);
 })().then(() => {
-  console.log("success");
+  console.log("success", PORT);
 }, (err) => {
   console.log("ERR", err);
 });

@@ -37,13 +37,13 @@ export default {
     if (!result) {
       return result;
     }
-    if ((result.edges || []).length > 0) {
-      result.edges = result.edges.map((x) => {
-        const {node} = x;
-        return node.name !== "item-null" ? x : null;
-      });
-      return result;
-    }
+    // if ((result.edges || []).length > 0) {
+    //   result.edges = result.edges.map((x) => {
+    //     const {node} = x;
+    //     return node.name !== "item-null" ? x : null;
+    //   });
+    //   return result;
+    // }
     return result.name !== "item-null" ? result : null;
   },
 };

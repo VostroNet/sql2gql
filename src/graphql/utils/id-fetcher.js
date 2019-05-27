@@ -19,7 +19,7 @@ export default function idFetcher(database, nodeTypeMapper) {
 
     const model = Object.keys(database.models).find(model => model === type);
     if (model) {
-      return database.models[model].findById(id);
+      return database.models[model].findByPk(id);
       //TODO: probably should abstract this instead of accessing the models directly
     }
 

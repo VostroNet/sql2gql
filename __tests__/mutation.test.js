@@ -319,13 +319,20 @@ describe("mutations", () => {
         tableName: "tasks",
         hooks: {
           beforeFind(options) {
-            expect(options.rootValue).toBeDefined();
-            expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            expect(options.getGraphQLArgs).toBeDefined();
+            expect(options.getGraphQLArgs).toBeInstanceOf(Function);
+            const args = options.getGraphQLArgs();
+            expect(args.info).toBeDefined();
+            expect(args.info.rootValue).toBeDefined();
+            expect(args.info.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(args.info.rootValue)}`);
             return undefined;
           },
           beforeCreate(instance, options) {
-            expect(options.rootValue).toBeDefined();
-            expect(options.rootValue.req).toEqual("exists", `beforeCreate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            expect(options.getGraphQLArgs).toBeDefined();
+            expect(options.getGraphQLArgs).toBeInstanceOf(Function);
+            const args = options.getGraphQLArgs();
+            expect(args.info.rootValue).toBeDefined();
+            expect(args.info.rootValue.req).toEqual("exists", `beforeCreate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(args.info.rootValue)}`);
             return undefined;
           },
           beforeUpdate(instance, options) {
@@ -369,13 +376,21 @@ describe("mutations", () => {
         tableName: "tasks",
         hooks: {
           beforeFind(options) {
-            expect(options.rootValue).toBeDefined();
-            expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            expect(options.getGraphQLArgs).toBeDefined();
+            expect(options.getGraphQLArgs).toBeInstanceOf(Function);
+            const args = options.getGraphQLArgs();
+            expect(args.info).toBeDefined();
+            expect(args.info.rootValue).toBeDefined();
+            expect(args.info.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(args.info.rootValue)}`);
             return undefined;
           },
           beforeUpdate(instance, options) {
-            expect(options.rootValue).toBeDefined();
-            expect(options.rootValue.req).toEqual("exists", `beforeUpdate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            expect(options.getGraphQLArgs).toBeDefined();
+            expect(options.getGraphQLArgs).toBeInstanceOf(Function);
+            const args = options.getGraphQLArgs();
+            expect(args.info).toBeDefined();
+            expect(args.info.rootValue).toBeDefined();
+            expect(args.info.rootValue.req).toEqual("exists", `beforeUpdate: rootValue: {req: 'exists'} does not match. ${JSON.stringify(args.info.rootValue)}`);
             return undefined;
           },
           beforeDestroy(instance, options) {
@@ -391,7 +406,6 @@ describe("mutations", () => {
     }), "sqlite");
     db.addDefinition(taskModel);
     await db.initialise({reset: true});
-    
     const {Task} = db.models;
     const item = await Task.create({
       name: "item2",
@@ -423,8 +437,12 @@ describe("mutations", () => {
         tableName: "tasks",
         hooks: {
           beforeFind(options) {
-            expect(options.rootValue).toBeDefined();
-            expect(options.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            expect(options.getGraphQLArgs).toBeDefined();
+            expect(options.getGraphQLArgs).toBeInstanceOf(Function);
+            const args = options.getGraphQLArgs();
+            expect(args.info).toBeDefined();
+            expect(args.info.rootValue).toBeDefined();
+            expect(args.info.rootValue.req).toEqual("exists", `beforeFind: rootValue: {req: 'exists'} does not match. ${JSON.stringify(args.info.rootValue)}`);
             return undefined;
           },
           beforeUpdate(instance, options) {
@@ -432,8 +450,12 @@ describe("mutations", () => {
             // return instance;
           },
           beforeDestroy(instance, options) {
-            expect(options.rootValue).toBeDefined();
-            expect(options.rootValue.req).toEqual("exists", `beforeDestroy: rootValue: {req: 'exists'} does not match. ${JSON.stringify(options.rootValue)}`);
+            expect(options.getGraphQLArgs).toBeDefined();
+            expect(options.getGraphQLArgs).toBeInstanceOf(Function);
+            const args = options.getGraphQLArgs();
+            expect(args.info).toBeDefined();
+            expect(args.info.rootValue).toBeDefined();
+            expect(args.info.rootValue.req).toEqual("exists", `beforeDestroy: rootValue: {req: 'exists'} does not match. ${JSON.stringify(args.info.rootValue)}`);
             return instance;
           },
         },
@@ -464,7 +486,7 @@ describe("mutations", () => {
   it("create inputs - with no PK defined", async() => {
     const instance = await createInstance();
     const {TaskItem} = instance.models;
-    const fields = instance.getFields("TaskItem"); //TaskItem.$sqlgql.define;
+    const fields = instance.getFields("Task"); //TaskItem.$sqlgql.define;
     const schema = await createSchema(instance);
     const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"TaskRequiredInput\") { inputFields {name} }}");
     const mutationInputFields = inputFields.map(x => x.name);
@@ -487,7 +509,7 @@ describe("mutations", () => {
     const itemResult = await graphql(schema, mutation);
     validateResult(itemResult);
     const {data: {__type: {inputFields}}} = await graphql(schema, "query {__type(name:\"ItemRequiredInput\") { inputFields {name} }}");
-    expect(Object.keys(inputFields).filter(x => x.name === "id").length).toBe(0);
+    expect(Object.keys(inputFields).filter(x => x.name === "id")).toHaveLength(0);
   });
   it("create complex object", async() => {
     const instance = await createInstance();

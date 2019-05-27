@@ -34,9 +34,10 @@ describe("permissions", () => {
         },
       },
     });
-    const taskFields = instance.getFields("Task");
+    const taskFields = schema.getQueryType().getFields().
+      models.type.getFields().Task.type.getFields().edges.type.ofType.getFields().node.type.getFields();
     expect(taskFields.mutationCheck).toBeDefined();
-    return expect(taskFields.name).not.toBeDefined();
+    expect(taskFields.name).not.toBeDefined();
   });
 
   it("query listing", async() => {
@@ -189,22 +190,22 @@ describe("permissions", () => {
     expect(func.reverseName2).toBeDefined();
     return expect(func.reverseName).not.toBeDefined();
   });
-  it("subscription", async() => {
-    const pubsub = new PubSub();
+  // it("subscription", async() => {
+  //   const pubsub = new PubSub();
 
-    const instance = await createInstance({subscriptions: {pubsub}});
-    // const {Task} = sqlInstance.models;
-    const schema = await createSchema(instance, {
-      permission: {
-        subscription(modelName, hookName) {
-          if (modelName === "Task" && hookName === "afterCreate") {
-            return false;
-          }
-          return true;
-        },
-      },
-    });
-    expect(schema.getSubscriptionType().getFields().afterCreateTask).not.toBeDefined();
-    return expect(schema.getSubscriptionType().getFields().afterUpdateTask).toBeDefined();
-  });
+  //   const instance = await createInstance({subscriptions: {pubsub}});
+  //   // const {Task} = sqlInstance.models;
+  //   const schema = await createSchema(instance, {
+  //     permission: {
+  //       subscription(modelName, hookName) {
+  //         if (modelName === "Task" && hookName === "afterCreate") {
+  //           return false;
+  //         }
+  //         return true;
+  //       },
+  //     },
+  //   });
+  //   expect(schema.getSubscriptionType().getFields().afterCreateTask).not.toBeDefined();
+  //   return expect(schema.getSubscriptionType().getFields().afterUpdateTask).toBeDefined();
+  // });
 });

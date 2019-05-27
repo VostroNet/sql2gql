@@ -38,7 +38,7 @@ export default function createRelatedFieldsFunc(
             // `targetType ${relationship.target} not defined for relationship`;
             return f;
           }
-          switch (relationship.type) {
+          switch (relationship.associationType) {
             case "hasOne":
             case "belongsTo":
               f[relName] = {

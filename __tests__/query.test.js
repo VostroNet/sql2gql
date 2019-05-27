@@ -214,7 +214,7 @@ describe("queries", () => {
     expect(enumValues).toContain("idASC");
     return expect(enumValues).toContain("idDESC");
   });
-  it("filter non-null", async() => {
+  it("before hook - filter non-null", async() => {
     const instance = await createInstance();
     const schema = await createSchema(instance);
     const mutation = `mutation {
@@ -251,16 +251,15 @@ describe("queries", () => {
     const schema = await createSchema(instance);
     const mutation = `mutation {
       models {
-        Item(create: {
-          name: "item",
-          children: [{
-            create: {
-              name: "item1"
-              children: [{create: {name: "item2"}}]
+        Item(
+          create: {
+            name: "item"
+            children: {
+              create: [{ name: "item1", children: { create: [{ name: "item2" }] } }]
             }
-          }]
-        }) {
-          id,
+          }
+        ) {
+          id
           name
         }
       }

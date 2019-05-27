@@ -94,20 +94,27 @@ describe("relay", () => {
     const instance = await createInstance();
     const schema = await createSchema(instance);
     const mutation = `mutation {
-  models {
-    Task(create: { name: "test", items: [{ create: { name: "testitem" } }, {create: { name: "testitem2" } }] }) {
-      id
-      items {
-        edges {
-          node {
-            id
-            taskId
+      models {
+        Task(
+          create: [
+            {
+              name: "test"
+              items: { create: [{ name: "testitem" }, { name: "testitem2" }] }
+            }
+          ]
+        ) {
+          id
+          items {
+            edges {
+              node {
+                id
+                taskId
+              }
+            }
           }
         }
       }
-    }
-  }
-}`;
+    }`;
     const mutationResults = await graphql(schema, mutation);
     validateResult(mutationResults);
     expect(mutationResults.data.models.Task).toHaveLength(1);
@@ -216,20 +223,25 @@ describe("relay", () => {
     const instance = await createInstance();
     const schema = await createSchema(instance);
     const mutation = `mutation {
-  models {
-    Task(create: { name: "test", items: [{ create: { name: "testitem" } }, {create: { name: "testitem2" } }] }) {
-      id
-      items {
-        edges {
-          node {
-            id
-            taskId
+      models {
+        Task(
+          create: {
+            name: "test"
+            items: { create: [{ name: "testitem" }, { name: "testitem2" }] }
+          }
+        ) {
+          id
+          items {
+            edges {
+              node {
+                id
+                taskId
+              }
+            }
           }
         }
       }
-    }
-  }
-}`;
+    }`;
     const mutationResults = await graphql(schema, mutation);
     validateResult(mutationResults);
     expect(mutationResults.data.models.Task).toHaveLength(1);
@@ -257,7 +269,12 @@ describe("relay", () => {
     const schema = await createSchema(instance);
     const mutation = `mutation {
       models {
-        Task(create: { name: "test", items: [{ create: { name: "testitem" } }, {create: { name: "testitem2" } }] }) {
+        Task(
+          create: {
+            name: "test"
+            items: { create: [{ name: "testitem" }, { name: "testitem2" }] }
+          }
+        ) {
           id
           items {
             edges {
