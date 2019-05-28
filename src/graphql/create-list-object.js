@@ -16,11 +16,11 @@ import {capitalize} from "../utils/word";
 
 function processDefaultArgs(args) {
   const newArgs = {};
-  if (args.first) {
-    newArgs.first = fromCursor(args.first);
+  if (args.before) {
+    newArgs.before = fromCursor(args.before);
   }
-  if (args.last) {
-    newArgs.last = fromCursor(args.last);
+  if (args.after) {
+    newArgs.after = fromCursor(args.after);
   }
   return Object.assign({}, args, newArgs);
 }

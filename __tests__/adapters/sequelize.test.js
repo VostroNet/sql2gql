@@ -564,7 +564,7 @@ test("adapter - processListArgsToOptions - hasInlineCount", async() => {
   };
   await adapter.createModel(itemDef);
 
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
+  const {getOptions, countOptions} = await adapter.processListArgsToOptions("Item", {
     first: 1,
   });
   expect(countOptions).toBeUndefined();
@@ -587,7 +587,7 @@ test("adapter - processListArgsToOptions - hasInlineCount - full_count args alre
   };
 
   await adapter.createModel(itemDef);
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
+  const {getOptions, countOptions} = await adapter.processListArgsToOptions("Item", {
     first: 1,
   }, {
     attributes: [[
@@ -616,7 +616,7 @@ test("adapter - processListArgsToOptions - hasInlineCount - mssql", async() => {
 
   await adapter.createModel(itemDef);
   adapter.sequelize.dialect.name = "mssql";
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
+  const {getOptions, countOptions} = await adapter.processListArgsToOptions("Item", {
     first: 1,
   });
   expect(countOptions).toBeUndefined();
@@ -640,7 +640,7 @@ test("adapter - processListArgsToOptions - hasInlineCount - postgres", async() =
   };
 
   await adapter.createModel(itemDef);
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
+  const {getOptions, countOptions} = await adapter.processListArgsToOptions("Item", {
     first: 1,
   });
   expect(countOptions).toBeUndefined();
@@ -664,7 +664,7 @@ test("adapter - processListArgsToOptions - no inlineCount", async() => {
 
   await adapter.createModel(itemDef);
   adapter.sequelize.dialect.name = "unknown";
-  const {getOptions, countOptions} = adapter.processListArgsToOptions({}, "Item", {
+  const {getOptions, countOptions} = await adapter.processListArgsToOptions("Item", {
     first: 1,
   });
   expect(countOptions).toBeDefined();

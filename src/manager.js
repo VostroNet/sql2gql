@@ -193,6 +193,9 @@ export default class GQLManager {
     };
   }
   getValueFromInstance = (defName, data, keyName) => {
+    if(!data) {
+      return undefined;
+    }
     const adapter = this.getModelAdapter(defName);
     return adapter.getValueFromInstance(data, keyName);
   }
@@ -221,6 +224,7 @@ export default class GQLManager {
   }
   resolveManyRelationship = async(defName, relationship, source, args, context, info) => {
     const adapter = this.getModelAdapter(defName);
+    const definition = this.getDefinition(defName);
     //(instance, defName, args, info, defaultOptions = {})
     const argNames = adapter.getAllArgsToReplaceId();
     const globalKeys = this.getGlobalKeys(defName);
@@ -232,15 +236,7 @@ export default class GQLManager {
       }
       return o;
     }, {});
-    const {getOptions, countOptions} = adapter.processListArgsToOptions(this, defName, a, info, {
-      getGraphQLArgs() {
-        return {
-          context,
-          info,
-          source,
-        };
-      }
-    }, true);
+    const {getOptions, countOptions} = await adapter.processListArgsToOptions(defName, a, info, definition.whereOperators, createGetGraphQLArgsFunc(context, info, source));
     const models = await source[relationship.accessors.get](getOptions);
     let total;
     if (adapter.hasInlineCountFeature()) {
@@ -277,7 +273,7 @@ export default class GQLManager {
       }
       return o;
     }, {});
-    const {getOptions, countOptions} = adapter.processListArgsToOptions(this, defName, a, info, createGetGraphQLArgsFunc(context, info, source), true);
+    const {getOptions, countOptions} = await adapter.processListArgsToOptions(defName, a, info, definition.whereOperators, createGetGraphQLArgsFunc(context, info, source));
     if (definition.before) {
       await definition.before({
         params: getOptions, args, context, info,
@@ -366,7 +362,7 @@ export default class GQLManager {
             const {where, input} = arg;
             // const [result] = await this.processUpdate(targetName, source, {input: arg}, context, info);
             const targets = await source[relationship.accessors.get](Object.assign({
-              where: targetAdapter.processFilterArgument(replaceIdDeep(where, targetGlobalKeys, info.variableValues)),
+              where: await targetAdapter.processFilterArgument(replaceIdDeep(where, targetGlobalKeys, info.variableValues), targetDef.whereOperators),
             }, defaultOptions));
             let i = await this.processInputs(targetName, input, source, args, context, info);
             if (targetDef.before) {
@@ -395,7 +391,7 @@ export default class GQLManager {
             const where = arg;
             // const [result] = await this.processUpdate(targetName, source, {input: arg}, context, info);
             const targets = await source[relationship.accessors.get](Object.assign({
-              where: targetAdapter.processFilterArgument(replaceIdDeep(where, targetGlobalKeys, info.variableValues)),
+              where: await targetAdapter.processFilterArgument(replaceIdDeep(where, targetGlobalKeys, info.variableValues), targetDef.whereOperators),
             }, defaultOptions));
             let i = await this.processInputs(targetName, input, source, args, context, info);
             await Promise.all(targets.map(async(model) => {
@@ -460,7 +456,7 @@ export default class GQLManager {
   processUpdate = async(defName, source, args, context, info) => {
     const definition = this.getDefinition(defName);
     const adapter = this.getModelAdapter(defName);
-    const processUpdate = adapter.getUpdateFunction(defName);
+    const processUpdate = adapter.getUpdateFunction(defName, definition.whereOperators);
     const globalKeys = this.getGlobalKeys(defName);
     let input = replaceIdDeep(args.input, globalKeys, info.variableValues);
     const where = replaceIdDeep(args.where, globalKeys, info.variableValues);
@@ -487,7 +483,7 @@ export default class GQLManager {
   processDelete = async(defName, source, args, context, info) => {
     const definition = this.getDefinition(defName);
     const adapter = this.getModelAdapter(defName);
-    const processDelete = adapter.getDeleteFunction(defName);
+    const processDelete = adapter.getDeleteFunction(defName, definition.whereOperators);
     const globalKeys = this.getGlobalKeys(defName);
     const where = replaceIdDeep(args.where, globalKeys, info.variableValues);
     const before = (model) => {

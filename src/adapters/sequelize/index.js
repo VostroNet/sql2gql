@@ -6,8 +6,8 @@ import typeMapper from "./type-mapper";
 const log = logger("sql2gql::database:");
 
 import jsonType from "@vostro/graphql-types/lib/json";
-import replaceIdDeep from "../../utils/replace-id-deep";
 import { replaceWhereOperators } from "graphql-sequelize/lib/replaceWhereOperators";
+import {replaceDefWhereOperators} from "../../utils/replace-id-deep";
 
 function formatObject(input) {
   return Object.keys(input).reduce((o, y) => {
@@ -238,13 +238,13 @@ export default class SequelizeAdapter {
     }
     return fullCount;
   }
-  processListArgsToOptions = (instance, defName, args, info, defaultOptions = {}) => {
+  processListArgsToOptions = async(defName, args, info, whereOperators, defaultOptions = {}) => {
     let limit, order, attributes = defaultOptions.attributes || [], where;
     // const Model = this.getModel(defName);
     if (args.first || args.last) {
       limit = parseInt(args.first || args.last, 10);
     }
-    if(args.orderBy) {
+    if (args.orderBy) {
       order = args.orderBy;
     }
     if (this.hasInlineCountFeature()) {
@@ -277,7 +277,7 @@ export default class SequelizeAdapter {
       }
     }
     if (args.where) {
-      where = this.processFilterArgument(args.where);
+      where = await this.processFilterArgument(args.where, whereOperators);
     }
     return {
       getOptions: Object.assign({
@@ -292,8 +292,12 @@ export default class SequelizeAdapter {
       }, defaultOptions) : undefined,
     };
   }
-  processFilterArgument(where) {
-    return replaceWhereOperators(where);
+  async processFilterArgument(where, whereOperators) {
+    const w = replaceWhereOperators(where);
+    if (whereOperators) {
+      return replaceDefWhereOperators(w, whereOperators, {});
+    }
+    return w;
   }
   getAllArgsToReplaceId() {
     return ["where"];
@@ -315,11 +319,11 @@ export default class SequelizeAdapter {
       return Model.create(input, options);
     };
   }
-  getUpdateFunction = (defName) => {
+  getUpdateFunction = (defName, whereOperators) => {
     const Model = this.sequelize.models[defName];
     return async(where, processInput, options) => {
       const items = await Model.findAll({
-        where: this.processFilterArgument(where),
+        where: await this.processFilterArgument(where, whereOperators),
         ...options,
       });
       return Promise.all(items.map(async(i) => {
@@ -331,11 +335,11 @@ export default class SequelizeAdapter {
       }));
     };
   }
-  getDeleteFunction = (defName) => {
+  getDeleteFunction = (defName, whereOperators) => {
     const Model = this.sequelize.models[defName];
     return async(where, options, before, after) => {
       const items = Model.findAll({
-        where: this.processFilterArgument(where),
+        where: await this.processFilterArgument(where, whereOperators),
         ...options,
       });
       return items.map(async(i) => {
