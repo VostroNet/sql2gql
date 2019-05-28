@@ -1,4 +1,4 @@
-import Database from "../src/database";
+import Database from "../src/manager";
 import Sequelize from "sequelize";
 import SequelizeAdapter from "../src/adapters/sequelize";
 // import ItemDef from "./models/item";

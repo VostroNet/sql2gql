@@ -1,4 +1,4 @@
-import Database from "../../src/database";
+import Database from "../../src/manager";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import Sequelize from "sequelize";
 import createMutationInput from "../../src/graphql/create-mutation-input";

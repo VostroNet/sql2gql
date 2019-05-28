@@ -8,7 +8,8 @@ export default function createComplexFieldsFunc(
   schemaCache
 ) {
   return function complexFields() {
-    let fields = instance.cache.get("complexFields", {})[defName];
+
+    let fields = schemaCache.complexFields[defName];
     if (!fields && schemaCache.types[defName]) {
       fields = {};
       if (((definition.expose || {}).instanceMethods || {}).query) {
@@ -37,7 +38,7 @@ export default function createComplexFieldsFunc(
           };
         });
       }
-      instance.cache.merge("complexFields", { [defName]: fields });
+      schemaCache.complexFields[defName] = fields;
     }
     return fields;
   };

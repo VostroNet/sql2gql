@@ -10,7 +10,8 @@ export default function createRelatedFieldsFunc(
   schemaCache
 ) {
   return function relatedFields() {
-    let fields = instance.cache.get("relatedFields", {})[defName];
+
+    let fields = schemaCache.relatedFields[defName];
     if (!fields && schemaCache.types[defName]) {
       const relationships = instance.getRelationships(defName);
       const relationshipKeys = Object.keys(relationships);
@@ -63,7 +64,7 @@ export default function createRelatedFieldsFunc(
           return f;
         }, {});
       }
-      instance.cache.merge("relatedFields", {[defName]: fields});
+      schemaCache.relatedFields[defName] = fields;
     }
     return fields;
   };

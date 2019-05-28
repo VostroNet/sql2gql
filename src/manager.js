@@ -5,19 +5,43 @@ import replaceIdDeep from "./utils/replace-id-deep";
 import { capitalize } from "./utils/word";
 import events from "./events";
 
-export default class GQL {
-  constructor() {
+const hookList = [
+  "beforeValidate",
+  "afterValidate",
+  "validationFailed",
+  "beforeCreate",
+  "beforeDestroy",
+  "beforeUpdate",
+  "beforeSave",
+  "beforeUpsert",
+  "afterCreate",
+  "afterDestroy",
+  "afterUpdate",
+  "afterSave",
+  "afterUpsert",
+];
+export default class GQLManager {
+  constructor(options) {
     this.defs = {};
     this.defsAdapters = {};
     this.adapters = {};
     this.models = {};
     this.relationships = {};
     this.globalKeys = {};
+    this.hooks = {};
+    this.hookmap = {};
+    this.globalHooks = hookList.reduce((o, hookName) => {
+      o[hookName] = [];
+      return o;
+    }, {});
     // this.reference = {};
     this.cache = new Cache();
     this.defaultAdapter = undefined;
   }
-  registerAdapter = (adapter, adapterName) => {
+  addHook = (hookName, hook) => {
+    this.globalHooks[hookName].push(hook);
+  }
+  registerAdapter = (adapter, adapterName = "default") => {
     this.adapters[adapterName || adapter.name] = adapter;
     if (!this.defaultAdapter) {
       this.defaultAdapter = adapterName || adapter.name;
@@ -33,8 +57,37 @@ export default class GQL {
     this.defs[def.name] = def;
     this.defsAdapters[def.name] = datasource;
     const adapter = this.adapters[datasource];
-    this.models[def.name] = await adapter.createModel(def);
+    this.hookmap[def.name] = this.generateHookMap(def.name);
+    this.hooks[def.name] = [hookList.reduce((o, hookName) => {
+      o[hookName] = (first, ...args) => {
+        if (this.globalHooks[hookName].length > 0) {
+          return waterfall(this.globalHooks[hookName], (hook, f) => {
+            return hook(f, ...args);
+          }, first);
+        }
+        return first;
+      };
+      return o;
+    }, {})];
+
+    this.models[def.name] = await adapter.createModel(def, this.hookmap[def.name]);
   }
+  generateHookMap = (defName, ...hooks) => {
+    return hookList.reduce((o, hookName) => {
+      o[hookName] = (first, ...args) => {
+        return waterfall(this.hooks[defName], (hooks, e) => {
+          if (hooks) {
+            if (hooks[hookName]) {
+              return hooks[hookName](e, ...args);
+            }
+          }
+          return e;
+        }, first);
+      };
+      return o;
+    }, {});
+  }
+
   getModel = (modelName) => {
     return this.getModelAdapter(modelName).getModel(modelName);
   }
@@ -60,15 +113,15 @@ export default class GQL {
     //TODO: add cross adapter relationships
     return adapter.getRelationships(defName);
   }
-  getGraphQLOutputType = (modelName, type) => {
+  getGraphQLOutputType = (modelName, fieldName, type) => {
     const adapter = this.getModelAdapter(modelName);
     const typeMapper = adapter.getTypeMapper();
-    return typeMapper(type);
+    return typeMapper(type, modelName, fieldName);
   }
-  getGraphQLInputType = (modelName, type) => {
+  getGraphQLInputType = (modelName, fieldName, type) => {
     const adapter = this.getModelAdapter(modelName);
     const typeMapper = adapter.getTypeMapper();
-    return typeMapper(type);
+    return typeMapper(type, modelName, `${fieldName}Input`);
   }
   getModelAdapter = (modelName) => {
     const adapterName = this.defsAdapters[modelName];
@@ -78,6 +131,9 @@ export default class GQL {
     const targetAdapter = this.getModelAdapter(rel.model);
     if (!this.relationships[def.name]) {
       this.relationships[def.name] = {};
+    }
+    if(this.relationships[def.name][rel.name]) {
+      throw new Error(`Unable to continue duplicate relationships: ${def.name} - ${rel.name}`);
     }
     this.relationships[def.name][rel.name] = {
       targetAdapter,
@@ -470,3 +526,38 @@ function createGetGraphQLArgsFunc(context, info, source, options = {}) {
     }
   }, options);
 }
+
+
+// function generateHooks(hooks = [], schemaName) {
+//   return hooks.reduce((o, h) => {
+//     Object.keys(h).forEach((hookName) => {
+//       if (!o[hookName]) {
+//         o[hookName] = createHookQueue(hookName, hooks, schemaName);
+//       }
+//     });
+//     return o;
+//   }, {});
+// }
+
+// function createHookQueue(hookName, hooks, schemaName) {
+//   return function(init, options, error) {
+//     return hooks.reduce((promise, targetHooks) => {
+//       return promise.then(async(val) => {
+//         if (targetHooks[hookName]) {
+//           let result;
+//           if (Array.isArray(targetHooks[hookName])) {
+//             result = await waterfall(targetHooks[hookName], (hook, prevResult) => {
+//               return hook(prevResult, options, error, schemaName, hookName);
+//             }, val);
+//           } else {
+//             result = await targetHooks[hookName](val, options, error, schemaName, hookName);
+//           }
+//           if (result) {
+//             return result;
+//           }
+//         }
+//         return val;
+//       });
+//     }, Promise.resolve(init));
+//   };
+// }

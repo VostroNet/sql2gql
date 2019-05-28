@@ -39,7 +39,7 @@ export function generateInputFields(instance, defName, definition, fields, relat
       }
     }
     if (!o[key]) {
-      const type = instance.getGraphQLInputType(defName, field.type);
+      const type = instance.getGraphQLInputType(defName, key, field.type);
       o[key] = {
         type: field.allowNull || field.autoPopulated || !forceOptional
           ? type : new GraphQLNonNull(type),

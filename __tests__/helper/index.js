@@ -1,5 +1,5 @@
 
-import Database from "../../src/database";
+import Database from "../../src/manager";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 
 import TaskModel from "./models/task";

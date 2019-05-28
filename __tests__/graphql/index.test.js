@@ -1,4 +1,4 @@
-import Database from "../../src/database";
+import Database from "../../src/manager";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import createModelType from "../../src/graphql/create-model-type";
 

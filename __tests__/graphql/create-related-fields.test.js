@@ -1,4 +1,4 @@
-import Database from "../../src/database";
+import Database from "../../src/manager";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import createRelatedFieldsFunc from "../../src/graphql/create-related-fields";
 import {GraphQLObjectType} from "graphql";

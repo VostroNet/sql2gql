@@ -2,8 +2,7 @@ module.exports = {
   "notify": true,
   "collectCoverage": true,
   "collectCoverageFrom": [
-    "**/*.{js,jsx}",
-    "!**/node_modules/**",
+    "src/**/*.{js,jsx}"
   ],
   "coveragePathIgnorePatterns": ["__tests__", "jest.config.js", "/node_modules/", "/old/", "/coverage/", "gulpfile.js"],
   "testEnvironment": "node",

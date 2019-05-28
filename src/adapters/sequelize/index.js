@@ -9,6 +9,25 @@ import jsonType from "@vostro/graphql-types/lib/json";
 import replaceIdDeep from "../../utils/replace-id-deep";
 import { replaceWhereOperators } from "graphql-sequelize/lib/replaceWhereOperators";
 
+function formatObject(input) {
+  return Object.keys(input).reduce((o, y) => {
+    const str = JSON.stringify(input[y], function(k, v) { return k ? "" + v : v; }, 2);
+    return `${o}\n[${y}]: ${str}`;
+  }, "");
+}
+function safeStringify(value) {
+  const seen = new Set();
+  return JSON.stringify(value, (k, v) => {
+    if (seen.has(v) || k === "sequelize") {
+      return "...";
+    }
+    if (typeof v === "object") {
+      seen.add(v);
+    }
+    return v;
+  }, 2);
+}
+
 export default class SequelizeAdapter {
   static name = "sequelize";
   constructor(adapterOptions = {}, ...config) {
@@ -69,7 +88,13 @@ export default class SequelizeAdapter {
           })[0];
         if (!foreignTarget) {
           //TODO: better error logging
-          throw new Error("There is a problem with associations and fields");
+          let message = `An error has occurred with relationships on model - ${modelName} - ${key}`;
+          if (process.env.NODE_ENV !== "production") {
+            const jsonAssociations = safeStringify(Model.associations);
+            const jsonRelationships = safeStringify(Model.relationships);
+            message = `Model: ${modelName} - Unable to find ${key} identifier field association in the model associations \n ---Associations--- ${jsonAssociations}\n ---Relationships--- ${jsonRelationships}`;
+          }
+          throw new Error(message);
         }
       }
 
@@ -106,11 +131,11 @@ export default class SequelizeAdapter {
         return fields;
       }, {});
   }
-  createModel = async(def) => {
+  createModel = async(def, hooks) => {
     const {defaultAttr, defaultModel} = this.options;
     const newDef = Object.assign({}, def, {
       options: Object.assign({}, def.options, {
-        hooks: Object.assign({}, (def.options || {}).hooks),
+        hooks,
       }),
     });
     let schemaOptions = Object.assign({}, defaultModel, def.options);
@@ -152,13 +177,15 @@ export default class SequelizeAdapter {
           options.through.model = this.sequelize.models[options.through.model];
         }
       }
+      const opts = Object.assign({
+        as: name,
+      }, options);
       model.relationships[name] = {
         type: type,
         source: sourceModel,
         target: targetModel,
-        rel: model[type](this.sequelize.models[sourceModel], Object.assign({
-          as: name,
-        }, options)),
+        options: opts,
+        rel: model[type](this.sequelize.models[sourceModel], opts),
       };
     } catch (err) {
       log.error("Error Mapping relationship", {model, sourceModel, name, type, options, err});

@@ -21,16 +21,18 @@ function globalIdBindValue(defName, key, instance) {
   return (i) => instance.getValueFromInstance(defName, i, key);
 }
 
-export default function createBasicFieldsFunc(defName, instance, definition, options) {
+export default function createBasicFieldsFunc(defName, instance, definition, options, schemaCache) {
   return function basicFields() {
-    let fields = instance.cache.get("basicFields", {})[defName];
+    let fields = schemaCache.basicFields[defName];
     if (!fields) {
       const modelFields = instance.getFields(defName);
       let exclude = Object.keys(definition.override || {})
         .concat(definition.ignoreFields || []);
       if (options.permission) {
         if (options.permission.field) {
-          exclude = exclude.concat(Object.keys(modelFields).filter((keyName) => !options.permission.field(defName, keyName)));
+          exclude = exclude.concat(Object.keys(modelFields)
+            .filter((keyName) => keyName !== "id")
+            .filter((keyName) => !options.permission.field(defName, keyName)));
         }
       }
       const fieldKeys = Object.keys(modelFields)
@@ -49,7 +51,7 @@ export default function createBasicFieldsFunc(defName, instance, definition, opt
           }
           f[key] = globalIdField(globalKeyName, globalIdBindValue(defName, key, instance));
         } else {
-          const type = instance.getGraphQLOutputType(defName, fieldDef.type);
+          const type = instance.getGraphQLOutputType(defName, key, fieldDef.type);
           f[key] = {
             type: fieldDef.allowNull ? type : new GraphQLNonNull(type),
             // description: fieldDef.description,
@@ -92,7 +94,11 @@ export default function createBasicFieldsFunc(defName, instance, definition, opt
           return f;
         }, fields);
       }
-      instance.cache.merge("basicFields", {[defName]: fields});
+      // if(!fields.id) {
+      //   throw new Error("id needs to be supplied");
+      // }
+
+      schemaCache.basicFields[defName] = fields;
     }
     return fields;
   };

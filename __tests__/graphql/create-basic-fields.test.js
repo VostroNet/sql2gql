@@ -1,4 +1,4 @@
-import Database from "../../src/database";
+import Database from "../../src/manager";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import createBasicFieldsFunc from "../../src/graphql/create-basic-fields";
 
@@ -9,6 +9,7 @@ import {
   GraphQLObjectType,
 } from "graphql";
 import Sequelize from "sequelize";
+import createSchemaCache from "../../src/graphql/create-schema-cache";
 
 test("createBasicFieldsFunc - empty define", async() => {
   const db = new Database();
@@ -22,7 +23,8 @@ test("createBasicFieldsFunc - empty define", async() => {
   };
   await db.addDefinition(itemDef);
   await db.initialise();
-  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {});
+  const schemaCache = createSchemaCache();
+  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {}, schemaCache);
   expect(basicFieldsFunc).toBeInstanceOf(Function);
   const fields = basicFieldsFunc();
   expect(fields).toBeDefined();
@@ -49,7 +51,8 @@ test("createBasicFieldsFunc - define", async() => {
   };
   await db.addDefinition(itemDef);
   await db.initialise();
-  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {});
+  const schemaCache = createSchemaCache();
+  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {},schemaCache);
   expect(basicFieldsFunc).toBeInstanceOf(Function);
   const fields = basicFieldsFunc();
   expect(fields).toBeDefined();
@@ -107,7 +110,8 @@ test("createBasicFieldsFunc - define - override", async() => {
   };
   await db.addDefinition(itemDef);
   await db.initialise();
-  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {});
+  const schemaCache = createSchemaCache();
+  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {}, schemaCache);
   expect(basicFieldsFunc).toBeInstanceOf(Function);
   const fields = basicFieldsFunc();
   expect(fields).toBeDefined();
@@ -154,7 +158,9 @@ test("createBasicFieldsFunc - define - with scalar", async() => {
   };
   await db.addDefinition(itemDef);
   await db.initialise();
-  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {});
+
+  const schemaCache = createSchemaCache();
+  const basicFieldsFunc = createBasicFieldsFunc(itemDef.name, db, itemDef, {}, schemaCache);
   expect(basicFieldsFunc).toBeInstanceOf(Function);
   const fields = basicFieldsFunc();
   expect(fields).toBeDefined();
@@ -202,7 +208,8 @@ test("createBasicFieldsFunc - foreign keys", async() => {
   await db.addDefinition(itemDef);
   await db.addDefinition(itemChildDef);
   await db.initialise();
-  const basicFieldsFunc = createBasicFieldsFunc(itemChildDef.name, db, itemChildDef, {});
+  const schemaCache = createSchemaCache();
+  const basicFieldsFunc = createBasicFieldsFunc(itemChildDef.name, db, itemChildDef, {}, schemaCache);
   expect(basicFieldsFunc).toBeInstanceOf(Function);
   const fields = basicFieldsFunc();
   expect(fields).toBeDefined();

@@ -199,7 +199,7 @@ describe("queries", () => {
     // const {TaskItem} = instance.models;
     // const fields = TaskItem.$sqlgql.define;
     const schema = await createSchema(instance);
-    const result = await graphql(schema, "query {__type(name:\"TaskitemOrderBy\") { enumValues {name} }}");
+    const result = await graphql(schema, "query {__type(name:\"TaskItemOrderBy\") { enumValues {name} }}");
     validateResult(result);
     const enumValues = result.data.__type.enumValues.map(x => x.name);// eslint-disable-line
     // const fields = instance.getFields();

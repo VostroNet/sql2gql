@@ -27,9 +27,6 @@ import createMutationModel from "./create-mutation-model";
 import createMutationInput from "./create-mutation-input";
 import createSchemaCache from "./create-schema-cache";
 
-// function getGraphQLObject(defName, instance) {
-//   return !(!instance.cache.get("objects", {})[defName]);
-// }
 export function createModelTypes(instance, options, nodeInterface, schemaCache) {
   return async(defName, o) => {
     if (options.permission) {
@@ -137,10 +134,10 @@ export async function createSchemaObjects(instance, options) {
     createClassMethods(instance, definitions, options, schemaCache, "mutations"), schemaCache.classMethodMutations);
 
 
-  const queryRootFields = {
+  let queryRootFields = {
     node: nodeField,
   };
-  const mutationRootFields = {};
+  let mutationRootFields = {};
   if (Object.keys(queryLists).length > 0) {
     queryRootFields.models = {
       type: new GraphQLObjectType({
@@ -257,10 +254,47 @@ export async function createSchemaObjects(instance, options) {
 }
 
 
+function searchForType(name, path, arr = {found: [], diff: []}, obj, typeCollection = []) {
+  if (typeCollection.indexOf(obj) > -1) {
+    return arr;
+  }
+  typeCollection.push(obj);
+  let oo = obj;
+  if (obj.ofType) {
+    oo = obj.ofType;
+  }
+  if (oo.toConfig) {
+    oo = oo.toConfig();
+  }
+
+  if (oo.name === name) {
+    if(arr.found.indexOf(oo) === -1) {
+      arr.found.push(oo);
+      arr.diff.push(`${path}/${oo.name}`);
+    }
+  }
+  if (oo.fields) {
+    const k = Object.keys(oo.fields);
+    for (let i = 0; i < k.length; i++) {
+      let {type} = oo.fields[k[i]];
+      searchForType(name, `${path}/${oo.name}/${k[i]}`, arr, type, typeCollection);
+    }
+  }
+  return arr;
+}
+
 
 export async function createSchema(dbInstance, options = {}) {
   const schemaObjects = await createSchemaObjects(dbInstance, options);
-  const schema = new GraphQLSchema(schemaObjects.root);
+  let schema;
+  try {
+    schema = new GraphQLSchema(schemaObjects.root);
+  } catch(err) {
+    const test = searchForType("Node", "", undefined, schemaObjects.root.query);
+    //const firstInstance = searchForType(, "", schemaObjects.root.query)
+    throw err;
+  }
+
   schema.$sql2gql = {
     types: schemaObjects.types,
   };

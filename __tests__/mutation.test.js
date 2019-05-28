@@ -5,7 +5,7 @@ import {graphql} from "graphql";
 import Sequelize from "sequelize";
 import {toGlobalId} from "graphql-relay";
 import SequelizeAdapter from "../src/adapters/sequelize";
-import Database from "../src/database";
+import Database from "../src/manager";
 import {createSchema} from "../src/graphql/index";
 
 Sequelize.Promise = global.Promise;

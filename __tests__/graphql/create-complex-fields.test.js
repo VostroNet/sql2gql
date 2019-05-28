@@ -1,7 +1,8 @@
-import Database from "../../src/database";
+import Database from "../../src/manager";
 import SequelizeAdapter from "../../src/adapters/sequelize";
 import createComplexFieldsFunc from "../../src/graphql/create-complex-fields";
 import {GraphQLObjectType, GraphQLInt} from "graphql";
+import createSchemaCache from "../../src/graphql/create-schema-cache";
 test("createComplexFieldsFunc - empty define", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
@@ -28,13 +29,11 @@ test("createComplexFieldsFunc - empty define", async() => {
   };
   await db.addDefinition(itemDef);
   await db.initialise();
-  const func = createComplexFieldsFunc(itemDef.name, db, itemDef, {}, {
-    types: {
-      "Item": new GraphQLObjectType({
-        name: "Item",
-      })
-    }
+  const schemaCache = createSchemaCache();
+  schemaCache.types.Item = new GraphQLObjectType({
+    name: "Item",
   });
+  const func = createComplexFieldsFunc(itemDef.name, db, itemDef, {}, schemaCache);
   expect(func).toBeInstanceOf(Function);
   const fields = func();
   expect(fields).toBeDefined();
