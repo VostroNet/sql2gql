@@ -273,7 +273,13 @@ export default class GQLManager {
       }
       return o;
     }, {});
-    const {getOptions, countOptions} = await adapter.processListArgsToOptions(defName, a, info, definition.whereOperators, createGetGraphQLArgsFunc(context, info, source));
+    let selectedFields = [];
+    if (info) {
+      if(Array.isArray(info.fieldNodes)) {
+        selectedFields = getSelectionFields(info.fieldNodes[0]);
+      }
+    }
+    const {getOptions, countOptions} = await adapter.processListArgsToOptions(defName, a, info, definition.whereOperators, createGetGraphQLArgsFunc(context, info, source), selectedFields);
     if (definition.before) {
       await definition.before({
         params: getOptions, args, context, info,
@@ -549,6 +555,29 @@ function createGetGraphQLArgsFunc(context, info, source, options = {}) {
     }
   }, options);
 }
+
+function getSelectionFields(startNode, targetName) {
+  const targetNode = getSelectionSet(startNode, targetName);
+  return targetNode.selectionSet.selections.reduce((o, k) => {
+    o.push(k.name.value);
+    return o;
+  }, []);
+}
+
+
+function getSelectionSet(node, targetName = "node") {
+  if (node.name.value === targetName) {
+    return node;
+  }
+  for (let i = 0; i < node.selectionSet.selections.length; i++) {
+    const result = getSelectionSet(node.selectionSet.selections[i], targetName);
+    if (result) {
+      return result;
+    }
+  }
+  return undefined;
+}
+
 
 
 // function generateHooks(hooks = [], schemaName) {
