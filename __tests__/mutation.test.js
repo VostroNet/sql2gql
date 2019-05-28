@@ -591,4 +591,175 @@ describe("mutations", () => {
     const {belongsTo} = item;
     expect(item.belongsToId).toEqual(belongsTo.id);
   });
+  it("add - multiple", async() => {
+    const instance = await createInstance();
+    const {Task, TaskItem} = instance.models;
+    const startTask = await Task.create({
+      name: "start",
+    });
+    const endTask = await Task.create({
+      name: "end",
+    });
+    await TaskItem.create({
+      name: "item000001",
+      taskId: startTask.get("id"),
+    });
+    await TaskItem.create({
+      name: "item000002",
+      taskId: startTask.get("id"),
+    });
+    await TaskItem.create({
+      name: "item000003",
+      taskId: startTask.get("id"),
+    });
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Task(update: {
+          where: {
+            name: "end" 
+          },
+          input: {
+            items: {
+              add: {
+                name: {
+                  in: ["item000002", "item000003"]
+                }
+              }
+            }
+          }
+        }) {
+          id
+          items {
+            edges {
+              node {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }`;
+    const result = await graphql(schema, mutation);
+    validateResult(result);
+    expect(result.data.models.Task).toHaveLength(1);
+    const queryResults = await graphql(schema, `{
+      models {
+        Task(where: {name: "start"}) {
+          edges {
+            node {
+              id
+              name
+              items {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`);
+    expect(queryResults.data.models.Task.edges).toHaveLength(1);
+    expect(queryResults.data.models.Task.edges[0].node.items.edges).toHaveLength(1);
+    const endQueryResults = await graphql(schema, `{
+      models {
+        Task(where: {name: "end"}) {
+          edges {
+            node {
+              id
+              name
+              items {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`);
+    expect(endQueryResults.data.models.Task.edges).toHaveLength(1);
+    expect(endQueryResults.data.models.Task.edges[0].node.items.edges).toHaveLength(2);
+  });
+  it("remove - multiple", async() => {
+    const instance = await createInstance();
+    const {Task, TaskItem} = instance.models;
+    const startTask = await Task.create({
+      name: "start",
+    });
+    await TaskItem.create({
+      name: "item000001",
+      taskId: startTask.get("id"),
+    });
+    await TaskItem.create({
+      name: "item000002",
+      taskId: startTask.get("id"),
+    });
+    await TaskItem.create({
+      name: "item000003",
+      taskId: startTask.get("id"),
+    });
+    const schema = await createSchema(instance);
+    const mutation = `mutation {
+      models {
+        Task(update: {
+          where: {
+            name: "start" 
+          },
+          input: {
+            items: {
+              remove: {
+                name: {
+                  in: ["item000002", "item000003"]
+                }
+              }
+            }
+          }
+        }) {
+          id
+          items {
+            edges {
+              node {
+                id
+                name
+              }
+            }
+          }
+        }
+      }
+    }`;
+    const result = await graphql(schema, mutation);
+    validateResult(result);
+    expect(result.data.models.Task).toHaveLength(1);
+    const queryResults = await graphql(schema, `{
+      models {
+        Task(where: {name: "start"}) {
+          edges {
+            node {
+              id
+              name
+              items {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }`);
+    expect(queryResults.data.models.Task.edges).toHaveLength(1);
+    expect(queryResults.data.models.Task.edges[0].node.items.edges).toHaveLength(1);
+  });
 });

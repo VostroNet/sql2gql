@@ -388,12 +388,10 @@ export default class GQLManager {
         }
         if (args.delete) {
           await waterfall(args.delete, async(arg) => {
-            const where = arg;
-            // const [result] = await this.processUpdate(targetName, source, {input: arg}, context, info);
             const targets = await source[relationship.accessors.get](Object.assign({
-              where: await targetAdapter.processFilterArgument(replaceIdDeep(where, targetGlobalKeys, info.variableValues), targetDef.whereOperators),
+              where: await targetAdapter.processFilterArgument(replaceIdDeep(arg, targetGlobalKeys, info.variableValues), targetDef.whereOperators),
             }, defaultOptions));
-            let i = await this.processInputs(targetName, input, source, args, context, info);
+            // let i = await this.processInputs(targetName, input, source, args, context, info);
             await Promise.all(targets.map(async(model) => {
               await this.processRelationshipMutation(targetDef, model, input, context, info);
               if (targetDef.before) {
@@ -413,6 +411,31 @@ export default class GQLManager {
               }
               return model;
             }));
+          });
+        }
+        if (args.add) {
+          await waterfall(args.add, async(arg) => {
+            const where = await targetAdapter.processFilterArgument(replaceIdDeep(arg, targetGlobalKeys, info.variableValues), targetDef.whereOperators);
+            const results = await targetAdapter.findAll(targetName, Object.assign({
+              where,
+            }, defaultOptions));
+            if (results.length > 0) {
+              return source[relationship.accessors.addMultiple](results, defaultOptions);
+            }
+            return undefined;
+          });
+        }
+
+        if (args.remove) {
+          await waterfall(args.remove, async(arg) => {
+            const where = await targetAdapter.processFilterArgument(replaceIdDeep(arg, targetGlobalKeys, info.variableValues), targetDef.whereOperators);
+            const results = await targetAdapter.findAll(targetName, Object.assign({
+              where,
+            }, defaultOptions));
+            if (results.length > 0) {
+              return source[relationship.accessors.removeMultiple](results, defaultOptions);
+            }
+            return undefined;
           });
         }
       }
@@ -458,26 +481,30 @@ export default class GQLManager {
     const adapter = this.getModelAdapter(defName);
     const processUpdate = adapter.getUpdateFunction(defName, definition.whereOperators);
     const globalKeys = this.getGlobalKeys(defName);
-    let input = replaceIdDeep(args.input, globalKeys, info.variableValues);
+    let i = replaceIdDeep(args.input, globalKeys, info.variableValues);
     const where = replaceIdDeep(args.where, globalKeys, info.variableValues);
     if (definition.before) {
-      input = await definition.before({
-        params: input, args, context, info,
+      i = await definition.before({
+        params: i, args, context, info,
         modelDefinition: definition,
         type: events.MUTATION_UPDATE,
       });
     }
     const results = await processUpdate(where, (model) => {
-      return this.processInputs(defName, input, source, args, context, info, model);
+      return this.processInputs(defName, i, source, args, context, info, model);
     }, createGetGraphQLArgsFunc(context, info, source));
 
-    if (definition.after) {
-      return Promise.all(results.map((r) => definition.after({
-        result: r, args, context, info,
-        modelDefinition: definition,
-        type: events.MUTATION_UPDATE,
-      })));
-    }
+    await waterfall(results, async(r) => {
+      await this.processRelationshipMutation(defName, r, args.input, context, info);
+      if (definition.after) {
+        await definition.after({
+          result: r, args, context, info,
+          modelDefinition: definition,
+          type: events.MUTATION_UPDATE,
+        });
+      }
+    });
+
     return results;
   }
   processDelete = async(defName, source, args, context, info) => {

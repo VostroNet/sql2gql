@@ -2,11 +2,15 @@
 
 
 TODO
+
+- test add/remove from relationships
 - test where operators
-- includes
-- add/remove from lists
+- implement includes for sequelize adapter
+- change where/filter object for sequelize adapter to typed object 
 - validate submitted schema via JSON Schema
-- subscriptions
+- reimplement subscriptions
 - test multiple enums
 - before, after event hooks
 - test paging
+- add elasticsearch adapter
+- implement cross adapter relationships

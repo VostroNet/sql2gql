@@ -122,14 +122,13 @@ export default {
   whereOperators: {
     async hasNoItems(newWhere, findOptions) {
       const {context} = findOptions;
-      const {instance} = context;
       return {
         id: {
-          [Op.notIn]: instance.literal(`(SELECT DISTINCT("taskId") FROM "task-items")`)
+          [Op.notIn]: Sequelize.literal(`(SELECT DISTINCT("taskId") FROM "task-items")`)
         }
       };
     },
-    async innerTest(newWhere, findOptions) {
+    async chainTest(newWhere, findOptions) {
       return {
         hasNoItems: true
       };

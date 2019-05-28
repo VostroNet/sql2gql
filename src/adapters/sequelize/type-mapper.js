@@ -95,11 +95,11 @@ export function toGraphQL(sequelizeType, sequelizeTypes, modelName, fieldName) {
     sequelizeType instanceof STRING ||
     sequelizeType instanceof TEXT ||
     sequelizeType instanceof UUID ||
+    sequelizeType instanceof UUIDV4 ||
     sequelizeType instanceof DATEONLY ||
     sequelizeType instanceof TIME ||
     sequelizeType instanceof BIGINT ||
     sequelizeType instanceof DECIMAL ||
-    sequelizeType instanceof UUIDV4 ||
     sequelizeType instanceof MACADDR ||
     sequelizeType instanceof CIDR ||
     sequelizeType instanceof INET
@@ -119,7 +119,7 @@ export function toGraphQL(sequelizeType, sequelizeTypes, modelName, fieldName) {
   if (sequelizeType instanceof ENUM) {
     let values = sequelizeType.values.reduce((o, k) => {
       o[sanitizeEnumValue(k)] = {
-        value: k
+        value: k,
       };
       return o;
     }, {});

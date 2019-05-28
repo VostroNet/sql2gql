@@ -6,7 +6,7 @@ import TaskDef from "./helper/models/task";
 // import TaskItemDef from "./models/task-item";
 
 
-test("database - registerAdapter", () => {
+test("manager - registerAdapter", () => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -14,7 +14,7 @@ test("database - registerAdapter", () => {
   expect(db.adapters.sqlite).not.toBeUndefined();
 });
 
-test("database - registerAdapter - check default adapter", () => {
+test("manager - registerAdapter - check default adapter", () => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -22,7 +22,7 @@ test("database - registerAdapter - check default adapter", () => {
   expect(db.defaultAdapter).toEqual("sqlite");
 });
 
-test("database - registerAdapter - multi adapters", () => {
+test("manager - registerAdapter - multi adapters", () => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -35,7 +35,7 @@ test("database - registerAdapter - multi adapters", () => {
   expect(db.adapters.sqlite2).not.toBeUndefined();
 });
 
-test("database - addDefinition", async() => {
+test("manager - addDefinition", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -47,7 +47,7 @@ test("database - addDefinition", async() => {
   expect(db.adapters.sqlite.getModel(TaskDef.name)).not.toBeUndefined();
 });
 
-test("database - getModelAdapter", async() => {
+test("manager - getModelAdapter", async() => {
   const db = new Database();
   const adapter = new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -58,7 +58,7 @@ test("database - getModelAdapter", async() => {
 });
 
 
-test("database - processRelationship - hasMany - single adapter", async() => {
+test("manager - processRelationship - hasMany - single adapter", async() => {
   const db = new Database();
   const sqlite = new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -86,7 +86,7 @@ test("database - processRelationship - hasMany - single adapter", async() => {
   expect(db.relationships.TestItem.items.targetAdapter).toEqual(sqlite);
 });
 
-test("database - processRelationship - hasMany - multi adapter", async() => {
+test("manager - processRelationship - hasMany - multi adapter", async() => {
   const db = new Database();
   const sqlite = new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -136,7 +136,7 @@ test("database - processRelationship - hasMany - multi adapter", async() => {
 });
 
 
-test("database - hasMany - multi adapter", async() => {
+test("manager - hasMany - multi adapter", async() => {
   const db = new Database();
   const sqlite = new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -191,7 +191,7 @@ test("database - hasMany - multi adapter", async() => {
 });
 
 
-test("database - processRelationship - belongsTo - single adapter", async() => {
+test("manager - processRelationship - belongsTo - single adapter", async() => {
   const db = new Database();
   const sqlite = new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -246,7 +246,7 @@ test("database - processRelationship - belongsTo - single adapter", async() => {
 
 
 
-test("database - processRelationship - belongsTo - multi adapter", async() => {
+test("manager - processRelationship - belongsTo - multi adapter", async() => {
   const db = new Database();
 
   const sqlite = new SequelizeAdapter({}, {
@@ -310,7 +310,7 @@ test("database - processRelationship - belongsTo - multi adapter", async() => {
 
 
 
-test("database - belongsTo - multi adapter", async() => {
+test("manager - belongsTo - multi adapter", async() => {
   const db = new Database();
   const sqlite = new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -373,7 +373,7 @@ test("database - belongsTo - multi adapter", async() => {
 
 
 
-test("database - resolveManyRelationship - hasMany", async() => {
+test("manager - resolveManyRelationship - hasMany", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -418,7 +418,7 @@ test("database - resolveManyRelationship - hasMany", async() => {
 });
 
 
-test("database - resolveManyRelationship - hasMany - with limit", async() => {
+test("manager - resolveManyRelationship - hasMany - with limit", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -467,7 +467,7 @@ test("database - resolveManyRelationship - hasMany - with limit", async() => {
 
 
 
-test("database - resolveManyRelationship - belongsToMany", async() => {
+test("manager - resolveManyRelationship - belongsToMany", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -544,7 +544,7 @@ test("database - resolveManyRelationship - belongsToMany", async() => {
 });
 
 
-test("database - resolveManyRelationship - belongsToMany - with limit", async() => {
+test("manager - resolveManyRelationship - belongsToMany - with limit", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -620,7 +620,7 @@ test("database - resolveManyRelationship - belongsToMany - with limit", async() 
   expect(models).toHaveLength(1);
 });
 
-test("database - resolveSingleRelationship - belongsTo", async() => {
+test("manager - resolveSingleRelationship - belongsTo", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
@@ -661,7 +661,7 @@ test("database - resolveSingleRelationship - belongsTo", async() => {
   expect(model.id).toEqual(parent.id);
 });
 
-test("database - resolveSingleRelationship - hasOne", async() => {
+test("manager - resolveSingleRelationship - hasOne", async() => {
   const db = new Database();
   db.registerAdapter(new SequelizeAdapter({}, {
     dialect: "sqlite",
